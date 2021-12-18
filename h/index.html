@@ -1,0 +1,29 @@
+<!doctype html>
+<meta charset="utf-8">
+<head>
+<title>a website</title>
+<style>
+#h {
+	position: absolute;
+	top: -76px;
+	animation: the 10s infinite;
+	font-family: serif;
+}
+
+@keyframes the {
+  50% {top: 12px;}
+}
+</style></head>
+<body>
+<div id="h">welcome to h<br>
+the busiest h folder in the whole world wide net<br>
+<br>
+<br>
+take your seats gather your places<br></div>
+<script>
+t=0;
+let o = document.getElementById("h").innerHTML;
+h=()=>{t++;document.getElementById("h").innerHTML = o.repeat(t);if(t<20){setTimeout(h,1000);}}
+setTimeout(h,5000);
+</script>
+</body>

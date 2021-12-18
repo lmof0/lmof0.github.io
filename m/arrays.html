@@ -1,0 +1,721 @@
+<html>
+<head>
+<title>website: arrays</title>
+<link rel="stylesheet" href="main.css" type="text/css" />
+<style>
+tr:nth-child(even) {
+	background-color: #111111;
+}
+tr:nth-child(odd) {
+	background-color: #1a1a1a;
+}
+table, h1, h2, p, li, appear {
+	color: white;
+}
+a {
+	color: #3388ee;
+}
+a:visited {
+	color: #bb88ee;
+}
+</style>
+</head>
+<body style="background-color:Black;">
+<h1>Arrays</h1>
+<h2>superecursive objects</h2>
+<hr>
+<center><a href="../index.html">Back</a></center>
+<br>
+<p>
+<b>array notation:</b><br>
+<m>#</m> refers to the unchanged remainder of the array.<br>
+base rule: <m>[a,b] = a<sup>b</sup></m><br>
+prime rule: <m>[a,1,#] = a</m><br>
+tailing rule: <m>[#,1] = [#]</m><br>
+hyperoperation rule: <m>[a,b,1,...,1,c,d,#] = [a,a,...,[a,b-1,1,...,1,c,d,#],c-1,d,#]</m><br>
+recursion rule: <m>[a,b,c,#] = [a,[a,b-1,c,#],c-1,#]</m><br><br>
+or in english,<br><br>
+if there are two entries, the array equals the first entry to the power of the second.<br>
+if the second entry is 1, the array equals the value of the first entry.<br>
+if the last entry is 1, it can be pruned.<br>
+if the third entry is one then:<br>
+- all elements before the next non-1 element become the first element.<br>
+- the last 1 in the string of 1s becomes the original array with the second entry decreased by 1.<br>
+- the said non-1 element is decreased by one.<br>
+if the above rules don't apply, let the second entry equal the entire array but with the second entry in that new array decreased by one, and subtract one from the third entry in the original array.
+<br><br>
+the above should operate exactly as bowers's original array notation from 2002. (his original array notation just lines up so well with how one would naturally extend the hyperoperators, so i'm using those rules)
+<br><br>
+according to these rules, the limit of this notation is about <m>&omega;<sup>&omega;</sup></m> on the FGH.
+<br><br>
+<b>extended array notation:</b><br>
+unextension rule: <m>[#](1) = [#]</m><br>
+extended base rule: <m>[a,b](n) = [a,a,a,a,...,a](n-1)</m> with <m>b a</m>s<br>
+extended prime rule: <m>[a,1,#](n) = a</m><br>
+extended tailing rule: <m>[#,1](n) = [#](n)</m><br>
+extended hyperoperation rule: <m>[a,b,1,...,1,c,d,#](n) = [a,a,...,[a,b-1,1,...,1,c,d,#](n),c-1,d,#](n)</m><br>
+extended recursion rule: <m>[a,b,c,#](n) = [a,[a,b-1,c,#](n),c-1,#](n)</m>
+<br><br>
+examples:<br>
+<m>[10,10](2) = [10,10,10,10,10,10,10,10,10,10]</m><br>
+<m>[10,100](2) = [10,10,10,10,...,10,10,10,10]</m> where there are <m>100</m> tens<br>
+<m>[10,3,2](2) =<br>
+[10,[10,2,2](2),1](2) =<br>
+[10,[10,[10,1,2](2),1](2),1](2) =<br>
+[10,[10,10](2)](2) =<br>
+[10,[10,10,10,10,10,10,10,10,10,10](1)](2) =<br>
+[10,10,10,10,................,10,10,10,10]</m> where there are <m>[10,10,10,10,10,10,10,10,10,10]</m> tens.<br><br>
+the limit of <m>[a,b,2](2)</m> on the FGH is <m>&omega;<sup>&omega;</sup>+1</m>.<br>
+the limit of <m>[a,b,c](2)</m> on the FGH is <m>&omega;<sup>&omega;</sup>+&omega;</m>.<br>
+the limit of <m>[a,b,c,d](2)</m> on the FGH is likely <m>&omega;<sup>&omega;</sup>+&omega;<sup>2</sup></m>.<br>
+the limit of <m>[a,b,c,d,e](2)</m> on the FGH is likely <m>&omega;<sup>&omega;</sup>+&omega;<sup>3</sup></m>.<br>
+the limit of <m>[a,b](3)</m> on the FGH is likely <m>&omega;<sup>&omega;</sup>+&omega;<sup>&omega;</sup> = (&omega;<sup>&omega;</sup>)2</m>.<br>
+the limit of <m>[a,b](4)</m> on the FGH is likely <m>(&omega;<sup>&omega;</sup>)3</m>.<br>
+the limit of <m>[a,b](n)</m> on the FGH is likely <m>(&omega;<sup>&omega;</sup>)&omega; = &omega;<sup>&omega;+1</sup></m>.<br>
+the next step would be to find an extended expression using similar rules <m>[a,b](n,2)?</m> which on the FGH would be equivalent to <m>(&omega;<sup>&omega;</sup>)&omega;<sup>2</sup> = &omega;<sup>&omega;+2</sup></m>.<br>
+<br><br>
+<b>definitions for groups and gaggles of googologisms:</b><br>
+group: family size of less than 500 members<br>
+gaggle: family size of between 500 and 1,000 members<br>
+regiment: family size of between 1,000 and 5,000 members<br>
+super regiment: family size of between 5,000 and 10,000 members<br>
+gathering: family size of 10,000 members or more<br>
+grand googolo gathering: family size of 10<sup>10</sup> members or more
+<br><br>
+<b>todo:</b><br>
+formalise -binga series for numbers other than -gol ones<br>
+come up with names for tetrational plex, pentational plex etc. (tetlex, penlex, etc. maybe?)
+<br><br>
+<b>numbers to be named:</b><br>
+<m>[10,10,100] = 10 &uarr;<sup>100</sup> 10</m><br>
+<m>[10,2,1,2] = 10 &uarr;<sup>10</sup> 10</m><br>
+<m>[10,3,1,2] = 10 &uarr;<sup>10 &uarr;<sup>10</sup> 10</sup> 10</m><br>
+<m>[10,4,1,2]</m><br>
+<m>[10,5,1,2]</m><br>
+<m>[10,6,1,2]</m><br>
+<m>[10,7,1,2]</m><br>
+<m>[10,8,1,2]</m><br>
+<m>[10,9,1,2]</m><br>
+<m>[10,10,1,2]</m><br>
+<m>[10,100,1,2]</m><br>
+<m>[10,2,2,2] = [10,[10,1,2,2],1,2] = [10,10,1,2]</m><br>
+<m>[10,3,2,2] = [10,[10,10,1,2],1,2]</m><br>
+<m>[10,4,2,2]</m><br>
+<m>[10,5,2,2]</m><br>
+<m>[10,6,2,2]</m><br>
+<m>[10,7,2,2]</m><br>
+<m>[10,8,2,2]</m><br>
+<m>[10,9,2,2]</m><br>
+<m>[10,10,2,2]</m><br>
+<m>[10,10,10,100]</m><br>
+<m>[10,10,10,10,100]</m><br>
+<m>[10,10,10,10,10,100]</m><br>
+<m>[10,10,10,10,10,10,10,10,10,10]</m><br>
+<m>[10,100](2)</m><br>
+<m>[10,3,2](2)</m><br>
+<m>[10,10,2](2)</m><br>
+<m>[10,10,3](2)</m><br>
+<m>[10,10,4](2)</m><br>
+<m>[10,10,5](2)</m><br>
+<m>[10,10,6](2)</m><br>
+<m>[10,10,7](2)</m><br>
+<m>[10,10,8](2)</m><br>
+<m>[10,10,9](2)</m><br>
+<m>[10,10,10](2)</m><br>
+<m>[10,10,100](2)</m><br>
+<m>[10,10,10,10](2)</m><br>
+<m>[10,10,10,100](2)</m><br>
+<m>[10,10,10,10,10](2)</m><br>
+<m>[10,10,10,10,100](2)</m><br>
+<m>[10,10,10,10,10,10](2)</m><br>
+<m>[10,10,10,10,10,100](2)</m><br>
+<m>[10,10,10,10,10,10,10,10,10,10](2)</m><br>
+<m>[10,100](3)</m><br>
+<m>[10,100](4)</m><br>
+<m>[10,100](5)</m><br>
+<m>[10,100](6)</m><br>
+<m>[10,100](7)</m><br>
+<m>[10,100](8)</m><br>
+<m>[10,100](9)</m><br>
+<m>[10,100](10)</m><br>
+<m>[10,10](100)</m><br>
+<m>[10,3](1,2) = [10,10]([10,2](1,2)) = [10,10]([10,10]([10,1](1,2))) = [10,10]([10,10](10))</m><br>
+<br><br>
+</p>
+<h1>some array numbers</h1>
+<!--<h2>arithmetical group</h2>
+<p><i><center><appear>family size: 20, starting at one and ending at billion</appear></center></i></p>
+<hr>
+<p>
+one = 1<br>
+two = 2<br>
+three = 3<br>
+four = 4<br>
+five = 5<br>
+six = 6<br>
+seven = 7<br>
+eight = 8<br>
+nine = 9<br>
+ten = 10<br>
+dozen = 12<br>
+baker's dozen = 13<br>
+hundred = 100<br>
+gross = 144<br>
+thousand = 1,000 = 10<sup>3</sup><br>
+great gross = 1,728 = (10<sub>12</sub>)<sup>3</sup><br>
+ten thousand = 10,000 = 10<sup>4</sup><br>
+hundred thousand = 100,000 = 10<sup>5</sup><br>
+million = 1,000,000 = 10<sup>6</sup><br>
+billion = 1,000,000,000 = 10<sup>9</sup><br>
+</p>-->
+<hr>
+<h2>googol group</h2>
+<p><i><center><appear>family size: 189, starting at binary-duograx and ending at googolgonga-decaplex
+<br>fgh level <m>&approx;</m> between <m>0</m> and <m>2</m></appear></center></i></p>
+<hr>
+<p>
+<!--<div id="googol-group"></div>
+<script>
+group = document.getElementById("googol-group");
+bases = ["googol"];
+base_values = ["100"];
+suffixes = ["binga","bonga","bongo","gong","gang","gongo","gango"];
+suffix_values = ["10","100","1000","10000","100000","1000000","10000000","100000000"];
+base_evaluators = ["[10,?] = 10<sup>?</sup>"];
+values = [];
+for (i = 0; i < base_evaluators.length; i++) {
+	values.push(base_evaluators[i].replaceAll("?",base_values[i]));
+	for (j = 0; j < suffixes.length; j++) {
+		values.push(base_evaluators[i].replaceAll("?",base_values[i]*suffix_values[j]));
+	}
+}
+text = "";
+for (i = 0; i < bases.length; i++) {
+	text += "<li>"+bases[i]+"<m> = "+values[i]+"</m></li>";
+	for (j = 0; j < suffixes.length; j++) {
+		text += "<li>"+bases[i]+suffixes[j]+"<m> = "+values[i+j+1]+"</m></li>";
+	}
+}
+group.innerHTML = "<ol>"+text+"</ol>";
+</script>-->
+<ol>
+
+<li>binary-duograx<m> = [2,2,2] = 2<sup>2</sup> = 4</m></li>
+<li>trinary-duograx<m> = [3,2,2] = 3<sup>3</sup> = 27</m></li>
+<li>quaternary-duograx<m> = [4,2,2] = 4<sup>4</sup> = 256</m></li>
+<li>quinary-duograx<m> = [5,2,2] = 5<sup>5</sup> = 3,125</m></li>
+<li>seximal-duograx<m> = [6,2,2] = 6<sup>6</sup> = 46,656</m></li>
+<li>septimal-duograx<m> = [7,2,2] = 7<sup>7</sup> = 823,543</m></li>
+<li>octal-duograx<m> = [8,2,2] = 8<sup>8</sup> = 16,777,216</m></li>
+<li>nonal-duograx<m> = [9,2,2] = 9<sup>9</sup> = 387,420,489</m></li>
+<li>duograx<m> = [10,2,2] = 10<sup>10</sup> = 10,000,000,000</m></li>
+
+<li>googol-of-twos<m> = [2,100]</m></li>
+<li>googol-of-threes<m> = [3,100]</m></li>
+<li>googol-of-fours<m> = [4,100]</m></li>
+<li>googol-of-fives<m> = [5,100]</m></li>
+<li>googol-of-sixes<m> = [6,100]</m></li>
+<li>googol-of-sevens<m> = [7,100]</m></li>
+<li>googol-of-eights<m> = [8,100]</m></li>
+<li>googol-of-nines<m> = [9,100]</m></li>
+<li>googol<m> = [10,100] = 10<sup>100</sup></m></li>
+
+<li>googolbinga<m> = [10,10<sup>3</sup>] = 10<sup>1,000</sup></m></li>
+<li>googolbonga<m> = [10,10<sup>4</sup>] = 10<sup>10,000</sup></m></li>
+<li>googolbooga<m> = [10,10<sup>5</sup>] = 10<sup>100,000</sup></m></li>
+<li>googolginga<m> = [10,10<sup>6</sup>] = 10<sup>1,000,000</sup></m></li>
+<li>googolgingali<m> = [10,10<sup>7</sup>]</m></li>
+<li>googolgingalo<m> = [10,10<sup>8</sup>]</m></li>
+<li>googolgingaloo<m> = [10,10<sup>9</sup>]</m></li>
+<li>googolgonga<m> = [10,10<sup>10</sup>]</m></li>
+
+<li>binary-triagrax<m> = [2,3,2]</m></li>
+<li>trinary-triagrax<m> = [3,3,2]</m></li>
+<li>quaternary-triagrax<m> = [4,3,2]</m></li>
+<li>quinary-triagrax<m> = [5,3,2]</m></li>
+<li>seximal-triagrax<m> = [6,3,2]</m></li>
+<li>septimal-triagrax<m> = [7,3,2]</m></li>
+<li>octal-triagrax<m> = [8,3,2]</m></li>
+<li>nonal-triagrax<m> = [9,3,2]</m></li>
+<li>triagrax<m> = [10,3,2] = 10<sup>10<sup>10</sup></sup></m></li>
+
+<li>googolplex<m> = [10,</m>googol<m>] = 10<sup>10<sup>100</sup></sup></m></li>
+<li>googolplexbinga<m> = [10,</m>googol&times;10<m>]</m></li>
+<li>googolbinga-plex<m> = [10,</m>googolbinga<m>]</m></li>
+<li>googolbonga-plex<m> = [10,</m>googolbonga<m>]</m></li>
+<li>googolbooga-plex<m> = [10,</m>googolbooga<m>]</m></li>
+<li>googolginga-plex<m> = [10,</m>googolginga<m>]</m></li>
+<li>googolgingali-plex<m> = [10,</m>googolgingali<m>]</m></li>
+<li>googolgingalo-plex<m> = [10,</m>googolgingalo<m>]</m></li>
+<li>googolgingaloo-plex<m> = [10,</m>googolgingaloo<m>]</m></li>
+<li>googolgonga-plex<m> = [10,</m>googolgonga<m>]</m></li>
+
+<li>binary-tetragrax<m> = [2,4,2]</m></li>
+<li>trinary-tetragrax<m> = [3,4,2]</m></li>
+<li>quaternary-tetragrax<m> = [4,4,2]</m></li>
+<li>quinary-tetragrax<m> = [5,4,2]</m></li>
+<li>seximal-tetragrax<m> = [6,4,2]</m></li>
+<li>septimal-tetragrax<m> = [7,4,2]</m></li>
+<li>octal-tetragrax<m> = [8,4,2]</m></li>
+<li>nonal-tetragrax<m> = [9,4,2]</m></li>
+<li>tetragrax<m> = [10,4,2] = 10<sup>10<sup>10<sup>10</sup></sup></sup></m></li>
+
+<li>googolduplex<m> = [10,</m>googolplex<m>] = 10<sup>10<sup>10<sup>100</sup></sup></sup></m></li>
+<li>googolbinga-duplex<m> = [10,</m>googolbinga-plex<m>]</m></li>
+<li>googolbonga-duplex<m> = [10,</m>googolbonga-plex<m>]</m></li>
+<li>googolbooga-duplex<m> = [10,</m>googolbooga-plex<m>]</m></li>
+<li>googolginga-duplex<m> = [10,</m>googolginga-plex<m>]</m></li>
+<li>googolgingali-duplex<m> = [10,</m>googolgingali-plex<m>]</m></li>
+<li>googolgingalo-duplex<m> = [10,</m>googolgingalo-plex<m>]</m></li>
+<li>googolgingaloo-duplex<m> = [10,</m>googolgingaloo-plex<m>]</m></li>
+<li>googolgonga-duplex<m> = [10,</m>googolgonga-plex<m>]</m></li>
+
+<li>binary-pentagrax<m> = [2,5,2]</m></li>
+<li>trinary-pentagrax<m> = [3,5,2]</m></li>
+<li>quaternary-pentagrax<m> = [4,5,2]</m></li>
+<li>quinary-pentagrax<m> = [5,5,2]</m></li>
+<li>seximal-pentagrax<m> = [6,5,2]</m></li>
+<li>septimal-pentagrax<m> = [7,5,2]</m></li>
+<li>octal-pentagrax<m> = [8,5,2]</m></li>
+<li>nonal-pentagrax<m> = [9,5,2]</m></li>
+<li>pentagrax<m> = [10,5,2]</m></li>
+
+<li>googoltriplex<m> = [10,</m>googolduplex<m>]</m></li>
+<li>googolbinga-triplex<m> = [10,</m>googolbinga-duplex<m>]</m></li>
+<li>googolbonga-triplex<m> = [10,</m>googolbonga-duplex<m>]</m></li>
+<li>googolbooga-triplex<m> = [10,</m>googolbooga-duplex<m>]</m></li>
+<li>googolginga-triplex<m> = [10,</m>googolginga-duplex<m>]</m></li>
+<li>googolgingali-triplex<m> = [10,</m>googolgingali-duplex<m>]</m></li>
+<li>googolgingalo-triplex<m> = [10,</m>googolgingalo-duplex<m>]</m></li>
+<li>googolgingaloo-triplex<m> = [10,</m>googolgingaloo-duplex<m>]</m></li>
+<li>googolgonga-triplex<m> = [10,</m>googolgonga-duplex<m>]</m></li>
+
+<li>binary-hexagrax<m> = [2,6,2]</m></li>
+<li>trinary-hexagrax<m> = [3,6,2]</m></li>
+<li>quaternary-hexagrax<m> = [4,6,2]</m></li>
+<li>quinary-hexagrax<m> = [5,6,2]</m></li>
+<li>seximal-hexagrax<m> = [6,6,2]</m></li>
+<li>septimal-hexagrax<m> = [7,6,2]</m></li>
+<li>octal-hexagrax<m> = [8,6,2]</m></li>
+<li>nonal-hexagrax<m> = [9,6,2]</m></li>
+<li>hexagrax<m> = [10,6,2]</m></li>
+
+<li>googolquadriplex<m> = [10,</m>googoltriplex<m>]</m></li>
+<li>googolbinga-quadriplex<m> = [10,</m>googolbinga-triplex<m>]</m></li>
+<li>googolbonga-quadriplex<m> = [10,</m>googolbonga-triplex<m>]</m></li>
+<li>googolbooga-quadriplex<m> = [10,</m>googolbooga-triplex<m>]</m></li>
+<li>googolginga-quadriplex<m> = [10,</m>googolginga-triplex<m>]</m></li>
+<li>googolgingali-quadriplex<m> = [10,</m>googolgingali-triplex<m>]</m></li>
+<li>googolgingalo-quadriplex<m> = [10,</m>googolgingalo-triplex<m>]</m></li>
+<li>googolgingaloo-quadriplex<m> = [10,</m>googolgingaloo-triplex<m>]</m></li>
+<li>googolgonga-quadriplex<m> = [10,</m>googolgonga-triplex<m>]</m></li>
+
+<li>binary-heptagrax<m> = [2,7,2]</m></li>
+<li>trinary-heptagrax<m> = [3,7,2]</m></li>
+<li>quaternary-heptagrax<m> = [4,7,2]</m></li>
+<li>quinary-heptagrax<m> = [5,7,2]</m></li>
+<li>seximal-heptagrax<m> = [6,7,2]</m></li>
+<li>septimal-heptagrax<m> = [7,7,2]</m></li>
+<li>octal-heptagrax<m> = [8,7,2]</m></li>
+<li>nonal-heptagrax<m> = [9,7,2]</m></li>
+<li>heptagrax<m> = [10,7,2]</m></li>
+
+<li>googolquintiplex<m> = [10,</m>googolquadriplex<m>]</m></li>
+<li>googolbinga-quintiplex<m> = [10,</m>googolbinga-quadriplex<m>]</m></li>
+<li>googolbonga-quintiplex<m> = [10,</m>googolbonga-quadriplex<m>]</m></li>
+<li>googolbooga-quintiplex<m> = [10,</m>googolbooga-quadriplex<m>]</m></li>
+<li>googolginga-quintiplex<m> = [10,</m>googolginga-quadriplex<m>]</m></li>
+<li>googolgingali-quintiplex<m> = [10,</m>googolgingali-quadriplex<m>]</m></li>
+<li>googolgingalo-quintiplex<m> = [10,</m>googolgingalo-quadriplex<m>]</m></li>
+<li>googolgingaloo-quintiplex<m> = [10,</m>googolgingaloo-quadriplex<m>]</m></li>
+<li>googolgonga-quintiplex<m> = [10,</m>googolgonga-quadriplex<m>]</m></li>
+
+<li>binary-octagrax<m> = [2,8,2]</m></li>
+<li>trinary-octagrax<m> = [3,8,2]</m></li>
+<li>quaternary-octagrax<m> = [4,8,2]</m></li>
+<li>quinary-octagrax<m> = [5,8,2]</m></li>
+<li>seximal-octagrax<m> = [6,8,2]</m></li>
+<li>septimal-octagrax<m> = [7,8,2]</m></li>
+<li>octal-octagrax<m> = [8,8,2]</m></li>
+<li>nonal-octagrax<m> = [9,8,2]</m></li>
+<li>octagrax<m> = [10,8,2]</m></li>
+
+<li>googolsextiplex<m> = [10,</m>googolquintiplex<m>]</m></li>
+<li>googolbinga-sextiplex<m> = [10,</m>googolbinga-quintiplex<m>]</m></li>
+<li>googolbonga-sextiplex<m> = [10,</m>googolbonga-quintiplex<m>]</m></li>
+<li>googolbooga-sextiplex<m> = [10,</m>googolbooga-quintiplex<m>]</m></li>
+<li>googolginga-sextiplex<m> = [10,</m>googolginga-quintiplex<m>]</m></li>
+<li>googolgingali-sextiplex<m> = [10,</m>googolgingali-quintiplex<m>]</m></li>
+<li>googolgingalo-sextiplex<m> = [10,</m>googolgingalo-quintiplex<m>]</m></li>
+<li>googolgingaloo-sextiplex<m> = [10,</m>googolgingaloo-quintiplex<m>]</m></li>
+<li>googolgonga-sextiplex<m> = [10,</m>googolgonga-quintiplex<m>]</m></li>
+
+<li>binary-ennagrax<m> = [2,9,2]</m></li>
+<li>trinary-ennagrax<m> = [3,9,2]</m></li>
+<li>quaternary-ennagrax<m> = [4,9,2]</m></li>
+<li>quinary-ennagrax<m> = [5,9,2]</m></li>
+<li>seximal-ennagrax<m> = [6,9,2]</m></li>
+<li>septimal-ennagrax<m> = [7,9,2]</m></li>
+<li>octal-ennagrax<m> = [8,9,2]</m></li>
+<li>nonal-ennagrax<m> = [9,9,2]</m></li>
+<li>ennagrax<m> = [10,9,2]</m></li>
+
+<li>googolseptiplex<m> = [10,</m>googolsextiplex<m>]</m></li>
+<li>googolbinga-septiplex<m> = [10,</m>googolbinga-sextiplex<m>]</m></li>
+<li>googolbonga-septiplex<m> = [10,</m>googolbonga-sextiplex<m>]</m></li>
+<li>googolbooga-septiplex<m> = [10,</m>googolbooga-sextiplex<m>]</m></li>
+<li>googolginga-septiplex<m> = [10,</m>googolginga-sextiplex<m>]</m></li>
+<li>googolgingali-septiplex<m> = [10,</m>googolgingali-sextiplex<m>]</m></li>
+<li>googolgingalo-septiplex<m> = [10,</m>googolgingalo-sextiplex<m>]</m></li>
+<li>googolgingaloo-septiplex<m> = [10,</m>googolgingaloo-sextiplex<m>]</m></li>
+<li>googolgonga-septiplex<m> = [10,</m>googolgonga-sextiplex<m>]</m></li>
+
+<li>binary-dekagrax<m> = [2,10,2]</m></li>
+<li>trinary-dekagrax<m> = [3,10,2]</m></li>
+<li>quaternary-dekagrax<m> = [4,10,2]</m></li>
+<li>quinary-dekagrax<m> = [5,10,2]</m></li>
+<li>seximal-dekagrax<m> = [6,10,2]</m></li>
+<li>septimal-dekagrax<m> = [7,10,2]</m></li>
+<li>octal-dekagrax<m> = [8,10,2]</m></li>
+<li>nonal-dekagrax<m> = [9,10,2]</m></li>
+<li>dekagrax<m> = [10,10,2]</m></li>
+
+<li>googoloctiplex<m> = [10,</m>googolseptiplex<m>]</m></li>
+<li>googolbinga-octiplex<m> = [10,</m>googolbinga-septiplex<m>]</m></li>
+<li>googolbonga-octiplex<m> = [10,</m>googolbonga-septiplex<m>]</m></li>
+<li>googolbooga-octiplex<m> = [10,</m>googolbooga-septiplex<m>]</m></li>
+<li>googolginga-octiplex<m> = [10,</m>googolginga-septiplex<m>]</m></li>
+<li>googolgingali-octiplex<m> = [10,</m>googolgingali-septiplex<m>]</m></li>
+<li>googolgingalo-octiplex<m> = [10,</m>googolgingalo-septiplex<m>]</m></li>
+<li>googolgingaloo-octiplex<m> = [10,</m>googolgingaloo-septiplex<m>]</m></li>
+<li>googolgonga-octiplex<m> = [10,</m>googolgonga-septiplex<m>]</m></li>
+
+<li>googolnonaplex<m> = [10,</m>googoloctiplex<m>]</m></li>
+<li>googolbinga-nonaplex<m> = [10,</m>googolbinga-octiplex<m>]</m></li>
+<li>googolbonga-nonaplex<m> = [10,</m>googolbonga-octiplex<m>]</m></li>
+<li>googolbooga-nonaplex<m> = [10,</m>googolbooga-octiplex<m>]</m></li>
+<li>googolginga-nonaplex<m> = [10,</m>googolginga-octiplex<m>]</m></li>
+<li>googolgingali-nonaplex<m> = [10,</m>googolgingali-octiplex<m>]</m></li>
+<li>googolgingalo-nonaplex<m> = [10,</m>googolgingalo-octiplex<m>]</m></li>
+<li>googolgingaloo-nonaplex<m> = [10,</m>googolgingaloo-octiplex<m>]</m></li>
+<li>googolgonga-nonaplex<m> = [10,</m>googolgonga-octiplex<m>]</m></li>
+
+<li>googoldecaplex<m> = [10,</m>googolnonaplex<m>]</m></li>
+<li>googolbinga-decaplex<m> = [10,</m>googolbinga-nonaplex<m>]</m></li>
+<li>googolbonga-decaplex<m> = [10,</m>googolbonga-nonaplex<m>]</m></li>
+<li>googolbooga-decaplex<m> = [10,</m>googolbooga-nonaplex<m>]</m></li>
+<li>googolginga-decaplex<m> = [10,</m>googolginga-nonaplex<m>]</m></li>
+<li>googolgingali-decaplex<m> = [10,</m>googolgingali-nonaplex<m>]</m></li>
+<li>googolgingalo-decaplex<m> = [10,</m>googolgingalo-nonaplex<m>]</m></li>
+<li>googolgingaloo-decaplex<m> = [10,</m>googolgingaloo-nonaplex<m>]</m></li>
+<li>googolgonga-decaplex<m> = [10,</m>googolgonga-nonaplex<m>]</m></li>
+</ol></p>
+
+<hr>
+<h2>goodugol group</h2>
+<p><i><center><appear>family size: 57, starting at goodugol-of-twos and ending at goodugoldecagrax
+<br>fgh level <m>&approx;</m> <m>3</m></appear></center></i></p>
+<hr>
+<p>
+<ol>
+
+<li>goodugol-of-twos<m> = [2,100,2] = 2<sup>2<sup>...<sup>2<sup>2<sup></sup></sup></sup></m> where there are a grand total of <m>100</m> twos.</li>
+<li>goodugol-of-threes<m> = [3,100,2]</li>
+<li>goodugol-of-fours<m> = [4,100,2]</li>
+<li>goodugol-of-fives<m> = [5,100,2]</li>
+<li>goodugol-of-sixes<m> = [6,100,2]</li>
+<li>goodugol-of-sevens<m> = [7,100,2]</li>
+<li>goodugol-of-eights<m> = [8,100,2]</li>
+<li>goodugol-of-nines<m> = [9,100,2]</li>
+<li>duotrex<m> = [10,2,3]</m></li>
+<li>goodugol<m> = [10,100,2] = 10<sup>10<sup>...<sup>10<sup>10<sup></sup></sup></sup></m> where there are a grand total of <m>100</m> tens.</li>
+<li>goodugolbinga<m> = [10,10<sup>3</sup>,2] = 10<sup>10<sup>...<sup>10<sup>10<sup></sup></sup></sup></m> where there are a grand total of <m>1,000</m> tens.</li>
+<li>goodugolbonga<m> = [10,10<sup>4</sup>,2]</m></li>
+<li>goodugolbooga<m> = [10,10<sup>5</sup>,2]</m></li>
+<li>goodugolginga<m> = [10,10<sup>6</sup>,2]</m></li>
+<li>goodugolgingali<m> = [10,10<sup>7</sup>,2]</m></li>
+<li>goodugolgingalo<m> = [10,10<sup>8</sup>,2]</m></li>
+<li>goodugolgingaloo<m> = [10,10<sup>9</sup>,2]</m></li>
+<li>goodugolgonga<m> = [10,10<sup>10</sup>,2]</m></li>
+<li>goodugol-gongoogolia<m> = [10,10<sup>100</sup>,2]</m><i> - very cool sounding</i></li>
+<li>googolgrax<m> = [10,10<sup>100</sup>,2]</m><i> - boring name compared to the last one</i></li>
+<li>googolgraxaplex<m> = [10,</m>googolgrax<m>]</m></li>
+<li>googolplexagrax<m> = [10,</m>googolplex<m>,2]</m></li>
+<li>googolduplexagrax<m> = [10,</m>googolduplex<m>,2]</m></li>
+<li>googoltriplexagrax<m> = [10,</m>googoltriplex<m>,2]</m></li>
+<li>googolquadriplexagrax<m> = [10,</m>googolquadriplex<m>,2]</m></li>
+<li>googolquintiplexagrax<m> = [10,</m>googolquintiplex<m>,2]</m></li>
+<li>googolsextiplexagrax<m> = [10,</m>googolsextiplex<m>,2]</m></li>
+<li>googolseptiplexagrax<m> = [10,</m>googolseptiplex<m>,2]</m></li>
+<li>googoloctiplexagrax<m> = [10,</m>googoloctiplex<m>,2]</m></li>
+<li>googolnonaplexagrax<m> = [10,</m>googolnonaplex<m>,2]</m></li>
+<li>googoldecaplexagrax<m> = [10,</m>googoldecaplex<m>,2]</m></li>
+<li>triatrex<m> = [10,3,3]</m></li>
+<li>goodugolgrax<m> = [10,</m>goodugol<m>,2]</m><i> - a goodugol's goodugol</i></li>
+<li>goodugolbinga-grax<m> = [10,</m>goodugolbinga<m>,2]</m></li>
+<li>goodugolbonga-grax<m> = [10,</m>goodugolbonga<m>,2]</m></li>
+<li>goodugolbooga-grax<m> = [10,</m>goodugolbooga<m>,2]</m></li>
+<li>goodugolginga-grax<m> = [10,</m>goodugolginga<m>,2]</m></li>
+<li>goodugolgingali-grax<m> = [10,</m>goodugolgingali<m>,2]</m></li>
+<li>goodugolgingalo-grax<m> = [10,</m>goodugolgingalo<m>,2]</m></li>
+<li>goodugolgingaloo-grax<m> = [10,</m>goodugolgingaloo<m>,2]</m></li>
+<li>goodugolgonga-grax<m> = [10,</m>goodugolgonga<m>,2]</m></li>
+<li>tetratrex<m> = [10,4,3]</m></li>
+<li>goodugoldugrax<m> = [10,</m>goodugolgrax<m>,2]</m></li>
+<li>pentatrex<m> = [10,5,3]</m></li>
+<li>goodugoltrigrax<m> = [10,</m>goodugoldugrax<m>,2]</m></li>
+<li>hexatrex<m> = [10,6,3]</m></li>
+<li>goodugolquadrigrax<m> = [10,</m>goodugoltrigrax<m>,2]</m></li>
+<li>heptatrex<m> = [10,7,3]</m></li>
+<li>goodugolquintigrax<m> = [10,</m>goodugolquadrigrax<m>,2]</m></li>
+<li>octatrex<m> = [10,8,3]</m></li>
+<li>goodugolsextigrax<m> = [10,</m>goodugolquintigrax<m>,2]</m></li>
+<li>ennatrex<m> = [10,9,3]</m></li>
+<li>goodugolseptigrax<m> = [10,</m>goodugolsextigrax<m>,2]</m></li>
+<li>dekatrex<m> = [10,10,3]</m></li>
+<li>goodugoloctigrax<m> = [10,</m>goodugolseptigrax<m>,2]</m></li>
+<li>goodugolnonagrax<m> = [10,</m>goodugoloctigrax<m>,2]</m></li>
+<li>goodugoldecagrax<m> = [10,</m>goodugolnonagrax<m>,2]</m></li>
+</ol></p>
+
+<hr>
+<h2>gootrugol group</h2>
+<p><i><center><appear>family size: 30, starting at gootrugol and ending at gootrugoldecatrex
+<br>fgh level <m>&approx;</m> <m>4</m></appear></center></i></p>
+<hr>
+<p>
+<ol>
+
+<li>gootrugol<m> = [10,100,3] = 10 &uarr;&uarr; 10 &uarr;&uarr; 10 &uarr;&uarr; 10 &uarr;&uarr; ... &uarr;&uarr; 10</m> where there are a grand total of <m>100</m> tens.</li>
+<li>gootrugolbinga<m> = [10,10<sup>3</sup>,3] = 10 &uarr;&uarr; 10 &uarr;&uarr; 10 &uarr;&uarr; 10 &uarr;&uarr; ... &uarr;&uarr; 10</m> where there are a grand total of <m>1,000</m> tens.</li>
+<li>gootrugolbonga<m> = [10,10<sup>4</sup>,3]</m></li>
+<li>gootrugolbooga<m> = [10,10<sup>5</sup>,3]</m></li>
+<li>gootrugolginga<m> = [10,10<sup>6</sup>,3]</m></li>
+<li>gootrugolgingali<m> = [10,10<sup>7</sup>,3]</m></li>
+<li>gootrugolgingalo<m> = [10,10<sup>8</sup>,3]</m></li>
+<li>gootrugolgingaloo<m> = [10,10<sup>9</sup>,3]</m></li>
+<li>gootrugolgonga<m> = [10,10<sup>10</sup>,3]</m></li>
+<li>gootrugol-gongoogolia<m> = [10,10<sup>100</sup>,3]</m><i> - very cool sounding</i></li>
+<li>googoltrex<m> = [10,10<sup>100</sup>,3]</m><i> - boring name compared to the last one</i></li>
+<li>googolgraxatrex<m> = [10,</m>googolgrax<m>,3] = 10 &uarr;&uarr;&uarr; (10 &uarr;&uarr; 100)</m></li>
+<li>gootrugoltrex<m> = [10,</m>goodugol<m>,3]</m><i> - a gootrugol's gootrugol</i></li>
+<li>gootrugolbinga-trex<m> = [10,</m>gootrugolbinga<m>,3] = 10 &uarr;<sup>3</sup> 10 &uarr;<sup>3</sup> 10<sup>3</sup></m></li>
+<li>gootrugolbonga-trex<m> = [10,</m>gootrugolbonga<m>,3]</m></li>
+<li>gootrugolbooga-trex<m> = [10,</m>gootrugolbooga<m>,3]</m></li>
+<li>gootrugolginga-trex<m> = [10,</m>gootrugolginga<m>,3]</m></li>
+<li>gootrugolgingali-trex<m> = [10,</m>gootrugolgingali<m>,3]</m></li>
+<li>gootrugolgingalo-trex<m> = [10,</m>gootrugolgingalo<m>,3]</m></li>
+<li>gootrugolgingaloo-trex<m> = [10,</m>gootrugolgingaloo<m>,3]</m></li>
+<li>gootrugolgonga-trex<m> = [10,</m>gootrugolgonga<m>,3]</m></li>
+<li>gootrugoldutrex<m> = [10,</m>gootrugoltrex<m>,3]</m></li>
+<li>gootrugoltritrex<m> = [10,</m>gootrugoldutrex<m>,3]</m></li>
+<li>gootrugolquadritrex<m> = [10,</m>gootrugoltritrex<m>,3]</m></li>
+<li>gootrugolquintitrex<m> = [10,</m>gootrugolquadritrex<m>,3]</m></li>
+<li>gootrugolsextitrex<m> = [10,</m>gootrugolquintitrex<m>,3]</m></li>
+<li>gootrugolseptitrex<m> = [10,</m>gootrugolsextitrex<m>,3]</m></li>
+<li>gootrugoloctitrex<m> = [10,</m>gootrugolseptitrex<m>,3]</m></li>
+<li>gootrugolnonatrex<m> = [10,</m>gootrugoloctitrex<m>,3]</m></li>
+<li>gootrugoldecatrex<m> = [10,</m>gootrugolnonatrex<m>,3]</m></li>
+
+</ol></p>
+
+<hr>
+<h2>beyond group (yet unsorted and unnamed)</h2>
+<hr>
+<p>
+grangol<m> = [10,100,2]</m> (grand)<br>
+grangolplex<m> = [10,</m>grangol<m>,1]</m><br>
+grangolgrax<m> = [10,</m>grangol<m>,2]</m><br>
+greagol<m> = [10,100,3]</m> (great) <small>todo: think of better names for grand grangol etc</small><br>
+greagolgrex<m> = [10,</m>greagol<m>,3]</m><br>
+giangol<m> = [10,100,4]</m> (giant)<br>
+giangolgiax<m> = [10,</m>giangol<m>,4]</m><br>
+greegol<m> = [10,100,5]</m> (greedy)<br>
+greegolgreex<m> = [10,</m>greegol<m>,5]</m><br>
+greugol<m> = [10,100,6]</m> (greuling)<br>
+greugolgreux<m> = [10,</m>greugol<m>,6]</m><br>
+ginorgol<m> = [10,100,7]</m> (ginormous)<br>
+ginorgolgorx<m> = [10,</m>ginorgol<m>,7]</m><br>
+glorigol<m> = [10,100,8]</m> (glorious)<br>
+glorigolglorx = [10,</m>glorigol<m>,8]</m><br>
+grandigol<m> = [10,100,9]</m> (grandiose)<br>
+grandigolgranx = [10,</m>grandigol<m>,9]</m><br>
+gargantugol<m> = [10,100,10]</m> (gargantuan)<br>
+gargantugolganx = [10,</m>gargantugol<m>,10]</m><br>
+googold<m> = [10,10,100]</m> (golden)<br>
+hectogrand googol<m> = [10,100,100]</m><br>
+</p>
+<!--<table>
+	<tr>
+		<th>Name</th>
+		<th>Value</th>
+	</tr>
+	<tr>
+		<td>ant</td>
+		<td><m>[10,10]</m></td>
+	</tr>
+	<tr>
+		<td>beetle</td>
+		<td><m>[10,20]</m></td>
+	</tr>
+</table>-->
+<!-- !!!! OLD GOOGOLOGISMS AHEAD !!!!
+<h2>- insect regiment -</h2>
+<p>
+insectol <m>= [1,1,1] = 1</m><br>
+ant-baby <m>= [10,1] = 10</m><br>
+beetle-baby <m>= [10,2] = 100</m><br>
+moth-baby <m>= [10,4] = 10,000</m><br>
+spider-baby <m>= [10,8] = 100,000,000</m><br>
+wasp-baby <m>= [10,16] = 10,000,000,000,000,000</m><br>
+ant <m>= [10,10]</m><br>
+beetle <m>= [10,20]</m><br>
+moth <m>= [10,40]</m><br>
+spider <m>= [10,80]</m><br>
+wasp <m>= [10,160]</m><br>
+ant-hive <m>= [10,100]</m><br>
+beetle-hive <m>= [10,200]</m><br>
+moth-hive <m>= [10,400]</m><br>
+spider-hive <m>= [10,800]</m><br>
+wasp-hive <m>= [10,1600]</m><br>
+ant-swarm <m>= [10,1000]</m><br>
+beetle-swarm <m>= [10,2000]</m><br>
+moth-swarm <m>= [10,4000]</m><br>
+spider-swarm <m>= [10,8000]</m><br>
+wasp-swarm <m>= [10,16000]</m><br><br>
+
+deka insectol <m>= [10,1,1] = [10,10]</m><br>
+icosa insectol <m>= [20,1,1] = [20,20]</m><br>
+hecta insectol <m>= [100,1,1] = [100,100]</m><br>
+kilo insectol <m>= [1000,1,1]</m><br>
+mega insectol <m>= [10<sup>6</sup>,1,1]</m><br>
+giga insectol <m>= [10<sup>9</sup>,1,1]</m><br>
+tera insectol <m>= [10<sup>12</sup>,1,1]</m><br><br>
+
+great deka insectol <m>= [10,2,1] = [10,[10,1,1]] = [10,[10,10]] = 10 &uarr;&uarr; 3</m><br>
+great icosa insectol <m>= [20,2,1] = 20 &uarr;&uarr; 3</m><br>
+great hecta insectol <m>= [100,2,1] = 100 &uarr;&uarr; 3</m><br>
+great kilo insectol <m>= [1000,2,1] = 1000 &uarr;&uarr; 3</m><br>
+great mega insectol <m>= [10<sup>6</sup>,2,1] = 10<sup>6</sup> &uarr;&uarr; 3</m><br>
+great giga insectol <m>= [10<sup>9</sup>,2,1] = 10<sup>9</sup> &uarr;&uarr; 3</m><br>
+great tera insectol <m>= [10<sup>12</sup>,2,1] = 10<sup>12</sup> &uarr;&uarr; 3</m><br><br>
+
+bigreat deka insectol <m>= [10,3,1] = 10 &uarr;&uarr; 4</m><br>
+bigreat icosa insectol <m>= [20,3,1] = 20 &uarr;&uarr; 4</m><br>
+bigreat hecta insectol <m>= [100,3,1] = 100 &uarr;&uarr; 4</m><br>
+bigreat kilo insectol <m>= [1000,3,1] = 1000 &uarr;&uarr; 4</m><br>
+bigreat mega insectol <m>= [10<sup>6</sup>,3,1] = 10<sup>6</sup> &uarr;&uarr; 4</m><br>
+bigreat giga insectol <m>= [10<sup>9</sup>,3,1] = 10<sup>9</sup> &uarr;&uarr; 4</m><br>
+bigreat tera insectol <m>= [10<sup>12</sup>,3,1] = 10<sup>12</sup> &uarr;&uarr; 4</m><br><br>
+
+trigreat deka insectol <m>= [10,4,1] = 10 &uarr;&uarr; 5</m><br>
+trigreat icosa insectol <m>= [20,4,1] = 20 &uarr;&uarr; 5</m><br>
+trigreat hecta insectol <m>= [100,4,1] = 100 &uarr;&uarr; 5</m><br>
+trigreat kilo insectol <m>= [1000,4,1] = 1000 &uarr;&uarr; 5</m><br>
+trigreat mega insectol <m>= [10<sup>6</sup>,4,1] = 10<sup>6</sup> &uarr;&uarr; 5</m><br>
+trigreat giga insectol <m>= [10<sup>9</sup>,4,1] = 10<sup>9</sup> &uarr;&uarr; 5</m><br>
+trigreat tera insectol <m>= [10<sup>12</sup>,4,1] = 10<sup>12</sup> &uarr;&uarr; 5</m><br><br>
+
+tetragreat deka insectol <m>= [10,5,1] = 10 &uarr;&uarr; 6</m><br>
+tetragreat icosa insectol <m>= [20,5,1] = 20 &uarr;&uarr; 6</m><br>
+tetragreat hecta insectol <m>= [100,5,1] = 100 &uarr;&uarr; 6</m><br>
+tetragreat kilo insectol <m>= [1000,5,1] = 1000 &uarr;&uarr; 6</m><br>
+tetragreat mega insectol <m>= [10<sup>6</sup>,5,1] = 10<sup>6</sup> &uarr;&uarr; 6</m><br>
+tetragreat giga insectol <m>= [10<sup>9</sup>,5,1] = 10<sup>9</sup> &uarr;&uarr; 6</m><br>
+tetragreat tera insectol <m>= [10<sup>12</sup>,5,1] = 10<sup>12</sup> &uarr;&uarr; 6</m><br><br>
+
+pentagreat deka insectol <m>= [10,6,1] = 10 &uarr;&uarr; 7</m><br>
+pentagreat icosa insectol <m>= [20,6,1] = 20 &uarr;&uarr; 7</m><br>
+pentagreat hecta insectol <m>= [100,6,1] = 100 &uarr;&uarr; 7</m><br>
+pentagreat kilo insectol <m>= [1000,6,1] = 1000 &uarr;&uarr; 7</m><br>
+pentagreat mega insectol <m>= [10<sup>6</sup>,6,1] = 10<sup>6</sup> &uarr;&uarr; 7</m><br>
+pentagreat giga insectol <m>= [10<sup>9</sup>,6,1] = 10<sup>9</sup> &uarr;&uarr; 7</m><br>
+pentagreat tera insectol <m>= [10<sup>12</sup>,6,1] = 10<sup>12</sup> &uarr;&uarr; 7</m><br><br>
+
+hexagreat deka insectol <m>= [10,7,1] = 10 &uarr;&uarr; 8</m><br>
+hexagreat icosa insectol <m>= [20,7,1] = 20 &uarr;&uarr; 8</m><br>
+hexagreat hecta insectol <m>= [100,7,1] = 100 &uarr;&uarr; 8</m><br>
+hexagreat kilo insectol <m>= [1000,7,1] = 1000 &uarr;&uarr; 8</m><br>
+hexagreat mega insectol <m>= [10<sup>6</sup>,7,1] = 10<sup>6</sup> &uarr;&uarr; 8</m><br>
+hexagreat giga insectol <m>= [10<sup>9</sup>,7,1] = 10<sup>9</sup> &uarr;&uarr; 8</m><br>
+hexagreat tera insectol <m>= [10<sup>12</sup>,7,1] = 10<sup>12</sup> &uarr;&uarr; 8</m><br><br>
+
+heptagreat deka insectol <m>= [10,8,1] = 10 &uarr;&uarr; 9</m><br>
+heptagreat icosa insectol <m>= [20,8,1] = 20 &uarr;&uarr; 9</m><br>
+heptagreat hecta insectol <m>= [100,8,1] = 100 &uarr;&uarr; 9</m><br>
+heptagreat kilo insectol <m>= [1000,8,1] = 1000 &uarr;&uarr; 9</m><br>
+heptagreat mega insectol <m>= [10<sup>6</sup>,8,1] = 10<sup>6</sup> &uarr;&uarr; 9</m><br>
+heptagreat giga insectol <m>= [10<sup>9</sup>,8,1] = 10<sup>9</sup> &uarr;&uarr; 9</m><br>
+heptagreat tera insectol <m>= [10<sup>12</sup>,8,1] = 10<sup>12</sup> &uarr;&uarr; 9</m><br><br>
+
+octagreat deka insectol <m>= [10,9,1] = 10 &uarr;&uarr; 10</m><br>
+octagreat icosa insectol <m>= [20,9,1] = 20 &uarr;&uarr; 10</m><br>
+octagreat hecta insectol <m>= [100,9,1] = 100 &uarr;&uarr; 10</m><br>
+octagreat kilo insectol <m>= [1000,9,1] = 1000 &uarr;&uarr; 10</m><br>
+octagreat mega insectol <m>= [10<sup>6</sup>,9,1] = 10<sup>6</sup> &uarr;&uarr; 10</m><br>
+octagreat giga insectol <m>= [10<sup>9</sup>,9,1] = 10<sup>9</sup> &uarr;&uarr; 10</m><br>
+octagreat tera insectol <m>= [10<sup>12</sup>,9,1] = 10<sup>12</sup> &uarr;&uarr; 10</m><br><br>
+
+great-of-deka deka insectol <m>= [10,10,1] = 10 &uarr;&uarr; 11</m><br>
+great-of-icosa icosa insectol <m>= [20,20,1] = 20 &uarr;&uarr; 21</m><br>
+great-of-hecta hecta insectol <m>= [100,100,1] = 100 &uarr;&uarr; 101</m><br>
+great-of-kilo kilo insectol <m>= [1000,1000,1] = 1000 &uarr;&uarr; 1001</m><br>
+great-of-mega mega insectol <m>= [10<sup>6</sup>,10<sup>6</sup>,1] = 10<sup>6</sup> &uarr;&uarr; 10<sup>6</sup>+1</m><br>
+great-of-giga giga insectol <m>= [10<sup>9</sup>,10<sup>9</sup>,1] = 10<sup>9</sup> &uarr;&uarr; 10<sup>9</sup>+1</m><br>
+great-of-tera tera insectol <m>= [10<sup>12</sup>,10<sup>12</sup>,1] = 10<sup>12</sup> &uarr;&uarr; 10<sup>12</sup>+1</m><br>
+</p>
+<h2>- triax regiment -</h2>
+<p>
+clumsy triadu <m>= [10,1,2] &approx; 10 &uarr;<sup>3</sup> 2</m><br>
+thoth-of-dutriax <m>= [2,3](1) = [2,2,2]</m><br>
+simple triadu <m>= [10,2,2] &approx; 10 &uarr;<sup>3</sup> 3</m><br>
+trusty triadu <m>= [10,3,2]</m><br>
+noteworthy triadu <m>= [10,4,2]</m><br>
+advanced triadu <m>= [10,5,2]</m><br>
+glistening triadu <m>= [10,6,2]</m><br>
+gleaming triadu <m>= [10,7,2]</m><br>
+stellar triadu <m>= [10,8,2]</m><br>
+celestial triadu <m>= [10,9,2]</m><br>
+cosmic triadu <m>= [10,10,2]</m><br><br>
+
+clumsy triatri <m>= [10,1,3]</m><br>
+simple triatri <m>= [10,2,3]</m><br>
+thoth-of-tritriax <m>= [3,3](1) = [3,3,3]</m><br>
+trusty triatri <m>= [10,3,3]</m><br>
+noteworthy triatri <m>= [10,4,3]</m><br>
+advanced triatri <m>= [10,5,3]</m><br>
+glistening triatri <m>= [10,6,3]</m><br>
+gleaming triatri <m>= [10,7,3]</m><br>
+stellar triatri <m>= [10,8,3]</m><br>
+celestial triatri <m>= [10,9,3]</m><br>
+cosmic triatri <m>= [10,10,3]</m><br><br>
+
+clumsy triatet <m>= [10,1,4]</m><br>
+simple triatet <m>= [10,2,4]</m><br>
+trusty triatet <m>= [10,3,4]</m><br>
+thoth-of-tetratriax <m>= [4,3](1) = [4,4,4]</m><br>
+noteworthy triatet <m>= [10,4,4]</m><br>
+advanced triatet <m>= [10,5,4]</m><br>
+glistening triatet <m>= [10,6,4]</m><br>
+gleaming triatet <m>= [10,7,4]</m><br>
+stellar triatet <m>= [10,8,4]</m><br>
+celestial triatet <m>= [10,9,4]</m><br>
+cosmic triatet <m>= [10,10,4]</m><br><br>
+
+clumsy triapent <m>= [10,1,5]</m><br>
+simple triapent <m>= [10,2,5]</m><br>
+trusty triapent <m>= [10,3,5]</m><br>
+thoth-of-pentatriax <m>= [5,3](1) = [5,5,5]</m><br>
+noteworthy triapent <m>= [10,4,5]</m><br>
+advanced triapent <m>= [10,5,5]</m><br>
+glistening triapent <m>= [10,6,5]</m><br>
+gleaming triapent <m>= [10,7,5]</m><br>
+stellar triapent <m>= [10,8,5]</m><br>
+celestial triapent <m>= [10,9,5]</m><br>
+cosmic triapent <m>= [10,10,5]</m><br><br>
+</p>-->
+<p>
+<br>
+<center><a href="../index.html">Back</a></center>
+</body>
+</html>
