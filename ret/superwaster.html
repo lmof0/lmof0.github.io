@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: time</title>
+<link href="../default.css" rel="stylesheet" type="text/css">
+<style>
+body
+{
+	background-color: #9BB3E9;
+}
+#bignumber
+{
+	font-size: 1000%;
+}
+div
+{
+	display:inline;
+}
+</style>
+</head>
+<body>
+	<p>You've wasted <div id="bignumber">0</div> seconds here.</p>
+	<br><br><br><br><br>
+	<a href="../index.html">back</a>
+</body>
+<script>
+Main=function()
+{
+if (localStorage.hundredths) {localStorage.hundredths = Number(localStorage.hundredths) + 5;}
+else {localStorage.hundredths = 0;}
+if (localStorage.tenths) {if (localStorage.hundredths >= 10) {localStorage.tenths = Number(localStorage.tenths) + 1; localStorage.hundredths = 0;}}
+else {localStorage.tenths = 0;}
+if (localStorage.seconds) {if (localStorage.tenths >= 10) {localStorage.seconds = Number(localStorage.seconds) + 1;localStorage.tenths = 0;}}
+else {localStorage.seconds = 0;}
+document.getElementById("bignumber").innerHTML = localStorage.seconds+"<div style='font-size:20%'>."+localStorage.tenths+localStorage.hundredths+"</div><br>";
+setTimeout(Main,50);
+}
+Main();
+ResetTime=function(){
+	localStorage.seconds=0;
+	localStorage.tenths=0;
+	localStorage.hundredths=0;
+}
+</script>
+</html>

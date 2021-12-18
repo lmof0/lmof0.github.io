@@ -1,0 +1,274 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Clicker Test</title>
+<link href="../default.css" rel="stylesheet" type="text/css">
+</head>
+<style>
+body
+{
+	background-color: lightblue;
+}
+#money
+{
+	background-color:#fff;
+	background-color:rgba(255,255,255,0.75);
+	border_radius:18px;
+	position:absolute;
+	left:0px;
+	top:0px;
+	margin:16px;
+	height:28px;
+	padding:4px 4px 0px 4px;
+	font-weight:bold;
+	font-size:24px;
+	z-index:100;
+}
+#moneypersecond
+{
+	background-color:#fff;
+	background-color:rgba(255,255,255,0.75);
+	border_radius:12px;
+	position:absolute;
+	left:0px;
+	top:32px;
+	margin:16px;
+	height:28px;
+	padding:6px 4px 0px 2px;
+	font-weight:bold;
+	font-size:16px;
+	z-index:99;
+}
+#moneymult
+{
+	background-color:#fff;
+	background-color:rgba(255,255,255,0.75);
+	border_radius:12px;
+	position:absolute;
+	left:0px;
+	top:66px;
+	margin:16px;
+	height:24px;
+	padding:2px 4px 0px 2px;
+	font-weight:bold;
+	font-size:16px;
+	z-index:98;
+}
+#upgrade
+{
+	width:256px;
+	height:64px;
+	cursor:pointer;
+}
+#button
+{
+	width:128px;
+	height:128px;
+	cursor:pointer;
+}
+#clicker
+{
+	width:164px;
+	height:72px;
+	cursor:pointer;
+}
+#clicker-stats
+{
+	height:32px;
+	user-select:none;
+}
+#worker
+{
+	width:164px;
+	height:72px;
+	cursor:pointer;
+}
+#farm
+{
+	width:164px;
+	height:72px;
+	cursor:pointer;
+}
+#mine
+{
+	width:164px;
+	height:72px;
+	cursor:pointer;
+}
+#factory
+{
+	width:164px;
+	height:72px;
+	cursor:pointer;
+}
+</style>
+<body>
+<div id="money"></div>
+<div id="moneypersecond"></div>
+<div id="moneymult"></div>
+
+<button id="upgrade" type="button" onclick="UpgradeAll();"></button>
+<br>
+<button id="button" type="button" onclick="ClickButton();"></button>
+<br>
+<button id="clicker" type="button" onclick="Buy('Clicker');"></button>
+<div id="clicker-stats" type="button"></div>
+<br>
+<button id="worker" type="button" onclick="Buy('Worker');"></button>
+<br>
+<button id="farm" type="button" onclick="Buy('Farm');"></button>
+<br>
+<button id="mine" type="button" onclick="Buy('Mine');"></button>
+<br>
+<button id="factory" type="button" onclick="Buy('Factory');"></button>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+<a href="../index.html">please get me out of here</a>
+<script>
+
+//took a lot from orteil's cookie clicker experiment thing.
+//yay
+
+function l(what) {return document.getElementById(what);}
+Money=0;
+MoneyTotal=0;
+Mps=0;
+MousePower=1;
+MoneyMult=100;
+
+UpgradePrice=50;
+Upgraded=0;
+UpgradeText='Cleaner Buttons';
+
+Clicker=0;
+Worker=0;
+Farm=0;
+Mine=0;
+Factory=0;
+
+Buyables=[];
+Buyable=function(name,desc,price,ps,pic,func)
+{
+	this.name=name;
+	this.desc=desc;
+	this.price=price;
+	this.ps=ps;
+	this.pic=pic;
+	this.func=func;
+	Buyables[name]=this;
+	
+	this.Buy=function()
+	{
+		if (Money>=this.price)
+		{
+			Money-=this.price;
+			this.price=Math.ceil(this.price*1.1);
+			this.func(1);
+		}
+	}
+}
+Buy=function(what)
+{
+	Buyables[what].Buy();
+}
+
+new Buyable('Clicker','Clicks the button once every second',15,1,'',function(){Clicker++;});
+new Buyable('Worker','Faster and smarter than a clicker',100,5,'',function(){Worker++;});
+new Buyable('Farm','Grows new buttons to be pushed',2000,20,'',function(){Farm++;});
+new Buyable('Mine','Mines out metal to be built into pushable buttons',45000,100,'',function(){Mine++;});
+new Buyable('Factory','Manufactures buttons at an unprecedented speed',800000,900,'',function(){Factory++;});
+
+function Beautify(what)//turns 9999999 into 9,999,999
+{
+	var str='';
+	what=Math.floor(what);
+	what=(what+'').split('').reverse();
+	for (var i in what)
+	{
+		if (i%3==0 && i>0) str=','+str;
+		str=what[i]+str;
+	}
+	return str;
+}
+Main=function()
+{
+	l('money').innerHTML="$ "+Beautify(Money);
+	l('moneypersecond').innerHTML="per second: "+Beautify(Mps*(1000/30));
+	l('moneymult').innerHTML="multiplier: "+Beautify(MoneyMult)+"%";
+	
+	l('upgrade').innerHTML=UpgradeText+": $"+Beautify(UpgradePrice)+"<br><sub>Increases the multiplier and mouse button power</sub>";
+	l('button').innerHTML="The Button<br>$"+Beautify(MousePower);
+	
+	l('clicker').innerHTML="<b>"+Clicker+"</b> Clicker: $"+Beautify(Buyables['Clicker'].price)+"<br><sub>"+Buyables['Clicker'].desc+"</sub>";
+	if (Clicker>0) {
+		l('clicker-stats').innerHTML="Each clicker is making $"+Buyables['Clicker'].ps*(MoneyMult/100.0)+"/s<br>All together, the clickers are making $"+Buyables['Clicker'].ps*Clicker*(MoneyMult/100.0)+"<small>("+((Buyables['Clicker'].ps*Clicker)/(Mps*(1000.0/30.0)))*100.0*(MoneyMult/100.0)+"% of total)</small>";
+	} else {
+		l('clicker-stats').height = 0;
+	}
+	
+	l('worker').innerHTML="<b>"+Worker+"</b> Worker: $"+Beautify(Buyables['Worker'].price)+"<br><sub>"+Buyables['Worker'].desc+"</sub>";
+	
+	l('farm').innerHTML="<b>"+Farm+"</b> Farm: $"+Beautify(Buyables['Farm'].price)+"<br><sub>"+Buyables['Farm'].desc+"</sub>";
+	
+	l('mine').innerHTML="<b>"+Mine+"</b> Mine: $"+Beautify(Buyables['Mine'].price)+"<br><sub>"+Buyables['Mine'].desc+"</sub>";
+	
+	l('factory').innerHTML="<b>"+Factory+"</b> Factory: $"+Beautify(Buyables['Factory'].price)+"<br><sub>"+Buyables['Factory'].desc+"</sub>";
+	
+	Mps=CalculateMps();
+	Money+=Mps
+
+	setTimeout(Main,1000/30);
+}
+ClickButton=function()
+{
+	Money+=MousePower;
+}
+UpgradeAll=function()
+{
+	if (Money>=UpgradePrice)
+	{
+		Money-=UpgradePrice;
+		MoneyMult+=(10*Math.floor(MoneyMult/100));
+		UpgradePrice=Math.ceil(UpgradePrice*1.45);
+		MousePower=Math.max(MousePower*1.25,MousePower+1);
+		Upgraded+=1;
+		UpdateUpgradeText();
+	}
+}
+UpdateUpgradeText=function()
+{
+	UpgradeTexts = ['Gloves','No Slacking','Two Minute Lunches','Trained Employees','Foot Buttons','Incouraging Words','Pocket Buttons', 'Reinforced Gloves','Slackers are Terminated','Fertilizer','Fertilizer for Lunch','Trained Farmers','Perfected Pitchforks','Button Vineyards','Double Buttons','Button Ores','Buy More'];
+	UpgradeText = UpgradeTexts[Upgraded-1];
+	/*if (Upgraded==1) {UpgradeText='Gloves';}
+	else if (Upgraded==2) {UpgradeText='No Slacking';}
+	else if (Upgraded==3) {UpgradeText='Two Minute Lunches';}
+	else if (Upgraded==4) {UpgradeText='Trained Employees';}
+	else if (Upgraded==5) {UpgradeText='Foot Buttons';}
+	else if (Upgraded==6) {UpgradeText='Incouraging Words';}
+	else if (Upgraded==7) {UpgradeText='Pocket Buttons';}
+	else if (Upgraded==8) {UpgradeText='Reinforced Gloves';}
+	else if (Upgraded==9) {UpgradeText='Slackers are Terminated';}
+	else if (Upgraded==10) {UpgradeText='Fertilizer';}
+	else if (Upgraded==11) {UpgradeText='Fertilizer for Lunch';}
+	else if (Upgraded==12) {UpgradeText='Trained Farmers';}
+	else if (Upgraded==13) {UpgradeText='Perfected Pitchforks';}
+	else if (Upgraded==14) {UpgradeText='Button Vineyards';}
+	else if (Upgraded==15) {UpgradeText='Double Buttons';}
+	else if (Upgraded==16) {UpgradeText='Button Ores';}*/
+}
+function CalculateMps()
+{
+	var mps=0;
+	mps+=Clicker*Buyables['Clicker'].ps;
+	mps+=Worker*Buyables['Worker'].ps;
+	mps+=Farm*Buyables['Farm'].ps;
+	mps+=Mine*Buyables['Mine'].ps;
+	mps+=Factory*Buyables['Factory'].ps;
+	mps*=(MoneyMult/100);
+	return mps/(1000/30);
+}
+
+Main();
+</script>
+</body>
+</html>

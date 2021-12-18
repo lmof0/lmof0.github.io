@@ -1,0 +1,202 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: accumulate</title>
+<link href="../default.css" rel="stylesheet" type="text/css">
+<style>
+body
+{
+	background-color: #f1f1f1;
+	generic-family: monospace;
+	font-family: Consolas,"courier new";
+	text-align: justify;
+	color: crimson;
+}
+div
+{
+	display:inline;
+}
+p
+{
+	padding:0px;
+	margin:0px;
+}
+.button
+{
+	background-color: #e0e0e0;
+	color: crimson;
+	display: inline-block;
+	cursor: pointer;
+	font-family: Consolas,"courier new";
+}
+</style>
+</head>
+<body>
+	<div>you <div id="have">have</div> <div id="candy">...</div> candy.<div id="candy ps" style="display:none;"> according to your experts you are producing ... candy every second.</div></div><br>
+	<div style="display:none;" id="money display">you have <div id="money">...</div>.<div style="display:none;" id="money invested"> you have invested $... into business.</div></div><br>
+	<div style="display:none; height:0%;" id="sacrifice display"><u>you have sacrificed <div id="candy sacrificed">...</div> candy for an x<div id="candy multiplier">...</div> multiplier.</u></div>
+	<br><br>
+	<div id="buttons">
+	<button style="display:none; height:0%;" class="button" name="true ending" id="true ending" onclick="end()">what was the point of it all?</button><br>
+	
+	<button style="display:none;" class="button" name="eat" id="eat" onclick="eat(5)">eat 5 candies.</button><br>
+	<button style="display:none;" class="button" name="eat more" id="eat more" onclick="eat(20)">eat 20 candies.</button><br>
+	
+	<button style="display:none;" class="button" name="collect" id="collect" onclick="collect(3)">collect some candy.</button><br>
+	<button style="display:none;" class="button" name="buy" id="buy" onclick="buy(10)">buy 10 candies.</button><br>
+	
+	<button style="display:none;" class="button" name="faster" id="faster" onclick="collect(99); L('faster').innerHTML = 'continue the runaway growth.';">begin the runaway growth.</button><br>
+	<button style="display:none;" class="button" name="job" id="job" onclick="job(1)">get 1 job.</button><br>
+	
+	<button style="display:none;" class="button" name="sacrifice" id="sacrifice" onclick="sacrifice()">become the candy.</button><br>
+	<button style="display:none;" class="button" name="buy more" id="buy more" onclick="buy(100)">buy 100 candies ($10).</button><br>
+	<button style="display:none;" class="button" name="more jobs" id="more jobs" onclick="job(15); increase('money', 5);">aquire currency.</button><br>
+	<button style="display:none;" class="button" name="business" id="business" onclick="business(); L('business').innerHTML = 'hire another employee.';">begin a business in data analysis.</button><br>
+	</div>
+</body>
+<script>
+function L(thing) {return document.getElementById(thing);}
+
+function beautify(what)//turns 9999999 into 9,999,999
+{ // stolen from orteil
+	if (what >= 10**21) {
+		return "> 10<sup>" + Math.floor(Math.log10(what)) + "</sup>";
+	}
+	var str='';
+	what=Math.floor(what);
+	what=(what+'').split('').reverse();
+	for (var i in what)
+	{
+		if (i%3==0 && i>0) str=','+str;
+		str=what[i]+str;
+	}
+	return str;
+}
+
+let ended = false;
+
+let candy = 0;
+let candy_ps = 1;
+let candy_total = 0;
+let candy_eaten = 0;
+let candy_collected = 0;
+let candy_sacrificed = 0;
+
+let money = 10;
+let money_ps = 0;
+let money_total = 10;
+let money_spent = 0;
+let money_salary = 0;
+
+let employees = 0;
+let food = 0;
+let water = 0;
+let money_invested = 0;
+
+function end() {
+	ended = true;
+	L('candy').innerHTML = ' ';
+	L("buttons").style.display="none";
+}
+
+function calculate_per_second() {
+	candy_ps = (1 + Math.min(candy_total / 60, 2 + (candy_collected / 3)) * (1 + candy_sacrificed**0.333)) + Math.floor(money_salary / 20);
+	money_ps = money_salary * 0.01;
+}
+
+function increase(thing, amount) {
+	eval(thing+" += amount; "+thing+"_total += amount;");
+}
+
+function eat(candies) {
+	if (candy >= candies) {
+		candy -= candies;
+		candy_eaten += candies;
+	}
+}
+
+function collect(candies) {
+	increase("candy", candies);
+	candy_collected += candies;
+}
+
+function buy(candies) {
+	if (money >= candies/10) {
+		increase("candy", candies);
+		money -= candies/10;
+		money_spent += candies/10;
+		L("money display").style.display="";
+	}
+}
+
+function job(salary) {
+	money_salary += salary;
+}
+
+function business() {
+	money_invested += money;
+	money = 0;
+	employees += 1;
+	money_salary = employees * money_invested;
+	L("candy ps").style.display="";
+	L("money invested").style.display="";
+}
+
+function sacrifice() {
+	candy_sacrificed += candy;
+	money = 0;
+	money_salary /= 2;
+	candy = 0;
+	L("have").innerHTML = "are";
+}
+
+function calculate_unlocks() {
+	if (candy_total >= 10) L("eat").style.display="";
+	if (candy_eaten >= 20) L("eat more").style.display="";
+	
+	if (candy_eaten >= 100) L("collect").style.display="";
+	if (candy_eaten < 20 && candy_total >= 50) L("buy").style.display="";
+	
+	if (money_salary < 1 && candy_eaten >= 500) L("faster").style.display="";
+	if (money < candy_total / 100) L("job").style.display="";
+	else L("job").style.display="none";
+	if (money_salary > 0) L("money display").style.display="";
+	
+	if (candy_total >= 100000) L("sacrifice").style.display="";
+	if (candy_sacrificed > 0) L("sacrifice display").style.display=""; L("sacrifice display").style.height="100%";
+	if (money_total > 100 && candy_collected < 100) L("more jobs").style.display="";
+	if (money_spent > 20 && money_salary > 10) L("buy more").style.display="";
+	if (money_spent > 100 && candy_collected < 100) L("business").style.display="";
+	
+	
+	if (candy >= 100000 && candy_eaten == 0 && money_salary == 0 && food == 0 && water == 0) L("true ending").style.display=""; L("true ending").style.height="100%";
+}
+
+function loop() {
+	calculate_per_second();
+	
+	increase("candy", candy_ps / 60.0);
+	increase("money", money_ps / 60.0);
+	
+	calculate_unlocks();
+	
+	if (ended) {
+		for(let i = 0; i < L("candy").innerHTML.length**0.3; i++) {
+			L("candy").innerHTML += String.fromCharCode(Math.floor(Math.random() * 10175));
+		}
+	}
+	else {
+		L("candy").innerHTML = beautify(candy);
+		L("money").innerHTML = "$" + money.toFixed(2);
+		L("candy ps").innerHTML = " according to your experts you are producing "+beautify(candy_ps)+" candy every second.";
+		L("candy sacrificed").innerHTML = beautify(candy_sacrificed);
+		L("candy multiplier").innerHTML = (candy_sacrificed**.333).toFixed(1);
+		L("money invested").innerHTML = " you have invested $"+money_invested.toFixed(2)+" into business.";
+	}
+	
+	setTimeout(loop,1000/60);
+}
+loop();
+</script>
+</html>

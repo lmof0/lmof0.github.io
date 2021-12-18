@@ -1,0 +1,810 @@
+<!doctype html>
+<!-- please don't look at the code i beg you it's a mess 
+i used the let keyword inconsistently while writing this and there are for loops where there should be table lookups but oh well
+
+TODO:
+- change default mem size to 16 and default stack size to 4 (+ in general have a more convenient way of setting defaults)
+- access custom instructions from a lookup table instead of looking up the unchangeable program each time one is run
+- same for call and func pls
+- make a series of example programs for learning this mess
+
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: scriptlang</title>
+<link href="lang.css" rel="stylesheet" type="text/css">
+<style>
+body {
+	background-color: #111111;
+	text-align: center;
+}
+p {
+	color: ivory;
+}
+label {
+	color: ivory;
+}
+textarea {
+	width: 100%;
+	height: 300px;
+	background: #111111;
+	color: ivory;
+}
+a {
+	color: #3388ee;
+}
+a:visited {
+	color: #bb88ee;
+}
+</style>
+</head>
+<body>
+	<textarea disabled id="lines" name="lines" spellcheck="false" style="width:0%;resize:none;border:none;overflow:hidden;color:#999999;text-align:right;-webkit-user-select:none;-ms-user-select:none;user-select:none;">1</textarea>
+	<textarea autofocus id="code" name="code" spellcheck="false" style="width:97%" onscroll="scroll_lines();">str Hello World!</textarea>
+<div style="text-align:justify">
+	<label>max program steps: </label>
+	<input id="max steps" name="max steps" placeholder="default: 1000" type="text"></input><small><div style="color:ivory;display:inline;"> (how many steps should we take before we automatically halt the program?)</div></small>
+	<br>
+	<label>speed: </label>
+	<input id="update every" name="update every" placeholder="default: 20" type="text"></input><small><div style="color:ivory;display:inline;"> (how many steps before we pause the process to update the displays?)</div></small>
+	<br>
+	<label>update delay: </label>
+	<input id="update delay" name="update delay" placeholder="default: 16" type="text"></input><small><div style="color:ivory;display:inline;"> (how many milliseconds do we pause for in-between display updates? good for debugging if set to a large number like 1000)</div></small>
+	<br>
+	<label>memory size: </label>
+	<input id="memory size" name="memory size" placeholder="default: 256" type="text"></input><small><div style="color:ivory;display:inline;"> (the length of the memory array, including the stack)</div></small>
+	<br>
+	<label>stack size: </label>
+	<input id="stack size" name="stack size" placeholder="default: 10" type="text"></input><small><div style="color:ivory;display:inline;"> (how much of the memory are we going to devote to the stack? not counting the stack pointer, which is also stored in memory)</div></small>
+	<br>
+	<input type="checkbox" id="debug" name="debug" value="debug mode">
+	<label for="debug"> Debug mode</label>
+	<br>
+	<input type="checkbox" id="bigints" name="bigints" value="use bigints">
+	<label for="bigints"> Use BigInts</label>
+	<br>
+	<label for="examples">Example Programs: </label>
+	<select name="examples" id="examples">
+		<option value="none">- none selected -</option>
+		<optgroup label="Complete Programs">
+		  <option value="fizzbuzz">Fizzbuzz</option>
+		  <option value="mandelbrot">Mandelbrot</option>
+		  <option value="bubblesort">Bubblesort</option>
+		  <option value="fibonacci">Fibonacci</option>
+		  <option value="smwrng">SMW RNG Function</option>
+		  <option value="numbergame">Number Guessing Game</option>
+		  <option value="rabin">Miller-Rabin Prime test</option>
+		</optgroup>
+		<optgroup label="Error Examples">
+		  <option value="invalid dereference">Invalid Dereference</option>
+		  <option value="stack overflow">Stack Overflow</option>
+		  <option value="stack underflow">Stack Underflow</option>
+		</optgroup>
+		<!--<optgroup label="Learn the Language">
+		  <option value="todo">todo</option>
+		</optgroup>-->
+		<!--<optgroup label="Easter Eggs">
+		  <option value="burger king recursion">Burger King Recursion</option>
+		</optgroup>-->
+	</select>
+	<br>
+</div>
+	<br>
+	<button id="run" name="run" onClick="run()">Run Program</button><button id="stop" name="stop" onClick="stop('stopped by user')">Stop Program</button><button id="clear out" name="clear out" onClick="clear_out()">Clear Output</button><br>
+	<input style="display:none;width:50%;background:#000000;color:#0000FF;" id="user input" name="user input" placeholder="type input here" type="text"></input><br>
+	<div style="text-align:right;">
+	  <input type="checkbox" id="expanded memory" name="expanded memory" value="expanded memory">
+	  <label for="expanded memory"> expanded memory view</label><br>
+	  <input type="checkbox" id="show memory" name="show memory" value="show memory" checked="true">
+	  <label for="show memory"> show memory<small> (disabling may improve performance)</small></label><br>
+	  <div style="display:inline;">
+	    <input type="radio" id="dec" name="memory base" value="dec" checked="true">
+	    <label for="dec"> dec</label>
+		<input type="radio" id="hex" name="memory base" value="hex">
+	    <label for="hex"> hex</label>
+		<input type="radio" id="bin" name="memory base" value="bin">
+	    <label for="bin"> bin</label>
+		<input type="radio" id="oct" name="memory base" value="oct">
+	    <label for="oct"> oct</label>
+		<input type="radio" id="sen" name="memory base" value="sen">
+	    <label for="sen"> sen</label>
+	  </div>
+	</div>
+	<code><textarea disabled id="output" name="output" style="background:#000000;color:#00FF00;width:80%;height:240pt;text-align:left;margin:left;overflow-y:scroll;">Oops! JS isn't loading correctly! Either something has gone wrong or you need to enable it in your browser.</textarea><textarea disabled id="memory" name="memory" style="background:#000000;color:#FF0000;width:19%;height:240pt;text-align:left"></textarea></code>
+	<br><br><br><br><br>
+	<a href="../index.html">back</a>
+</body>
+<script>
+function rand(x) {
+	return Math.floor(Math.random() * x);
+}
+
+function varInList(s, L) {
+	for (tmp = 0; tmp < L.length; tmp++) {
+		if (s == L[tmp]) { return true; }
+	}
+	return false;
+}
+// do not confound initialization with restarting the program state!
+let memory_size = 256; // default in python version is 256
+let mem = new Array(memory_size); // initialize memory of length 256 with undefined values
+for (let i=0; i<mem.length; i++) {mem[i]=0;} // initalize all memory values at zero
+let stack_size = 10; // stack size and counter are constants which may be freely changed while the program is not running. default in python version is 10.
+let stack_counter = (memory_size - 1) - stack_size; // where is the stack counter stored in memory?
+mem[stack_counter] = 0; // stack counter initialization (will be zero anyway). maxes at stack_size.
+let pointer = 0; // program pointer
+let program = []; // the script
+let insts = []; // custom instructions
+let halt = true; // should the program halt? well it wont be running at the beginning
+let max_steps = 1000; // how many steps before the program is automatically halted (to prevent the site from freezing)
+let update_every = 20; // how many steps should run before we pause momentarily to update the page display?
+let update_delay = 16; // delay between updates
+let steps = 0; // how many instructions have we executed/steps have we taken?
+let debug_enabled = false; // is debug mode enabled?
+
+let input_stack = []; // list of string values entered by the user
+let taking_input = false; // is the input box activated?
+let expanded_memory = false; // is the memory view expanded?
+let show_memory = true; // are we showing/updating the memory display while the program is running?
+let memory_base = "dec"; // what base are the numbers in memory?
+let use_bigints = false; // is memory using BigInts or Numbers?
+var update_lines_please; // a timeout variable for updating the line number indicator on the side of the code window.
+
+var loop_timeout_variable;
+let paused = false; // is the program currently in a paused state?
+
+document.getElementById("output").value = "Hello World! This is the output screen. Feel free to load a preset program or to take a quick look at the incomplete guide below:\n\nset a b - sets mem[a] to the value of b.\nout a - prints mem[a] to the console.\nstr <...> - prints everything after [str ] to the console and does not parse pointers (^n) to values in memory.\nmath x <op> y i - where x, y, and i can be values, and <op> must be a valid mathematical operator (+, -, *, /, mod, pow, <<, >>, xor, and, or). computes x <op> y and stores the value in mem[i].\nhop a - jumps forward 'a' steps in code. a can be negative, allowing an easy way to loop sections of code.\njump a - jumps to line a.\ncall func - jumps to the location of function 'func' and pushes a return address to the stack.\nreturn - jumps to the address on the stack and decrements the stack counter.\nif x <comp> y <code...> - comp must be a valid comparator (==, >, <, >=, <=, !=). if x <comp> y is true, the string following from the end of the if statement to the end of the line will be run as an instruction. this means that if statements can be chained. e.g.:\nif 3 > 2 if 2 < 3 str three is greater than two and two is less than three.\nfunc n - if call n is executed, it will search for func n and jump to it. func serves no computational purpose other than this.\nins <name> <ops> - custom instruction definition. creates an instruction with name <name> which takes an amount of inputs equal to <ops>.\ndone - keyword for the end of an instruction definition.\ninpush - opens the input window and when fed an input gets pushed to the input stack.\ninpop - removes the last element of the input stack.\ntime i - gets the time in milliseconds since january 1 1970 00:00:00 and outputs it to mem[i].\nv scroll down for more info!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! v\n\nspecial values:\npointer - gets the location of the program pointer.\nstack_counter - gets the current height of the stack.\nstack_size - gets the set size of the stack.\nmemory_size - gets the set size of the memory.\ninput - gets the latest input.\ninput_num - gets the latest input in numerical form. returns \"NaN\" if the latest input cannot be converted to a number.\ninput_int - gets the latest input in integer form. returns \"NaN\" if the latest input cannot be converted to an integer."; // hi! also thanks for explain :) (this information is not put into the innerHTML by default because that's already being used to inform the user if js is enabled or not.) ((also this information is incomplete in multiple ways but most importantly does not make any mention of pointers nov9 2021))
+document.getElementById("memory").value = "Program memory will appear here"; // true.
+
+function set_setting(input_name, var_name, def) { // this whole function is actually kindof like a macro
+	/* parsing <input_name> input */
+	if (isNaN(Number(document.getElementById(input_name).value)) || document.getElementById(input_name).value == "") { // no valid input found for max steps
+		eval(var_name+" = "+def+";"); // oh no this could probably become very uh oh
+		// above sets the variable name to the thing but uhhhh uhhmmmm eval()
+		document.getElementById(input_name).value = def + ""; // string conversion B)
+	} else { // there is a valid input!
+		eval(var_name+" = Number(document.getElementById(input_name).value);"); // uhhhhhhhhhhhhhhhhhhhhhhhhhh
+	}
+}
+
+class example_program {
+	constructor(name, code, settings=[1000,20,16,256,10,"no debug","no expanded memory","yes show memory","dec","no bigints"]) {
+		this.name = name;
+		this.code = code;
+		//this.settings = [max_steps, speed, update_delay, ... etc] maybe one day (i love readability)
+		settings[5] = (settings[5] == "yes debug"); // improved readability when creating example programs
+		settings[6] = (settings[6] == "yes expanded memory"); // expanded memory
+		settings[7] = (settings[7] == "yes show memory"); // show memory
+		// 8 is the memory display base
+		settings[9] = (settings[9] == "yes bigints"); // use bigints
+		this.settings = settings;
+		// max steps, speed, update delay, mem size, stack size, debug?, expanded memory?, show memory?, memory base, use bigints?
+	}
+}
+
+let examples = [];
+//examples.push(new example_program("none", "", settings=[null,null,null,null,null,false]));
+
+/* --- COMPLETE PROGRAMS --- */
+examples.push(new example_program("fizzbuzz", "math ^0 + 1 0\nmath ^0 mod 3 1\nmath ^0 mod 5 2\nif ^1 == 0 str fizz\nif ^2 == 0 str buzz\nif ^1 != 0 if ^2 != 0 out ^0\nstr ,\nif ^0 > 99 hop 2\nhop -8"));
+examples.push(new example_program("mandelbrot", 'ins add 3\nmath ^#0 + ^#1 #2\ndone\nins sub 3\nmath ^#0 - ^#1 #2\ndone\nins mul 3\nmath ^#0 * ^#1 #2\nmath ^#2 / 10000 #2\ndone\nins squ 2\nmul #0 #0 #1\ndone\nins yes 0\nset 4 1\nreturn\ndone\nins no 0\nset 4 0\nreturn\ndone\nins // 0\ndone\ncall main\nfunc char\nmath ^0 + ^1 10\nmath ^10 mod 5 10\nif ^10 == 0 str *\nif ^10 == 1 str "\nif ^10 == 2 str /\nif ^10 == 3 str ]\nif ^10 == 4 str &\nreturn\nfunc move_y\nset 2 -20000\nmath ^3 + 1000 3\nstr \\n\nreturn\nfunc iter\nset 6 0\nmath ^6 + 1 6\nsqu 0 7\nsqu 1 8\nmath ^7 - ^8 7\nmath ^7 + ^2 9 new x computation done\nmath ^1 * 2 7\nmul 7 0 7\nmath ^7 + ^3 1 new y computation done\nset 0 ^9\n// out ^0\n// str +\n// out ^1\n// str i\n// str \\n\nif ^6 > ^5 yes\nsqu 0 7\nsqu 1 8\nmath ^0 + ^1 9\nif ^9 < 0 math ^9 * -1 9\nif ^9 > 40000 no\nhop -20\nfunc main\nset 2 -20000 Cx\nset 3 -13000 Cy\nset 0 0 Zx\nset 1 0 Zy\nset 4 0 partOfTheSet\nset 5 20 Iter\ncall iter\nif ^4 == 1 call char\nif ^4 == 0 str  \nmath ^2 + 500 2\nif ^2 > 20000 call move_y\nif ^3 > 13000 hop 2\nhop -10',
+	settings=[400000,10000,16,14,2,"no debug","yes expanded memory","yes show memory","dec","no bigints"]));
+	
+examples.push(new example_program("bubblesort", 'ins // 0\ndone\n// feel free to change the starting values here to test the behavior of the algorithm\nset 0 9\nset 1 7\nset 2 8\nset 3 5\nset 4 6\nset 5 2\nset 6 4\nset 7 0\nset 8 1\nset 9 3\n// end of starting values\nset 10 0 // pointer\nset 11 1 // pointer 2 (pointer + 1)\nset 12 0 // has there been a swap this bubble?\ncall main\nfunc print\nset 13 0\nout ^^13\nif ^13 != 9 str , \nmath ^13 + 1 13\nif ^13 > 9 return\nhop -4\nfunc swap // swap the values pointer and pointer + 1 are pointing to\nmath ^10 + 1 10 // move pointer to value 2\nset 14 ^^10 // clone value 2\nmath ^10 - 1 10 // go back to value 1\nset 15 ^^10 // clone value 1\nmath ^10 + 1 10 // move pointer back to value 2\nset ^10 ^15 // pop value 1 into value 2\nmath ^10 - 1 10 // move pointer back to value 1\nset ^10 ^14 // pop value 2 into value 1\nset 12 1 // this bubble has swapped\nreturn\nfunc bubble\nif ^^10 > ^^11 call swap // if a number and its succeeding number are not in the correct order, swap them\nmath ^10 + 1 10 // increment both pointers\nmath ^11 + 1 11\nif ^11 >= 10 hop 2 // reached end of list\nhop -4 // not end of list yet; loop back\nset 10 0 // reset pointers\nset 11 1\nreturn\nfunc main\nstr values are: \ncall print\nstr \\nsorting...\nstr .\nset 12 0 // there has not been a swap in this bubble\ncall bubble\nif ^12 == 0 hop 2 // nothing was swapped during the bubble, so the list must be sorted\nhop -4\nstr done!\\n\ncall print',
+	settings=[10000,40,16,20,3,"no debug","no expanded memory","yes show memory","dec","no bigints"]));
+	
+examples.push(new example_program("fibonacci","set 1 1\nout ^0\nstr \\n\nmath ^0 + ^1 1\nmath ^1 - ^0 0\nif ^0 > 1000 hop 2\nhop -5\nstr done!",
+	settings=[1000,10,16,2,0,"no debug","no expanded memory","yes show memory","dec","no bigints"]));
+	
+examples.push(new example_program("smwrng",'ins math8 4\nmath #0 #1 #2 #3\nmath ^#3 mod 256 #3\ndone\nins asl 1\nmath ^#0 << 1 #0\nset 7 0\nif ^#0 > 255 set 7 1\nmath ^#0 mod 256 #0\ndone\nins bit 1\nmath ^5 and #0 8\nif ^8 == 0 set 6 1\nif ^8 != 0 set 6 0\ndone\nins // 0\ndone\nset 0 0 x66 B\nset 1 0 x8F C\nset 2 0 xE9 D\nset 3 0 xA6 E\nset 4 0x00 Y\nset 5 0x00 A\nset 6 0b1  Z\nset 7 0b0  C\ncall main\nfunc tick_rng\nset 5 ^0 //            LDA $148B\nasl 5 //               ASL A\nasl 5 //               ASL A\nset 7 1 //             SEC\nmath8 ^5 + ^0 5 //     ADC $148B\nmath8 ^5 + ^7 0 //     STA $148B\nasl 1 //               ASL $148C\nset 5 0x20 //          LDA #$20\nbit ^1 //              BIT $148C\nif ^6 == ^7 hop 2 //   BCC; BEQ; BNE; BNE\nmath ^1 + 1 1 //       INC $148C\nmath ^1 xor ^0 5 //    LDA $148C; EOR $148B\nmath ^4 + 2 9 //       STA $148D,Y\nset ^9 ^5 //           ...\nreturn\nfunc get_rand\nset 4 1 // LDY #$01\ncall tick_rng\nset 4 0 // DEY\ncall tick_rng\nreturn\nfunc main\nstr seeds are: \nout ^0\nstr , \nout ^1\nstr \\noutputs are: \nout ^2\nstr , \nout ^3\nstr \\n\\n\nmath ^10 + 1 10\ncall get_rand\nif ^0 == 0 if ^1 == 0 hop 2\nhop -12\nstr values have looped after \nout ^10\nstr  calls to the rng function',
+	settings=[1500000,20,16,15,3,"no debug","yes expanded memory","yes show memory","hex","no bigints"]));
+	
+examples.push(new example_program("numbergame", "inpop\nstr I'm thinking of a number between 1 and 100. Try to guess what it is!\\n\ntime 0\nmath ^0 mod 100 0\ncall main\nfunc nan\nstr '\nout input\nstr ' is not a whole number. please try again.\\n\ninpop\nreturn\nfunc too_high\nstr '\nout input\nstr ' is too high! guess again!\\n\nreturn\nfunc too_low\nstr '\nout input\nstr ' is too low! guess again!\\n\nreturn\nfunc correct\nstr your guess '\nout input\nstr ' was correct! you win!\\n\nmath memory_size - 1 1\nmath ^1 - stack_size 1\nmath stack_counter - 2 ^1\ninpop\nstr would you like to play again? <y or n>\\n\ninpush\nif input == ;y jump 1\ninpop\njump 999\nfunc main\ninpush\nif input_int == ;NaN call nan\nif input_int > ^0 call too_high\nif input_int < ^0 call too_low\nif input_int == ^0 call correct\ninpop\nhop -6",
+	settings=[100000,40,16,5,2,"no debug","no expanded memory","no show memory","dec","no bigints"]));
+
+examples.push(new example_program("rabin", "ins // 0\ndone\n// warning: there is an absolute hodgepodge of extra stuff that probably doesn't need to be here\nins div_again 0\nmath ^1 / 2 1 divide d\nhop -1\nmath ^3 + 1 3\ndone\nins reset 0\nmath memory_size - 1 7\nmath ^7 - stack_size 7\nset ^7 0 effectively empties the stack\nmath ^0 + 1 0\ncall back\ndone\ncall main\nfunc testify\nset 5 1 modified\nset 6 0 reset counter\nmath ^5 * ^4 5\nmath ^5 mod ^0 5\nmath ^6 + 1 6 counter\nif ^6 < ^1 hop -3 if the counter hasn't surpassed d, we need to keep multiplying\nmath ^0 - 1 7\nif ^5 != 1 if ^5 != ^7 call not_prime\nreturn\nfunc not_prime\nstr '\nout ^0\nstr ' is not a prime number.\\n\njump 999 // reset\nreturn\nfunc main\nstr Choose a number to test for primality. (This test can yield false negatives, I'm not entirely sure why)\\n\ninpush\nset 0 input_int\nstr testing...\\n\nfunc back\nmath ^0 - 1 1\nmath ^1 mod 2 2\nif ^2 == 0 div_again\nset 4 2 witness\ncall testify\nset 4 3\ncall testify\nstr '\nout ^0\nstr ' is a prime number.\\n\n// reset",
+	settings=[1000000,1000,16,12,3,"no debug","yes expanded memory","yes show memory","dec","no bigints"]));
+	
+/* --- ERROR EXAMPLES --- */
+examples.push(new example_program("invalid dereference", "str here a value is dereferenced as 'the -2809th index in memory' which is undefined, throwing an error\nset 0 -2809\nset 1 0\nset 2 1\nout ^^^^2"));
+examples.push(new example_program("stack overflow", "str a stack overflow occurs when there's no more room in the stack to store a return address\\n\\n\nfunc recursion\nstr the program is \nout stack_counter\nstr  levels deep into recursion\\n\ncall recursion",
+	settings=[1000,10,16,21,20,"no debug","no expanded memory","yes show memory","dec","no bigints"]));
+examples.push(new example_program("stack underflow", "str a stack underflow occurs when there's no address in the stack to return to.\\n\\n\nhop 4\nfunc hello\nstr hello! i am a function.\nreturn\ncall hello\nreturn <- this return is invalid",
+	settings=[1000,10,50,16,10,"no debug","no expanded memory","yes show memory","dec","no bigints"]));
+
+/*
+inpush
+set 0 1
+set ^0 __input
+math ^0 + 1 0
+if ^0 > 255 hop 2
+hop -3
+set 0 __input
+set 0 1
+set 1 1
+math ^0 + ^1 2
+out ^^3
+
+⁑ ⁑ 10 ㍳ ⁑ ⁑
+*/
+
+/*
+set 0 900000000000000
+math ^0 / 3 0
+if ^0 < 100000000000000 math ^0 * 10 0
+out ^0
+str \n
+jump 2
+*/
+
+/*
+ins // 0
+done
+// warning: there is an absolute hodgepodge of extra stuff that probably doesn't need to be here
+ins div_again 0
+math ^1 / 2 1 divide d
+hop -1
+math ^3 + 1 3
+done
+ins reset 0
+set 7 0 effectively empties the stack
+math ^0 + 1 0
+call back
+done
+call main
+func testify
+set 5 1 modified
+set 6 0 reset counter
+math ^5 * ^4 5
+math ^5 mod ^0 5
+math ^6 + 1 6 counter
+if ^6 < ^1 hop -3 if the counter hasn't surpassed d, we need to keep multiplying
+if ^5 != 1 call not_prime
+return
+func not_prime
+reset
+return
+func main
+str Choose a number to test for primality. (This test can yield false negatives, I'm not entirely sure why)\n
+inpush
+set 0 input_int
+str testing...\n
+func back
+math ^0 - 1 1
+math ^1 mod 2 2
+if ^2 == 0 div_again
+set 4 2 witness
+call testify
+set 4 3
+call testify
+str '
+out ^0
+str ' is a prime number.\n
+reset
+*/
+
+examples.push(new example_program("burger king recursion", "str number fifteen, burger king recursion: \nstr the last thing you want in your burger king burger is \nhop -1", settings=[1000,1,500,256,10,"no debug","no expanded memory","yes show memory","dec"]));
+
+document.getElementById("examples").onchange = () => {
+	stop("a different program has been loaded");
+	let name = document.getElementById("examples").value;
+	for (let i = 0; i < examples.length; i++) {
+		if (name == examples[i].name) {
+			document.getElementById("code").value = examples[i].code;
+			max_steps = examples[i].settings[0];
+			update_every = examples[i].settings[1];
+			update_delay = examples[i].settings[2];
+			memory_size = examples[i].settings[3];
+			stack_size = examples[i].settings[4];
+			debug_enabled = examples[i].settings[5];
+			document.getElementById("max steps").value = examples[i].settings[0];
+			document.getElementById("update every").value = examples[i].settings[1];
+			document.getElementById("update delay").value = examples[i].settings[2];
+			document.getElementById("memory size").value = examples[i].settings[3];
+			document.getElementById("stack size").value = examples[i].settings[4];
+			document.getElementById("debug").checked = examples[i].settings[5];
+			
+			// the disparity here where the actual variables seem to not be set is because they're checked while the program is running (options for memory display)
+			document.getElementById("expanded memory").checked = examples[i].settings[6];
+			document.getElementById("show memory").checked = examples[i].settings[7];
+			document.getElementById("dec").checked = examples[i].settings[8] == "dec";
+			document.getElementById("hex").checked = examples[i].settings[8] == "hex";
+			document.getElementById("bin").checked = examples[i].settings[8] == "bin";
+			document.getElementById("oct").checked = examples[i].settings[8] == "oct";
+			document.getElementById("sen").checked = examples[i].settings[8] == "sen";
+			
+			document.getElementById("bigints").checked = examples[i].settings[9];
+		}
+	}
+}
+//document.getElementById("examples").onchange(); <- this was for updating the example program code on page refresh
+document.getElementById("user input").addEventListener("keyup", function(event) { // taken from w3
+	if (event.keyCode === 13) { // supposedly this is the enter key. i hope this is universal.
+		//event.preventDefault();
+		push_input();
+		resume_loop();
+	}
+});
+document.getElementById("user input").onchange = () => { // parsing enclosed regions of strings is outside the scope of this scripting language, but most inputs will (hopefully) be simple ones so this an okay compromise (to be fair, inputs and strings of any form were outside the scope of the js edition, but whatever)
+	document.getElementById("user input").value = document.getElementById("user input").value.replaceAll(" ", "");
+}
+
+document.getElementById("debug").onchange = () => { // teehee look at me replacing a null value with an anonymous function i sure hope nothing bad happens
+	document.getElementById("update every").value = "1"; // speed is called update every????? what???????? (the purpose of this line is to make the website not crash when the output box fills with thousands of lines of debug information)
+}
+
+function push_input() {
+	input_stack.push(document.getElementById("user input").value);
+	hide_and_reset_input_box();
+	taking_input = false;
+}
+
+function hide_and_reset_input_box() {
+	document.getElementById("user input").style.display = "none";
+	document.getElementById("user input").value = "";
+}
+
+class instruction {
+	constructor(name, op, code) {
+		this.name = name;
+		this.op = op;
+		this.code = code;
+	}
+	run(inputs) {
+		for (let i = 0; i < this.code.length; i++) { // copied directly from the pythonic version
+			let tmp = this.code[i];
+			if (tmp.includes("#")) { // replace for function variables
+				for (let k = 0; k < inputs.length; k++) {
+					tmp = tmp.replaceAll("#"+k, inputs[k]);
+				}
+			}
+			execute(tmp);
+		}
+	}
+}
+
+function restart_program_state() { // lazy fix (?????????????????? what does this mean)
+	mem = new Array(memory_size); // initialize memory of length 256 with undefined values
+	for (let i=0; i<mem.length; i++) {
+		if (!use_bigints) {
+			mem[i]=0;
+		} else {
+			mem[i]=0n;
+		}
+	} // initalize all memory values at zero
+	stack_counter = (memory_size - 1) - stack_size; // where is the stack counter stored in memory?
+	mem[stack_counter] = 0; // stack height. maxes at 10.
+	pointer = 0; // program pointer
+	steps = 0; // program steps taken
+	program = []; // the script
+	insts = []; // custom instructions
+	document.getElementById("output").value = "Running...";
+	paused = false; // the program should be running now
+	input_stack = []; // list of string values entered by the user
+	taking_input = false; // restart this for obvious reasons
+}
+
+function out(txt) {
+	document.getElementById("output").value += txt;
+	document.getElementById("output").scrollTop = 1000000000; // keep the output window at the bottom where all the new strings are getting printed. (used to be scrollTopMax but that was creating inconsistent behavior)
+}
+function clear_out() {
+	document.getElementById("output").value = "";
+}
+function scroll_lines() {
+	document.getElementById("lines").scrollTop = document.getElementById("code").scrollTop;
+}
+function update_line_text() {
+	lines = document.getElementById("code").value.split("\n").length;
+	let text = "";
+	for (i = 0; i < lines; i++) {
+		text += (i+1) + "\n";
+	}
+	document.getElementById("lines").value = text;
+	width = 0.6 * (lines+"").length;
+	document.getElementById("lines").style.width = width + "%";
+	code_width = 99 - Math.ceil(width); // this breaks past 10000 but who's gonna need that much code
+	document.getElementById("code").style.width = code_width + "%";
+	document.getElementById("lines").style.height = document.getElementById("code").style.height;
+	update_lines_please = setTimeout(update_line_text, 150);
+}
+
+function stop(code) {
+	if (!halt) {
+		out('\n! program has stopped !');
+		out('\nexitcode: '+code);
+		halt = true;
+		// the program is no longer pausable, so change the pause button back into a run button
+		document.getElementById("run").attributes.onclick = "run()"; // yes
+		document.getElementById("run").innerHTML = "Run Program";
+		hide_and_reset_input_box(); // we don't want the input open when it doesn't make sense to receive input i.e. when no program is running
+	}
+}
+
+function value(n) { // the unoriginal but new and optionful
+	if (use_bigints) return value_as_bigint(n);
+	else return value_as_number(n);
+}
+function value_as_number(n) { // parse pointers and keywords into numbers
+	//if (use_bigints && !ignore_bigint_check) return BigInt(value(n, true)); // lazy :)
+	if (typeof(n) == "number" || Number.isSafeInteger(n)) return n; // the safe integer check may have made this function faster on average
+	n = String(n); // for parsing purposes
+	
+	/* !!! SPECIAL CASES !!! */
+	if (n == "pointer") return pointer;
+	if (n == "stack_counter") return mem[stack_counter];
+	if (n == "stack_size") return stack_size;
+	if (n == "memory_size") return memory_size;
+	if (n == "input") return input_stack[input_stack.length - 1];
+	if (n == "input_num") {
+		if (isNaN(input_stack[input_stack.length - 1])) return "NaN"; // for input-checking. this does open the possibility to more annoying debugging, but i currently have no idea how to implement try catch statements (in scriptlang), so this will do.
+		return Number(input_stack[input_stack.length - 1]);
+	}
+	if (n == "input_int") {
+		if (!Number.isSafeInteger(Number(input_stack[input_stack.length - 1]))) return "NaN"; // technically this should be NaI but who cares
+		return Number(input_stack[input_stack.length - 1]);
+	}
+	/* end of special cases */
+	
+	if (n[0] == ';') { // check for string literals
+		return n.substr(1); // please behave yourselves
+	}
+	if (n[0] == '^') {
+		let pointers = n.match(/\^/g).length; // count the amount of pointers
+		n = n.substr(n.lastIndexOf("^")+1); // take the pointers out
+		for (let x = 0; x < pointers; x++) {n = mem[value_as_number(n)];} // dereference them in a chainlike fashion
+	}
+	if (isNaN(n)) throw "'"+n+"' is not a number or parsable value"; // the string value mapped to nothing; throw it out!
+	n = Number(n); // done parsing
+	return n;
+}
+function value_as_bigint(n) { // why wasn't this incorporated into the value function? readability and speed.
+	if (typeof(n) == "bigint") return n; // there is no isSafeBigInt function :(
+	n = String(n); // for parsing purposes
+	
+	/* !!! SPECIAL CASES !!! */
+	if (n == "pointer") return BigInt(pointer);
+	if (n == "stack_counter") return BigInt(mem[stack_counter]);
+	if (n == "stack_size") return BigInt(stack_size);
+	if (n == "memory_size") return BigInt(memory_size);
+	if (n == "input") return input_stack[input_stack.length - 1];
+	if (n == "input_num") {
+		//if (isNaN(input_stack[input_stack.length - 1])) return "NaN"; // for input-checking. this does open the possibility to more annoying debugging, but i currently have no idea how to implement try catch statements (in scriptlang), so this will do.
+		return BigInt(input_stack[input_stack.length - 1]);
+	}
+	if (n == "input_int") {
+		//if (!Number.isSafeInteger(Number(input_stack[input_stack.length - 1]))) return "NaN"; // technically this should be NaI but who cares
+		return BigInt(input_stack[input_stack.length - 1]);
+	}
+	/* end of special cases */
+	
+	if (n[0] == ';') { // check for string literals
+		return n.substr(1); // please behave yourselves
+	}
+	if (n[0] == '^') {
+		pointers = n.match(/\^/g).length; // count the amount of pointers
+		n = n.substr(n.lastIndexOf("^")+1); // take the pointers out
+		for (let x = 0; x < pointers; x++) {n = mem[value_as_bigint(n)];} // dereference them in a chainlike fashion. value as bigint can be called because you actually can take BigInt indices of an array :D
+	}
+	try {n = BigInt(n);} // done parsing
+	catch (err) {
+		if (debug_enabled) throw err;
+		throw "'"+n+"' is not a bigint number or parsable value"; // the string value (likely) mapped to nothing; throw it out!
+	}
+	return n;
+}
+
+function str_not_allowed(v) { // shorthand for cases where a value of type "string" is unacceptable
+	if (typeof(v) == "string") throw "string value of \""+v+"\" is not allowed here";
+	return v; // if this isn't a string, it's probably fine (but it should definitely be returned!!)
+}
+
+function location_of_function(n) { // crude method for finding the location of a function. if this were a lookup table things might possibly be able to run 1000000x faster.
+	for (let i = 0; i < program.length; i++) {
+		let line = program[i].split(" ");
+		if (line[0] == "func") {
+			if (line[1] == n) {
+				return i;
+			}
+		}
+	}
+	return 0;
+}
+
+function floor(n) { // i need a compactified solution for dealing with bigints and this is it
+	if (typeof(n) == "number") {return Math.floor(n);}
+	else return n;
+}
+// some other weird math substitute things will go here too i guess, if ever needed
+function abs(n) {
+	if (typeof(n) == "number") {return Math.abs(n);}
+	else {
+		if (n >= 0) return n;
+		else return n*-1n;
+	}
+} // i hope this is as fast as possible
+
+function execute(line) {
+	let op = line.split(' ');
+	switch (op[0]) { // read the instruction keyword
+		case "set":
+			index = str_not_allowed(value(op[1]));
+			mem[index] = str_not_allowed(value(op[2]));
+			if (debug_enabled) out("  (memory at index "+index+" was set to "+mem[index]+")\n");
+			break;
+		case "out":
+			out(value(op[1]));
+			break;
+		case "str":
+			string = line.substr(4).replaceAll('\\n', '\n');
+			out(string);
+			break;
+		case "math":
+			operator = op[2];
+			x = str_not_allowed(value(op[1]));
+			y = str_not_allowed(value(op[3]));
+			index = str_not_allowed(value(op[4]));
+			switch(operator) {
+				case "+": mem[index] = x + y; break;
+				case "-": mem[index] = x - y; break;
+				case "*": mem[index] = x * y; break;
+				case "/": mem[index] = floor(x / y); break;
+				case "mod": mem[index] = abs(x % y); break;
+				case "pow": if (y>=0) {mem[index] = x ** y;} else {throw "exponent must be greater than zero, not "+y;} break;
+				case "<<": mem[index] = x << y; break;
+				case ">>": mem[index] = x >> y; break;
+				case "xor": mem[index] = x ^ y; break;
+				case "and": mem[index] = x & y; break;
+				case "or": mem[index] = x | y; break;
+				default: throw operator+" is not a valid operator";
+			}
+			mem[index] = floor(mem[index]);
+			if (debug_enabled) out("  (calculated result: "+x+" "+operator+" "+y+" = "+mem[index]+" and stored in "+index+")\n");
+			if (!use_bigints) { // if we are using bigInts, the result will always be an integer
+				if (!Number.isSafeInteger(mem[index])) throw "result must be an integer";
+			}
+			break;
+		case "hop":
+			relative = Number(str_not_allowed(value(op[1]))); // pointer is a number, so we cannot have a BigInt here.
+			pointer += relative - 1;
+			break;
+		case "jump":
+			loc = Number(str_not_allowed(value(op[1])));
+			pointer = loc - 2; // this exact offset is for two things. 1) you need to subtract 1 because after each instruction the pointer is incremented. if 1 isn't subtracted, the instruction after the line you specify would be executed. 2) the pointer begins counting at zero, whereas the line indicator and error messages start counting at 1.
+			break;
+		case "call":
+			if (mem[stack_counter] > stack_size - 1) throw "stack overflow"; // just so that debugging doesn't become incredibly confusing
+			loc = Number(location_of_function(op[1])); // loc certainly cannot be a BigInt!
+			if (typeof(mem[stack_counter]) == "bigint") throw "the stack counter cannot be a BigInt.";
+			mem[stack_counter] += 1;
+			mem[stack_counter + mem[stack_counter]] = pointer; // at one point i knew exactly what this line meant (this is an incredibly funny joke)
+			pointer = loc - 1;
+			break;
+		case "return":
+			if (mem[stack_counter + mem[stack_counter]] == undefined) throw "the stack pointer has been tampered with in an unexpected way; there is no value to return to at index '"+ (stack_counter + mem[stack_counter]) +"' in memory";
+			pointer = mem[stack_counter + mem[stack_counter]];
+			mem[stack_counter] -= 1;
+			if (mem[stack_counter] < 0) throw "stack underflow"; // just so that debugging doesn't become incredibly confusing
+			break;
+		case "if":
+			x = value(op[1]);
+			comp = op[2];
+			y = value(op[3]);
+			is_true = false;
+			switch (comp) {
+				case "==": if (x==y) {is_true = true;} break;
+				case ">": if (x>y) {is_true = true;} break;
+				case "<": if (x<y) {is_true = true;} break;
+				case ">=": if (x>=y) {is_true = true;} break;
+				case "<=": if (x<=y) {is_true = true;} break;
+				case "!=": if (x!=y) {is_true = true;} break;
+				default: throw comp+" is not a valid comparator";
+			}
+			if (debug_enabled) out("  (evaluated as: "+x+" "+comp+" "+y+" is "+is_true+")\n");
+			if (is_true) {
+				let code = "";
+				for (let i = 0; i < op.slice(4).length; i++) { // why isn't this just line.substr
+					code += op.slice(4)[i];
+					if (i != op.slice(4).length-1) {code += " ";}
+				}
+				execute(code);
+			}
+			break;
+		case "ins":
+			name = op[1];
+			number_of_ops = value(op[2]);
+			let code = [];
+			for (let i = pointer + 1; i < program.slice(pointer).indexOf("done") + pointer; i++) {
+				code.push(program[i]);
+			}
+			insts.push(new instruction(name, number_of_ops, code));
+			pointer += program.slice(pointer).indexOf("done");
+			if (debug_enabled) out("  (created instruction '"+name+"' with "+number_of_ops+" operands and "+code.length+" lines)\n");
+			break;
+		case "func":
+			break; // func is a builtin instruction so this has to be here.
+		case "done":
+			break;
+		/* !!! THESE ARE JS EXCLUSIVE !!! */
+		case "inpush":
+			document.getElementById("user input").style.display = "";
+			taking_input = true;
+			break;
+		case "inpop": // clean up input stack; not for popping values into memory
+			input_stack.pop();
+			break;
+		case "time": // something like this might've been in the rust ver though
+			i = str_not_allowed(value(op[1]));
+			let t = new Date();
+			mem[i] = t.getTime();
+			if (debug_enabled) out("  (got time: "+t.getTime()+" and stored in "+i+")\n");
+			break;
+		/* end of js exclusives */
+		default:
+			let insts_names = []; // list the instructions by name...
+			for (let i = 0; i < insts.length; i++) {
+				insts_names.push(insts[i].name);
+			} // ...so that indexOf can find the requested instruction and run it
+			// this might be faster if insts_names was declared and updated alongside insts
+			// ah well
+			try {
+				insts[insts_names.indexOf(op[0])].run(op.slice(1));
+			}
+			catch (err) {
+				if (insts[insts_names.indexOf(op[0])] == undefined) throw "instruction '"+op[0]+"' does not exist."; // split this into two different errors to increase the descriptiveness of attempting to do something weird with instructions.
+				throw "an error occured attempting to execute instruction '"+op[0]+"': "+err; // also recursion is funny (ins j 0\nj\ndone\nj) or (ins j 0\nmath ^0 + 1 0\nif ^0 > 3 return\nj\ndone\nj)
+			}
+			break;
+	}
+	if (pointer < -1) throw "program pointer is out of bounds; you cannot go to line "+pointer; // js gives values of undefined for negative list indices (really it treats anything which isn't a nonnegative integer as a string, which is even worse). the check has to be here and not inside the loop method because otherwise something breaks. for why the check for this seems to be offset, see the comment in the jump instruction.
+}
+
+function run() {
+	if (!halt) { // uh oh run button got pressed during a running program that means it was a pause button
+		if (!paused) pause();
+		else unpause(); // i agree
+		return; // please do not execute the run() code
+	}
+	document.getElementById("run").innerHTML = "Pause Program"; // turn the run button into a pause button
+
+	set_setting("max steps", "max_steps", 1000);
+	set_setting("update every", "update_every", 20);
+	set_setting("update delay", "update_delay", 16);
+	set_setting("memory size", "memory_size", 256);
+	set_setting("stack size", "stack_size", 10);
+	debug_enabled = document.getElementById("debug").checked;
+	use_bigints = document.getElementById("bigints").checked;
+	
+	if (memory_size < 1) {
+		memory_size = 1;
+		document.getElementById("memory size").value = "1";
+	}
+	
+	// limit bizarre stack errors
+	if (stack_size > memory_size - 1) {
+		stack_size = memory_size - 1;
+		document.getElementById("stack size").value = memory_size - 1;
+	}
+	if (stack_size < 0) {
+		stack_size = 0;
+		document.getElementById("stack size").value = "0";
+	}
+	
+	restart_program_state(); // this might not be the first run. read in after the settings so that everything is initialized to preference.
+	update_memory_display(); // we've just rearranged the internals of the interpreter, so clearly the visuals need to be updated.
+	
+	program = document.getElementById("code").value.split('\n'); // get code info and split into lines
+	halt = false; // we are currently running!
+	document.getElementById("output").value = "";
+	loop();
+	/*
+	while (!halt) {
+		//out(pointer + " " + program[pointer] + "\n");
+		try {
+			execute(program[pointer]);
+		}
+		catch (err) {
+			stop("error at line "+(pointer+1)+": " + err);
+		}
+		pointer++; steps++;
+		document.getElementById("memory").value = mem;
+		if (pointer >= program.length) stop('eof');
+		if (steps >= max_steps) stop('step limit exceeded');
+	}*/
+}
+
+function update_memory_display() { // i know this is only repeated twice but it's convenient anyways (this method used to be way smaller)
+	show_memory = document.getElementById("show memory").checked; // boy this is confusing. so these settings *can* be set by an example program, but they're checked per update. funky. also this needs to be checked before the if.
+	if (show_memory) {
+		// this formatting is because js is a piece of untyped garbage
+		expanded_memory = document.getElementById("expanded memory").checked; // update this boolean while the memory is being updated; it doesn't make sense to only update this option at the beginning of a program. (i was going to comment on the fact that this is probably going to increase lag, but this whole method is adding extra computation; maybe make an option to disable it? yes okay i have added that now)
+		let base = "10";
+		let indicator = "";
+		if (document.getElementById("dec").checked) {base = "10"; indicator = "";}
+		else if (document.getElementById("hex").checked) {base = "16"; indicator = "0x";}
+		else if (document.getElementById("bin").checked) {base = "2"; indicator = "0b";}
+		else if (document.getElementById("oct").checked) {base = "8"; indicator = "0o";}
+		else if (document.getElementById("sen").checked) {base = "6"; indicator = "0s";}
+		let full_memory = "";
+		if (!expanded_memory) {
+			mem_str = "[";
+			for (let i = 0; i < mem.length; i++) { // loop through memory
+				let big_inticator = "n".repeat(typeof(mem[i]) == "bigint");
+				mem_str += indicator + mem[i].toString(base) + big_inticator;
+				if (i != mem.length-1) mem_str += ',';
+			}
+			mem_str += "]";
+			// input stack time
+			input_stack_str = "[";
+			for (let i = 0; i < input_stack.length; i++) { // loop through input stack
+				input_stack_str += '"' + input_stack[i] + '"';
+				if (i != input_stack.length-1) input_stack_str += ',';
+			}
+			input_stack_str += "]";
+			// end of this formatting
+			full_memory = mem_str + (" + " + input_stack_str).repeat(input_stack.length > 0); // branchless programming :)
+		} else {
+			// now for different formatting
+			// j
+			input_stack_str = "[";
+			for (let i = 0; i < input_stack.length; i++) {
+				input_stack_str += '"' + input_stack[i] + '"';
+				if (i != input_stack.length-1) input_stack_str += ',';
+			}
+			input_stack_str += "]";
+			// end of j begin h
+			mem_str = "";
+			for (let i = 0; i < mem.length; i++) {
+				let big_inticator = "n".repeat(typeof(mem[i]) == "bigint");
+				mem_str += i + ": " + indicator + mem[i].toString(base) + big_inticator;
+				if (i != mem.length-1) mem_str += '\n';
+			}
+			// end of h
+			full_memory = (input_stack_str + " +\n").repeat(input_stack.length > 0) + mem_str; // different formatting
+		}
+		document.getElementById("memory").value = full_memory; // full memory referring to the memory and the input stack.
+	} else {
+		document.getElementById("memory").value = "(memory view has been disabled)"; // woop woop
+	}
+}
+function loop() {
+	let loop_steps = 0;
+	while (!halt && loop_steps < update_every) {//steps % update_every != 0) {
+		if (taking_input) {update_memory_display(); return;} // pausing should have no effect during a user input, or at least not until we're done inputting. (but the memory display should be updated, because we're not getting to the one down below if we're running at speed). this is before the debug output, because otherwise upon inpush the debug out would be printed twice.
+		if (debug_enabled) out(pointer + " " + program[pointer] + "\n");
+		if (paused) return; // oops lets exit
+		try {
+			execute(program[pointer]);
+		}
+		catch (err) {
+			stop("error at line "+(pointer+1)+": " + err);
+		}
+		pointer++; steps++; loop_steps++;
+		if (pointer >= program.length) stop('eof');
+		if (steps >= max_steps) stop('step limit exceeded');
+	}
+	update_memory_display(); // memory should only be updated if we're expecting the page to update as well.
+	if (!halt) loop_timeout_variable = setTimeout(loop, update_delay);
+}
+
+function pause() {
+	clearTimeout(loop_timeout_variable);
+	// update button state accordingly
+	document.getElementById("run").innerHTML = "Unpause Program";
+	paused = true;
+}
+
+function unpause() {
+	resume_loop();
+	// refer to pause()
+	document.getElementById("run").innerHTML = "Pause Program";
+	paused = false;
+}
+
+function resume_loop() { // some shorthand
+	loop_timeout_variable = setTimeout(loop, update_delay);
+}
+update_lines_please = setTimeout(update_line_text, 150); // problematic when there are many lines
+</script>
+</html>

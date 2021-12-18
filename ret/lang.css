@@ -1,0 +1,28 @@
+@charset "utf-8";
+
+@media (max-width: 1174px)
+{
+	
+}
+
+body
+{
+	font-family: Helvetica;
+	text-align: center;
+}
+
+
+header
+{
+	font-size: 300%;
+}
+
+subtitle
+{
+	font-size: 90%;
+}
+
+p
+{
+	padding: 5px;
+}

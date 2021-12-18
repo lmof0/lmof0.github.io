@@ -1,0 +1,9 @@
+ins A 2
+math ^0 + 1 0
+if ^0 == 1 hop 2
+ins #0 #1
+done
+A hello 0
+str poo
+A thing 1
+thing hello

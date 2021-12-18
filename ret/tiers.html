@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: tiers</title>
+<link href="../default.css" rel="stylesheet" type="text/css">
+<style>
+@font-face {font-family: Alagard; src: url('alagard.ttf') format('truetype')}
+
+body {
+	background-color: #000000;
+}
+p {
+	color: #FFFFFF;
+	font-family: Alagard, serif;
+	font-size: 125%;
+}
+a {
+	color: #3388ee;
+}
+a:visited {
+	color: #bb88ee;
+}
+div {
+	display:inline;
+}
+</style>
+</head>
+<body>
+	<p id="tiersElement"></p>
+	<br><br><br><br><br>
+	<a href="../index.html">back</a>
+</body>
+<script>
+function random(x) {
+	return Math.floor(Math.random() * x);
+}
+
+function varInList(s, L) {
+	for (tmp = 0; tmp < L.length; tmp++) {
+		if (s == L[tmp]) { return true; }
+	}
+	return false;
+}
+
+// stolen from orteil; specifically from nested (i think)
+function weightedChoose(arr,weightChoose) {
+	if (weightChoose<=0 || weightChoose==undefined) weightChoose=1;
+	return arr[Math.floor(Math.pow(Math.random(),weightChoose)*arr.length)];
+}
+
+function beautify(val) { // also from orteil
+	let str=val.toString();
+	let str2='';
+	for (var i in str) {
+		if ((str.length-i)%3==0 && i>0) str2+=',';
+		str2+=str[i];
+	}
+	return str2;
+}
+
+class Tier {
+	constructor(name, color, texture, power) {
+		this.name = name;
+		this.color = color;
+		this.texture = texture;
+		this.power = power;
+	}
+	display() {
+		let title = this.name[0].toUpperCase().concat(this.name.substr(1));
+		return "<div style=\"color:"+this.color+";\">"+title+"</div><br>Power: " + this.power + "<br><i>" + this.texture + "!</i>";
+	}
+}
+
+let test = new Tier("test","red","rubbery",10);
+
+let tiersElement = document.getElementById("tiersElement");
+let tiers = [
+new Tier("wood","saddlebrown","organic",10),
+new Tier("bone","beige","organic",15),
+new Tier("flint","#505050","natural",20),
+new Tier("stone","slategray","natural",25),
+new Tier("iron","silver","metallic",30)];
+
+let prefixes = ["hy","he","li","bery","bor","car","nit","ox","fl","neo","so","mag","alum","sil","phos","su","chl","ar","pota","ca","sc","ti","van","chr","man","iro","co","nick","cop","zi","ga","ger","ars","sel","bro","kry","rub","str","yt","zirc","nio","moly","tech","ruth","rho","pal","sil","ca","i","ti","anti","tell","io","xe","cae","ba","lan","ce","prase","neod","prom","sam","eur","gado","te","dys","ho","er","thu","ytt","lu","ha","tan","tung","rhe","os","ir","plat","go","mer","th","le","bis","pol","ast","ra","fra","ra","act","th","prot","ur","nept","plut","amer","cu","ber","cali","ein","fer","mend","nob","law","ruther","du","sea","bo","ha","meit","darm","roent","coper","nih","fle","mosc","liver","ten","ogan","nox","oba","lum","sol","tur"];
+let infixes = ["dro","l","th","ll","o","b","ro","y","our","n","d","nes","in","ic","phor","lf","or","g","ss","lc","and","tan","ad","om","gan","n","b","el","per","nc","ll","man","en","en","m","pt","id","ont","tr","on","b","bden","net","en","d","lad","ver","dm","nd","n","mony","ur","d","n","s","r","than","r","odym","ym","eth","ar","op","lin","rb","pros","lm","b","l","erb","tet","fn","tal","sten","n","m","id","in","ld","cury","all","ad","muth","on","at","d","nc","d","in","or","actin","an","un","on","ic","r","kel","forn","stein","m","elev","el","renc","ford","bn","borg","hr","ss","ner","stadt","gen","nic","on","rov","ov","mor","ness","ess","es","m","in","ar","oth"];
+let suffixes = ["ium","ium","ite","ite","ine","us","ur","ind","nt","ate","on","ese","ene","alt","ic","um","ld","th","ony","gen"];
+
+let colors = ["red","orangered","coral","orange","yellow","greenyellow","yellowgreen","green","aquamarine","cyan","blue","midnightblue","indigo","violet","purple","magenta","pink","gray","gold","silver","darkred","darkviolet","mediumslateblue","olivedrab","rebeccapurple","orchid","crimson","lightslategray","mediumaquamarine","lightgray","tan","chocolate","burlywood","sandybrown","wheat","darkorange"];
+
+let effects = ["organic","natural","metallic","rubbery","heavy","light","soft","hard","wet","dry","bright","shimmering","glistening","dark","cold","warm","slimy","rigid","brittle","synthetic","wacky","chaotic","electric","orderly","exotic","destructive","healing","cozy","flaming","earthly","rocklike","refractive","reflective","shiny","radioactive","sterile","pure","reactive","volatile","smooth","rough","cryogenic","magical","dreamy","tough","evil","noble","liminal","luminal","toxic","venomous","sharp","rusting","delicious","crystalline","intricate","robotic","glassy","translucent","dense","porous","hot","magnetic","nuclear","charged","artisinal","inert","pneumatic","rhetoric","comical","phlorescent","encabulant"];
+let effectModifiers = ["","","super","un","greatly ","terribly ","uber-","turbo-","meta","bio-"];
+let effectCombinations = effects.length * effectModifiers.length;
+function getEffect(materialName) { // todo: expand this to procedural effect names
+	return weightedChoose(effectModifiers, 4.5) + effects[random(effects.length)];
+}
+
+for (i = 0; i < 10; i++) {
+	prefix = prefixes[random(prefixes.length)];
+	infix = infixes[random(infixes.length)];
+	suffix = weightedChoose(suffixes,1.2);
+	tier = "";
+	if (varInList(prefix[prefix.length-1],"wrtpsdfghjklzxcvbnm") &&
+	    varInList(infix[0],"wrtpsdfghjklzxcvbnm")) {
+		tier += prefix.concat("aeiouy"[random(6)]);
+	}
+	else if (varInList(prefix[prefix.length-1],"aeiouy") &&
+	    varInList(infix[0],"aeiouy")) {
+		tier += prefix.concat("wrtpsdfghjklzxcvbnm"[random(19)]);
+	}
+	else {tier += prefix;}
+	
+	if (varInList(infix[infix.length-1],"wrtpsdfghjklzxcvbnm") &&
+	    varInList(suffix[0],"wrtpsdfghjklzxcvbnm")) {
+		tier += infix.concat("aeiouy"[random(6)]);
+	}
+	else if (varInList(infix[infix.length-1],"aeiouy") &&
+	    varInList(suffix[0],"aeiouy")) {
+		tier += infix.concat("wrtpsdfghjklzxcvbnm"[random(19)]);
+	}
+	else {tier += infix;}
+	/*
+	if (varInList(suffix[suffix.length-1],"aeiou")) {
+		tier += suffix.concat("wrtpsdfghjklzxcvbnm"[random(20)]);
+	} else {tier += suffix;}*/
+	tier += suffix;
+	
+	tiers.push(new Tier(tier, colors[random(colors.length)], getEffect(tier), 10+(5*(i+5))));
+}
+let nameCombinations = prefixes.length * infixes.length * suffixes.length * (26**2);
+let formattedTierList = "";
+for (j = 0; j < tiers.length; j++) {
+	formattedTierList += tiers[j].display()+"<br><br>";
+}
+tiersElement.innerHTML = "Name Combinations: " + beautify(nameCombinations.toString()) + " <small>(probably inaccurate)</small><br>Effect Combinations: " + beautify(effectCombinations.toString()) + "<br>Colors: " + colors.length.toString() + "<br>Total Combinations: " + beautify((nameCombinations * effectCombinations * colors.length).toString()) + "<br><br>" + formattedTierList;
+</script>
+</html>

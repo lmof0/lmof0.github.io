@@ -1,0 +1,21 @@
+ins tostr 1
+if #0 == 0b1 str a
+if #0 == 0b10 str b
+if #0 == 0b100 str c
+if #0 == 0b1000 str d
+if #0 == 0b10000 str e
+if #0 == 0b100000 str f
+if #0 == 0b1000000 str g
+jump 0
+done
+math ^0 + 1 0
+math ^0 and 0b1 1
+if ^1 > 0 tostr ^1
+math ^0 and 0b10 1
+if ^1 > 0 tostr ^1
+math ^0 and 0b100 1
+if ^1 > 0 tostr ^1
+math ^0 and 0b1000 1
+if ^1 > 0 tostr ^1
+math ^0 and 0b10000 1
+if ^1 > 0 tostr ^1

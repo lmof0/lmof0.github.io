@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: me!!!!!!!!!!!!!!!!!</title>
+<!--
+
+
+hi! source viewers!
+
+
+-->
+<!--<link href="../default.css" rel="stylesheet" type="text/css">-->
+<style>
+[contenteditable] {
+	outline: 0px solid transparent;
+}
+p {
+	//margin-top: 24%;
+	font-family: Times New Roman;
+	font-size: 100%;
+}
+
+#wrap
+{
+	display:table;
+	width:100%;
+	height:100%;
+	margin-bottom:-96px;
+	min-height:96px;
+}
+#text
+{
+	font-size:100%;
+	display:table-cell;
+	vertical-align:middle;
+	text-align:center;
+}
+html
+{
+	height: 100%;
+}
+body
+{
+	height: 100%;
+	margin: 0px;
+	background-color: #FFFFFF;
+}
+</style>
+</head>
+<body>
+	<div id="wrap"><div id="text"><p contenteditable="true" style="font-family:Times New Roman;" id="me">look at me!</p></div></div>
+	<script>
+	// stolen from orteil; specifically from nested (i think)
+function weightedChoose(arr,weightChoose) {
+	if (weightChoose<=0 || weightChoose==undefined) weightChoose=1;
+	return arr[Math.floor(Math.pow(Math.random(),weightChoose)*arr.length)];
+}
+document.getElementById("me").innerHTML = weightedChoose(["look at me!","look at me! woah!!!!!!!!!!!!!!!!","look at me! woah!!!!!!!!!!!!!!!!<br>poop :)<br><br><br><br><br><br><br>","hi!","hi! :)","this one is verrry rare :o","it's my secret little area :)","this text is editable, you know!","go away!!!!!!!!","i believe your collection is now complete :)"],20);
+	</script>
+</body>
+</html>
