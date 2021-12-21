@@ -154,7 +154,7 @@ var update_lines_please; // a timeout variable for updating the line number indi
 var loop_timeout_variable;
 let paused = false; // is the program currently in a paused state?
 
-document.getElementById("output").value = "Hello World! This is the output screen. Feel free to load a preset program or to take a quick look at the incomplete guide below:\n\nset a b - sets mem[a] to the value of b.\nout a - prints mem[a] to the console.\nstr <...> - prints everything after [str ] to the console and does not parse pointers (^n) to values in memory.\nmath x <op> y i - where x, y, and i can be values, and <op> must be a valid mathematical operator (+, -, *, /, mod, pow, <<, >>, xor, and, or). computes x <op> y and stores the value in mem[i].\nhop a - jumps forward 'a' steps in code. a can be negative, allowing an easy way to loop sections of code.\njump a - jumps to line a.\ncall func - jumps to the location of function 'func' and pushes a return address to the stack.\nreturn - jumps to the address on the stack and decrements the stack counter.\nif x <comp> y <code...> - comp must be a valid comparator (==, >, <, >=, <=, !=). if x <comp> y is true, the string following from the end of the if statement to the end of the line will be run as an instruction. this means that if statements can be chained. e.g.:\nif 3 > 2 if 2 < 3 str three is greater than two and two is less than three.\nfunc n - if call n is executed, it will search for func n and jump to it. func serves no computational purpose other than this.\nins <name> <ops> - custom instruction definition. creates an instruction with name <name> which takes an amount of inputs equal to <ops>.\ndone - keyword for the end of an instruction definition.\ninpush - opens the input window and when fed an input gets pushed to the input stack.\ninpop - removes the last element of the input stack.\ntime i - gets the time in milliseconds since january 1 1970 00:00:00 and outputs it to mem[i].\nv scroll down for more info!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! v\n\nspecial values:\npointer - gets the location of the program pointer.\nstack_counter - gets the current height of the stack.\nstack_size - gets the set size of the stack.\nmemory_size - gets the set size of the memory.\ninput - gets the latest input.\ninput_num - gets the latest input in numerical form. returns \"NaN\" if the latest input cannot be converted to a number.\ninput_int - gets the latest input in integer form. returns \"NaN\" if the latest input cannot be converted to an integer."; // hi! also thanks for explain :) (this information is not put into the innerHTML by default because that's already being used to inform the user if js is enabled or not.) ((also this information is incomplete in multiple ways but most importantly does not make any mention of pointers nov9 2021))
+document.getElementById("output").value = "Hello World! This is the output screen. Feel free to load a preset program or to take a quick look at the incomplete guide below:\n\nset a b - sets mem[a] to the value of b.\nout a - prints mem[a] to the console.\nstr <...> - prints everything after [str ] to the console and does not parse pointers (^n) to values in memory.\nmath x <op> y i - where x, y, and i can be values, and <op> must be a valid mathematical operator (+, -, *, /, mod, pow, <<, >>, xor, and, or, ==, >, <, >=, <=, !=). computes x <op> y and stores the value in mem[i].\nhop a - jumps forward 'a' steps in code. a can be negative, allowing an easy way to loop sections of code.\njump a - jumps to line a.\ncall func - jumps to the location of function 'func' and pushes a return address to the stack.\nreturn - jumps to the address on the stack and decrements the stack counter.\nif x <comp> y <code...> - comp must be a valid comparator (==, >, <, >=, <=, !=). if x <comp> y is true, the string following from the end of the if statement to the end of the line will be run as an instruction. this means that if statements can be chained. e.g.:\nif 3 > 2 if 2 < 3 str three is greater than two and two is less than three.\nfunc n - if call n is executed, it will search for func n and jump to it. func serves no computational purpose other than this.\nins <name> <ops> - custom instruction definition. creates an instruction with name <name> which takes an amount of inputs equal to <ops>.\ndone - keyword for the end of an instruction definition.\ninpush - opens the input window and when fed an input gets pushed to the input stack.\ninpop - removes the last element of the input stack.\ntime i - gets the time in milliseconds since january 1 1970 00:00:00 and outputs it to mem[i].\nv scroll down for more info!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! v\n\nspecial values:\npointer - gets the location of the program pointer.\nstack_counter - gets the current height of the stack.\nstack_size - gets the set size of the stack.\nmemory_size - gets the set size of the memory.\ninput - gets the latest input.\ninput_num - gets the latest input in numerical form. returns \"NaN\" if the latest input cannot be converted to a number.\ninput_int - gets the latest input in integer form. returns \"NaN\" if the latest input cannot be converted to an integer."; // hi! also thanks for explain :) (this information is not put into the innerHTML by default because that's already being used to inform the user if js is enabled or not.) ((also this information is incomplete in multiple ways but most importantly does not make any mention of pointers nov9 2021))
 document.getElementById("memory").value = "Program memory will appear here"; // true.
 
 function set_setting(input_name, var_name, def) { // this whole function is actually kindof like a macro
@@ -524,6 +524,10 @@ function abs(n) {
 		else return n*-1n;
 	}
 } // i hope this is as fast as possible
+function bool_to_num(b) {
+	if (use_bigints) return BigInt(Number(b));
+	return Number(b);
+}
 
 function execute(line) {
 	let op = line.split(' ');
@@ -545,7 +549,7 @@ function execute(line) {
 			x = str_not_allowed(value(op[1]));
 			y = str_not_allowed(value(op[3]));
 			index = str_not_allowed(value(op[4]));
-			switch(operator) {
+			switch(operator) { // sorry for long switch statement
 				case "+": mem[index] = x + y; break;
 				case "-": mem[index] = x - y; break;
 				case "*": mem[index] = x * y; break;
@@ -557,6 +561,12 @@ function execute(line) {
 				case "xor": mem[index] = x ^ y; break;
 				case "and": mem[index] = x & y; break;
 				case "or": mem[index] = x | y; break;
+				case "==": mem[index] = bool_to_num(x == y); break;
+				case ">": mem[index] = bool_to_num(x > y); break;
+				case "<": mem[index] = bool_to_num(x < y); break;
+				case ">=": mem[index] = bool_to_num(x >= y); break;
+				case "<=": mem[index] = bool_to_num(x <= y); break;
+				case "!=": mem[index] = bool_to_num(x != y); break;
 				default: throw operator+" is not a valid operator";
 			}
 			mem[index] = floor(mem[index]);
