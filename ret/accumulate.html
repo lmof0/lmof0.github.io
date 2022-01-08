@@ -29,13 +29,16 @@ p
 	display: inline-block;
 	cursor: pointer;
 	font-family: Consolas,"courier new";
+	-webkit-user-select:none;-ms-user-select:none;user-select:none;
 }
 </style>
 </head>
 <body>
 	<div>you <div id="have">have</div> <div id="candy">...</div> candy.<div id="candy ps" style="display:none;"> according to your experts you are producing ... candy every second.</div></div><br>
 	<div style="display:none;" id="money display">you have <div id="money">...</div>.<div style="display:none;" id="money invested"> you have invested $... into business.</div></div><br>
-	<div style="display:none; height:0%;" id="sacrifice display"><u>you have sacrificed <div id="candy sacrificed">...</div> candy for an x<div id="candy multiplier">...</div> multiplier.</u></div>
+	<div style="display:none; height:0%;" id="sacrifice display"><u>you have sacrificed <div id="candy sacrificed">...</div> candy for an x<div id="candy multiplier">...</div> multiplier.</u></div><br>
+	<div style="display:none;" id="employees display">you have hired <div id="employees hired">...</div> employees. <div id="employees">...</div> of them are working.</div><br> 
+	<div style="display:none;position:absolute;right:10px;top:10px;width:150px;text-align:left;" id="raw materials">--raw materials--<br>food: 1000s<br>water: 10000s<br>gold: 50g<br>lead: 134000g<br>rich mineral: 34999t</div><br> 
 	<br><br>
 	<div id="buttons">
 	<button style="display:none; height:0%;" class="button" name="true ending" id="true ending" onclick="end()">what was the point of it all?</button><br>
@@ -47,12 +50,13 @@ p
 	<button style="display:none;" class="button" name="buy" id="buy" onclick="buy(10)">buy 10 candies.</button><br>
 	
 	<button style="display:none;" class="button" name="faster" id="faster" onclick="collect(99); L('faster').innerHTML = 'continue the runaway growth.';">begin the runaway growth.</button><br>
-	<button style="display:none;" class="button" name="job" id="job" onclick="job(1)">get 1 job.</button><br>
+	<button style="display:none;" class="button" name="job" id="job" onclick="job(2); increase('money', 0.2);">get 1 job.</button><br>
 	
 	<button style="display:none;" class="button" name="sacrifice" id="sacrifice" onclick="sacrifice()">become the candy.</button><br>
 	<button style="display:none;" class="button" name="buy more" id="buy more" onclick="buy(100)">buy 100 candies ($10).</button><br>
 	<button style="display:none;" class="button" name="more jobs" id="more jobs" onclick="job(15); increase('money', 5);">aquire currency.</button><br>
 	<button style="display:none;" class="button" name="business" id="business" onclick="business(); L('business').innerHTML = 'hire another employee.';">begin a business in data analysis.</button><br>
+	<button style="display:none;" class="button" name="provisions" id="provisions" onclick="provisions();">buy 1000 units of provisions (100$)</button><br>
 	</div>
 </body>
 <script>
@@ -76,6 +80,10 @@ function beautify(what)//turns 9999999 into 9,999,999
 
 let ended = false;
 
+let t = new Date;
+let current_time = t.getTime();
+let new_time = t.getTime();
+
 let candy = 0;
 let candy_ps = 1;
 let candy_total = 0;
@@ -90,9 +98,73 @@ let money_spent = 0;
 let money_salary = 0;
 
 let employees = 0;
-let food = 0;
-let water = 0;
+let employees_hired = 0;
 let money_invested = 0;
+
+let materials = [];
+class material {
+	constructor(name, qty, measurement, ps=0) {
+		this.name = name;
+		this.qty = qty;
+		this.measurement = measurement;
+		this.unlocked = false;
+		this.total = qty;
+		this.ps = ps;
+		materials.push(this);
+	}
+	add(amount) {
+		this.qty += amount;
+		this.total += Math.max(0, amount);
+	}
+	ps_tick(delta_t) {
+		this.add(this.ps*delta_t);
+	}
+}
+let buildings = [];
+class building {
+	constructor(name, qty, inputs, outputs, costs) {
+		this.name = name;
+		this.qty = qty;
+		this.inputs = inputs;
+		this.outputs = outputs;
+		this.costs = costs;
+		buildings.push(this);
+	}
+	tick(delta_t) {
+		
+	}
+}
+
+let food = new material("food", 0, "mg");
+let water = new material("water", 0, "mL");
+let gold = new material("gold", 0, "g");
+let lead = new material("lead", 0, "g");
+let rich_ore = new material("rich ore", 0, "t");
+
+let monazite = new material("monazite", 0, "kg");
+let steel = new material("steel", 0, "kg");
+
+let artifacts = ["ancient cube","archaic icosahedron","forgotten statue","immovable orb","silver key","gold pendant","icy sculpture","unbreakable sofa","refractive shards","vial of nitrogen","pile of paper wrappings","blue crystal","yellow crystal","purple crystal","red crystal","green crystal","clear crystal","glowing vessel"];
+let collected_artifacts = [];
+
+let cerium = new material("cerium", 0, "kg");
+let praseodymium = new material("praseodymium", 0, "kg");
+let neodymium = new material("neodymium", 0, "g");
+let promethium = new material("promethium", 0, "ng");
+let samarium = new material("samarium", 0, "g");
+let europium = new material("europium", 0, "g");
+let gadolinium = new material("gadolinium", 0, "g");
+let terbium = new material("terbium", 0, "g");
+let dysprosium = new material("dysprosium", 0, "g");
+let holmium = new material("holmium", 0, "g");
+let erbium = new material("erbium", 0, "g");
+let thulium = new material("thulium", 0, "mg");
+let ytterbium = new material("ytterbium", 0, "mg");
+let lutetium = new material("lutetium", 0, "mg");
+let thorium = new material("thorium", 0, "mg");
+let uranium = new material("uranium", 0, "mg");
+let scandium = new material("scandium", 0, "mg");
+let yttrium = new material("yttrium", 0, "mg");
 
 function end() {
 	ended = true;
@@ -136,9 +208,14 @@ function job(salary) {
 
 function business() {
 	money_invested += money;
+	food.add(200);
+	water.add(200);
 	money = 0;
 	employees += 1;
-	money_salary = employees * money_invested;
+	employees_hired += 1;
+	food.unlocked = true;
+	water.unlocked = true;
+	money_salary = employees * (money_invested ** 0.8);
 	L("candy ps").style.display="";
 	L("money invested").style.display="";
 }
@@ -149,6 +226,18 @@ function sacrifice() {
 	money_salary /= 2;
 	candy = 0;
 	L("have").innerHTML = "are";
+}
+
+function provisions() {
+	if (money >= 100) {
+		money -= 100;
+		food.add(1000);
+		water.add(1000);
+	}
+}
+
+function reset_game() {
+	
 }
 
 function calculate_unlocks() {
@@ -163,21 +252,44 @@ function calculate_unlocks() {
 	else L("job").style.display="none";
 	if (money_salary > 0) L("money display").style.display="";
 	
-	if (candy_total >= 100000) L("sacrifice").style.display="";
+	if (candy_total >= 100000 && money_spent < 102) L("sacrifice").style.display="";
 	if (candy_sacrificed > 0) L("sacrifice display").style.display=""; L("sacrifice display").style.height="100%";
 	if (money_total > 100 && candy_collected < 100) L("more jobs").style.display="";
 	if (money_spent > 20 && money_salary > 10) L("buy more").style.display="";
-	if (money_spent > 100 && candy_collected < 100) L("business").style.display="";
+	if ((money_spent > 100 && candy_collected < 100) || employees_hired > 0) L("business").style.display="";
+	else L("business").style.display="none";
 	
+	if (employees > 0) {L("employees display").style.display=""; L("raw materials").style.display="";}
+	else {L("candy ps").style.display="none"; L("money invested").style.display="none";}
+	if (employees_hired > 0) L("provisions").style.display="";
+	if (candy_sacrificed > 1000000000) L("recover artifact").style.display="";
 	
-	if (candy >= 100000 && candy_eaten == 0 && money_salary == 0 && food == 0 && water == 0) L("true ending").style.display=""; L("true ending").style.height="100%";
+	if (candy >= 10000000 && candy_eaten == 0 && money_salary == 0 && food == 0 && water == 0) L("true ending").style.display=""; L("true ending").style.height="100%";
 }
 
 function loop() {
 	calculate_per_second();
 	
-	increase("candy", candy_ps / 60.0);
-	increase("money", money_ps / 60.0);
+	let t0 = new Date;
+	new_time = t0.getTime();
+	let d = (new_time - current_time)/1000; // deltaTime (division by 1000 is for it to be in seconds)
+	increase("candy", candy_ps * d);
+	increase("money", money_ps * d);
+	
+	food.ps = employees * -4;
+	water.ps = employees * -4;
+	
+	for (let i = 0; i < materials.length; i++) {
+		materials[i].ps_tick(d);
+	}
+	
+	if ((food.qty <= 0 || water.qty <= 0) && employees > 0) {
+		employees = 0;
+		money_invested = 0;
+		money_salary = 100;
+		food.qty = 0;
+		water.qty = 0;
+	}
 	
 	calculate_unlocks();
 	
@@ -193,8 +305,17 @@ function loop() {
 		L("candy sacrificed").innerHTML = beautify(candy_sacrificed);
 		L("candy multiplier").innerHTML = (candy_sacrificed**.333).toFixed(1);
 		L("money invested").innerHTML = " you have invested $"+money_invested.toFixed(2)+" into business.";
+		L("employees").innerHTML = beautify(employees);
+		L("employees hired").innerHTML = beautify(employees_hired);
+		L("raw materials").innerHTML = "--raw materials--";
+		for (let i = 0; i < materials.length; i++) {
+			if (materials[i].unlocked) {
+				L("raw materials").innerHTML += "<br>"+materials[i].name + ": "+beautify(materials[i].qty)+materials[i].measurement;
+			}
+		}
 	}
-	
+	let t1 = new Date;
+	current_time = t1.getTime();
 	setTimeout(loop,1000/60);
 }
 loop();
