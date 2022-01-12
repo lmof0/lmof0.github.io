@@ -1,0 +1,103 @@
+$name : would you rather?
+$author : lmof
+$description : canned meats
+$picture : https://cdn.discordapp.com/attachments/662182370778021907/724463238192037918/IMG-20200327-WA0000.jpg
+$button : generate another one
+ 
+$noun
+couch
+child
+tv set
+muffin
+apple
+cookie
+cyanide pill
+dildo
+can of beans
+god
+asteroid
+trash bin
+gaming setup
+bird
+ghost
+vacuum tube
+teapot
+[big |small |]testicle
+snake
+elephant
+spleen[is|||||||||||]
+tower
+fighter jet
+snowplow
+monster
+frog
+stupid motherfucker
+idiotic fatherfucker
+cum blob
+virgin
+mutilated [noun] {20%}
+ 
+$good thing
+live to be [80-120] years old
+gain [1000000-20000000] dollars
+be able to [fly|teleport|time travel|speak to animals|jump very high|never get a boner at a bad time|never have a period ever again|become invisible]
+be very wise
+win the lottery
+have zero college debt
+become a [[noun] ||]celebrity
+be more attractive than everyone
+know the day you die
+become vegan
+die happy
+ 
+$bad thing
+become [an] [noun]
+die instantly
+[vomit|produce|shit] [2-10] [noun][s] every [hour|[2-14] hours]
+be very [retarded|stupid|dumb|deaf|mute|blind|paralyzed]
+always be a virgin
+sneeze every [10-60] seconds
+drown
+shit your pants at this very moment
+have a price on your head
+be uglier than everyone
+become a cannibal
+nut in a sewer
+die[ a virgin| having fucked everyone you know at least once]
+get [violently|brutally|lovingly] [stabbed|shot|fucked|slapped] [7-29] times in the [chest|neck|groin|leg|head|ass]
+[have a nut busted in you whilst being in a sewer|fucking die] {50%}
+ 
+$person
+nicholas cage
+belle delphine
+[vinesauce joel|a big greasy man]
+bill gates
+obama
+you
+the burger king
+god
+your [mother|father]
+john smith
+ 
+$indeterminate
+have to fuck your [mom|dad|brother|sister|favorite world leader]
+[fart|gleek|cum] every [10-60] seconds
+lose your genitals
+not be able to tell the difference between [an] [noun] and [an] [noun]
+gain [3-49] teeth
+have to use a $[1-37]K dollar [noun] daily
+have a dick shaped like a [noun]
+only be able to eat [noun][s]
+fuck [person]
+have to eat [person][s] personal [noun]
+receive [2-28] [noun][s] daily
+ 
+$action
+[good thing] {40%}
+[bad thing] {40%}
+[good thing] but [[bad thing]|[indeterminate]]
+[indeterminate]
+[good thing] but [action] {5%}
+ 
+$wyr
+<big>[if you had no other choice, ||]would you rather [action] <big>OR</big> [action]</big>
