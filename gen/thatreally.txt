@@ -1,0 +1,175 @@
+$name : that really blanks my blank
+$author : lmof
+$description : canned vegetables
+$picture : https://cdn.discordapp.com/attachments/662182370778021907/724126069258584144/12kpxc.jpg
+$button : generate another one
+
+$verb
+pisses[ off|]
+poops
+salts
+sugars
+censors
+crumples
+cramps
+creams
+builds
+constructs
+destroys
+eliminates
+mocks
+jacks
+jerks
+pisses
+burns
+waxes
+flash freezes
+magnetises
+grinds
+pops
+fucks
+shits
+vomits
+glansifies
+dominates
+somnambulates
+drinks
+saponifies
+cums
+[cuts|tears|rips|fucks] open
+diseases
+fortifies
+sexes
+impregnates
+twists
+turns
+slobbers on
+moistens
+kills
+murders
+martyrs
+shits into the eyes of
+screws
+nails
+jails
+dings
+takes
+steals
+captures
+[deep |]fries
+enslaves
+cucks
+cracks
+fractures
+fragments
+defragments
+garbles
+encrypts
+corrupts
+decodes
+avenges
+suffocates
+clamps onto
+grabs
+fondles
+screams
+guffaws
+chortles
+drugs
+assaults
+wrenches
+encabulates
+trogs
+encapsulates
+teaches
+milks
+gleeks
+marinates
+
+$noun
+apples
+pears
+table[s|]
+couche[s|]
+wife[s|]
+hentai
+children
+middle class
+films
+cocks
+jerks
+jerky
+people
+cities
+cacti
+hair
+penises
+foreskin
+vaginal core
+elastic funnels
+coffee mugs
+gears
+[jizz |]napkin[s|]
+beef nuggets
+farm animals
+marios
+mucus
+teeth
+civil [war|skirmish|battle|talk]
+cum[| chalice]
+seltzer
+[fuck|root] [juice|beer]
+ass
+fortnite funnies
+mounds
+earlobes
+bulge
+earwax
+memes
+college thesis
+sinusoidal dingle arm
+balls
+testicles
+scrote
+pubes
+eyes
+mother
+father
+brother
+sister
+daughter
+son
+galaxy
+car
+kids
+combustion engine
+bronies
+bees
+tongue
+dickwaffle
+kooky docky poo poo
+anus farts
+[4-19]th favorite marble flooring
+rectum
+shaft
+elevator music
+joy
+sorrow
+hatred
+fear
+death
+birthday
+orange[s|]
+coins
+relics
+treasures
+artifa[n||]cts
+dors
+orifice
+cookies
+spit
+
+$phrase
+<b><big>that really [verb] my [noun]</big></b>
+<b><big>that really [verb] me</big></b> {5%}
+ey fuck you luigi {1%}
