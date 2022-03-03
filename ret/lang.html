@@ -3,9 +3,9 @@
 i used the let keyword inconsistently while writing this and there are for loops where there should be table lookups but oh well
 
 TODO:
-- change default mem size to 16 and default stack size to 4 (+ in general have a more convenient way of setting defaults)
-- access custom instructions from a lookup table instead of looking up the unchangeable program each time one is run
-- same for call and func pls
+d change default mem size to 16 and default stack size to 4 (+ in general have a more convenient way of setting defaults)
+d access custom instructions from a lookup table instead of looking up the unchangeable program each time one is run
+d same for call and func pls
 - make a series of example programs for learning this mess
 
 -->
@@ -53,10 +53,10 @@ a:visited {
 	<input id="update delay" name="update delay" placeholder="default: 16" type="text"></input><small><div style="color:ivory;display:inline;"> (how many milliseconds do we pause for in-between display updates? good for debugging if set to a large number like 1000)</div></small>
 	<br>
 	<label>memory size: </label>
-	<input id="memory size" name="memory size" placeholder="default: 256" type="text"></input><small><div style="color:ivory;display:inline;"> (the length of the memory array, including the stack)</div></small>
+	<input id="memory size" name="memory size" placeholder="default: 16" type="text"></input><small><div style="color:ivory;display:inline;"> (the length of the memory array, including the stack)</div></small>
 	<br>
 	<label>stack size: </label>
-	<input id="stack size" name="stack size" placeholder="default: 10" type="text"></input><small><div style="color:ivory;display:inline;"> (how much of the memory are we going to devote to the stack? not counting the stack pointer, which is also stored in memory)</div></small>
+	<input id="stack size" name="stack size" placeholder="default: 4" type="text"></input><small><div style="color:ivory;display:inline;"> (how much of the memory are we going to devote to the stack? not counting the stack pointer, which is also stored in memory)</div></small>
 	<br>
 	<input type="checkbox" id="debug" name="debug" value="debug mode">
 	<label for="debug"> Debug mode</label>
@@ -127,15 +127,16 @@ function varInList(s, L) {
 	return false;
 }
 // do not confound initialization with restarting the program state!
-let memory_size = 256; // default in python version is 256
+let memory_size = 16; // default in python version is 256
 let mem = new Array(memory_size); // initialize memory of length 256 with undefined values
 for (let i=0; i<mem.length; i++) {mem[i]=0;} // initalize all memory values at zero
-let stack_size = 10; // stack size and counter are constants which may be freely changed while the program is not running. default in python version is 10.
+let stack_size = 4; // stack size and counter are constants which may be freely changed while the program is not running. default in python version is 10.
 let stack_counter = (memory_size - 1) - stack_size; // where is the stack counter stored in memory?
 mem[stack_counter] = 0; // stack counter initialization (will be zero anyway). maxes at stack_size.
 let pointer = 0; // program pointer
 let program = []; // the script
 let insts = []; // custom instructions
+let insts_names = []; // names of custom instructions (so that i can find them!!!!!) 
 let halt = true; // should the program halt? well it wont be running at the beginning
 let max_steps = 1000; // how many steps before the program is automatically halted (to prevent the site from freezing)
 let update_every = 20; // how many steps should run before we pause momentarily to update the page display?
@@ -150,6 +151,13 @@ let show_memory = true; // are we showing/updating the memory display while the 
 let memory_base = "dec"; // what base are the numbers in memory?
 let use_bigints = false; // is memory using BigInts or Numbers?
 var update_lines_please; // a timeout variable for updating the line number indicator on the side of the code window.
+let func_locs = []; // lookup for function locations. hopefully makes things faster.
+class func_loc {
+	constructor(name, loc) {
+		this.name = name;
+		this.loc = loc;
+	}
+}
 
 var loop_timeout_variable;
 let paused = false; // is the program currently in a paused state?
@@ -169,7 +177,7 @@ function set_setting(input_name, var_name, def) { // this whole function is actu
 }
 
 class example_program {
-	constructor(name, code, settings=[1000,20,16,256,10,"no debug","no expanded memory","yes show memory","dec","no bigints"]) {
+	constructor(name, code, settings=[1000,20,16,16,4,"no debug","no expanded memory","yes show memory","dec","no bigints"]) {
 		this.name = name;
 		this.code = code;
 		//this.settings = [max_steps, speed, update_delay, ... etc] maybe one day (i love readability)
@@ -284,7 +292,35 @@ str ' is a prime number.\n
 reset
 */
 
-examples.push(new example_program("burger king recursion", "str number fifteen, burger king recursion: \nstr the last thing you want in your burger king burger is \nhop -1", settings=[1000,1,500,256,10,"no debug","no expanded memory","yes show memory","dec"]));
+/*
+ins j 1
+math #0 + 1 0
+if ^0 > 5 j
+j ^0
+done
+j 0
+*/
+
+/*
+ins j 0
+math ^0 + 1 0
+out ^0
+if ^0 < 5 j
+done
+j
+*/
+
+/*
+js execute("ins a"+mem[0]+" ^0")
+out #0
+str \n
+done
+math ^0 + 1 0
+js execute("a"+(mem[0]-1)+(" ^0".repeat(mem[0])))
+jump 1
+*/
+
+examples.push(new example_program("burger king recursion", "str number fifteen, burger king recursion: \nstr the last thing you want in your burger king burger is \nhop -1", settings=[1000,1,500,16,4,"no debug","no expanded memory","yes show memory","dec"]));
 
 document.getElementById("examples").onchange = () => {
 	stop("a different program has been loaded");
@@ -352,6 +388,9 @@ class instruction {
 		this.code = code;
 	}
 	run(inputs) {
+		if (inputs.length < this.op) { // this extra check was not in the python version
+			throw "not enough operands for custom instruction: '"+this.name+"'";
+		}
 		for (let i = 0; i < this.code.length; i++) { // copied directly from the pythonic version
 			let tmp = this.code[i];
 			if (tmp.includes("#")) { // replace for function variables
@@ -370,7 +409,7 @@ function restart_program_state() { // lazy fix (?????????????????? what does thi
 		if (!use_bigints) {
 			mem[i]=0;
 		} else {
-			mem[i]=0n;
+			mem[i]=0n; // this may or may not be unneccessary
 		}
 	} // initalize all memory values at zero
 	stack_counter = (memory_size - 1) - stack_size; // where is the stack counter stored in memory?
@@ -379,15 +418,17 @@ function restart_program_state() { // lazy fix (?????????????????? what does thi
 	steps = 0; // program steps taken
 	program = []; // the script
 	insts = []; // custom instructions
+	insts_names = []; // names of custom instructions (so that i can find them!!!!!) 
 	document.getElementById("output").value = "Running...";
 	paused = false; // the program should be running now
 	input_stack = []; // list of string values entered by the user
 	taking_input = false; // restart this for obvious reasons
+	func_locs = []; // see line directly above
 }
 
 function out(txt) {
 	document.getElementById("output").value += txt;
-	document.getElementById("output").scrollTop = 1000000000; // keep the output window at the bottom where all the new strings are getting printed. (used to be scrollTopMax but that was creating inconsistent behavior)
+	document.getElementById("output").scrollTop = 1000000000; // keep the output window at the bottom where all the new strings are getting printed. (used to be scrollTopMax but that was creating inconsistent behavior across browsers)
 }
 function clear_out() {
 	document.getElementById("output").value = "";
@@ -501,6 +542,7 @@ function str_not_allowed(v) { // shorthand for cases where a value of type "stri
 }
 
 function location_of_function(n) { // crude method for finding the location of a function. if this were a lookup table things might possibly be able to run 1000000x faster.
+	/*
 	for (let i = 0; i < program.length; i++) {
 		let line = program[i].split(" ");
 		if (line[0] == "func") {
@@ -508,6 +550,9 @@ function location_of_function(n) { // crude method for finding the location of a
 				return i;
 			}
 		}
+	}*/
+	for (let i = 0; i < func_locs.length; i++) { // this is more efficient because its complexity scales by the amount of functions there are, as opposed to the amount of lines there are in the program.
+		if (func_locs[i].name == n) return func_locs[i].loc;
 	}
 	return 0;
 }
@@ -630,6 +675,7 @@ function execute(line) {
 			}
 			insts.push(new instruction(name, number_of_ops, code));
 			pointer += program.slice(pointer).indexOf("done");
+			insts_names.push(name);
 			if (debug_enabled) out("  (created instruction '"+name+"' with "+number_of_ops+" operands and "+code.length+" lines)\n");
 			break;
 		case "func":
@@ -650,14 +696,20 @@ function execute(line) {
 			mem[i] = t.getTime();
 			if (debug_enabled) out("  (got time: "+t.getTime()+" and stored in "+i+")\n");
 			break;
+		case "js":
+			let js = line.substr(3);
+			eval(js);
+			break;
 		/* end of js exclusives */
 		default:
-			let insts_names = []; // list the instructions by name...
+			/*let insts_names = []; // list the instructions by name...
 			for (let i = 0; i < insts.length; i++) {
 				insts_names.push(insts[i].name);
 			} // ...so that indexOf can find the requested instruction and run it
 			// this might be faster if insts_names was declared and updated alongside insts
 			// ah well
+			update: i am doing that now. this commented-out code is defunct.
+			*/
 			try {
 				insts[insts_names.indexOf(op[0])].run(op.slice(1));
 			}
@@ -681,8 +733,8 @@ function run() {
 	set_setting("max steps", "max_steps", 1000);
 	set_setting("update every", "update_every", 20);
 	set_setting("update delay", "update_delay", 16);
-	set_setting("memory size", "memory_size", 256);
-	set_setting("stack size", "stack_size", 10);
+	set_setting("memory size", "memory_size", 16);
+	set_setting("stack size", "stack_size", 4);
 	debug_enabled = document.getElementById("debug").checked;
 	use_bigints = document.getElementById("bigints").checked;
 	
@@ -705,6 +757,12 @@ function run() {
 	update_memory_display(); // we've just rearranged the internals of the interpreter, so clearly the visuals need to be updated.
 	
 	program = document.getElementById("code").value.split('\n'); // get code info and split into lines
+	for (let i = 0; i < program.length; i++) { // find all the locations of functions beforehand and put them in a nice list for safekeeping.
+		words = program[i].split(' ');
+		if (words[0] == "func") {
+			func_locs.push(new func_loc(words[1], i));
+		}
+	}
 	halt = false; // we are currently running!
 	document.getElementById("output").value = "";
 	loop();
