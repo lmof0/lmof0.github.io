@@ -75,6 +75,7 @@ a:visited {
 		  <option value="smwrng">SMW RNG Function</option>
 		  <option value="numbergame">Number Guessing Game</option>
 		  <option value="rabin">Miller-Rabin Prime test</option>
+		  <option value="pi">Pi from Arctan (Pi day 2022)</option>
 		</optgroup>
 		<optgroup label="Error Examples">
 		  <option value="invalid dereference">Invalid Dereference</option>
@@ -213,6 +214,9 @@ examples.push(new example_program("numbergame", "inpop\nstr I'm thinking of a nu
 
 examples.push(new example_program("rabin", "ins // 0\ndone\n// warning: there is an absolute hodgepodge of extra stuff that probably doesn't need to be here\nins div_again 0\nmath ^1 / 2 1 divide d\nhop -1\nmath ^3 + 1 3\ndone\nins reset 0\nmath memory_size - 1 7\nmath ^7 - stack_size 7\nset ^7 0 effectively empties the stack\nmath ^0 + 1 0\ncall back\ndone\ncall main\nfunc testify\nset 5 1 modified\nset 6 0 reset counter\nmath ^5 * ^4 5\nmath ^5 mod ^0 5\nmath ^6 + 1 6 counter\nif ^6 < ^1 hop -3 if the counter hasn't surpassed d, we need to keep multiplying\nmath ^0 - 1 7\nif ^5 != 1 if ^5 != ^7 call not_prime\nreturn\nfunc not_prime\nstr '\nout ^0\nstr ' is not a prime number.\\n\njump 999 // reset\nreturn\nfunc main\nstr Choose a number to test for primality. (This test can yield false negatives, I'm not entirely sure why)\\n\ninpush\nset 0 input_int\nstr testing...\\n\nfunc back\nmath ^0 - 1 1\nmath ^1 mod 2 2\nif ^2 == 0 div_again\nset 4 2 witness\ncall testify\nset 4 3\ncall testify\nstr '\nout ^0\nstr ' is a prime number.\\n\n// reset",
 	settings=[1000000,1000,16,12,3,"no debug","yes expanded memory","yes show memory","dec","no bigints"]));
+	
+examples.push(new example_program("pi","str How many digits of pi would you like?\ninpush\njs clear_out()\nstr pi = 16 * arctan(1/5) - 4 * arctan(1/239)\\n\nstr arctan(1/x) = 1/x - 1/3x^3 + 1/5x^5 - 1/7x^7 + 1/9x^9...\\n\\n\nmath 10 pow input_int 8\ninpop\nins frac 3\nmath #0 * ^8 5\nmath ^5 * ^8 5\nmath #1 * ^8 6\nmath ^5 / ^6 #2\ndone\nins arctan 2\nset 9 ^#1\nmath ^0 + 2 0\nmath ^1 * -1 1\nmath #0 pow ^0 2\nmath ^0 * ^2 2\nfrac ^1 ^2 2\nmath ^2 + ^#1 #1\nif ^9 != ^#1 arctan #0 #1\ndone\nset 0 -1\nset 1 -16\narctan 5 3\nstr 16 * arctan(1/5) = \nout ^3\nstr \\n\nset 0 -1\nset 1 4\narctan 239 4\nstr -4 * arctan(1/239) = \nout ^4\nstr \\n\\n\nmath ^3 + ^4 7\nstr pi = \nout ^7\nstr \\n",
+	settings=[1000,20,16,10,0,"no debug","yes expanded memory","yes show memory","dec","yes bigints"]));
 	
 /* --- ERROR EXAMPLES --- */
 examples.push(new example_program("invalid dereference", "str here a value is dereferenced as 'the -2809th index in memory' which is undefined, throwing an error\nset 0 -2809\nset 1 0\nset 2 1\nout ^^^^2"));
@@ -512,11 +516,13 @@ function value_as_bigint(n) { // why wasn't this incorporated into the value fun
 	if (n == "input") return input_stack[input_stack.length - 1];
 	if (n == "input_num") {
 		//if (isNaN(input_stack[input_stack.length - 1])) return "NaN"; // for input-checking. this does open the possibility to more annoying debugging, but i currently have no idea how to implement try catch statements (in scriptlang), so this will do.
-		return BigInt(input_stack[input_stack.length - 1]);
+		try {return BigInt(input_stack[input_stack.length - 1]);}
+		catch {return "NaN";}
 	}
 	if (n == "input_int") {
 		//if (!Number.isSafeInteger(Number(input_stack[input_stack.length - 1]))) return "NaN"; // technically this should be NaI but who cares
-		return BigInt(input_stack[input_stack.length - 1]);
+		try {return BigInt(input_stack[input_stack.length - 1]);}
+		catch {return "NaN";}
 	}
 	/* end of special cases */
 	
