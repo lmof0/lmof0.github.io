@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: capitalism</title>
+<link href="../default.css" rel="stylesheet" type="text/css">
+<style>
+body
+{
+	background-color: #000000;
+	generic-family: serif;
+	font-family: "Garamond", Garamond, serif;
+	font-weight: lighter;
+	text-align: justify;
+}
+hr
+{
+	background-color: #00ff00;
+	height:1px;
+	border-width:0;
+}
+h1
+{
+	color: #00ff00;
+}
+</style>
+</head>
+<body>
+<center><h1>Capitalism</h1></center>
+<hr>
+<h1 id="dollars">$0.00</h1>
+<h2 style="color:#aaaaaa;">Lemonade Stand</h2>
+<svg width="196" height="36" id="lemonade_stand_progress">
+  <rect width="196" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
+  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
+  <text x="64" y="26" fill="black" style="font-family:initial;font-size:30px;text-align:center;">$0.50</text>
+</svg>
+<script>
+let dollars = 0n;
+function money(n, prefix="$") {
+	if (n < 100000000000n) {
+		let string = "";
+		let chars = (n + "").split("").reverse();
+		for (let i = 0; i < chars.length; i++)
+		{  // we have to move over 2 places for the cents
+			if (i%3 == 0+2 && i > 0+2) string = "," + string;
+			if (i == 2) string = "." + string;
+			string = chars[i] + string;
+		}
+		if (string.length <3) string = ("0.0").substr(0,4-string.length) + string;
+		string = prefix + string;
+		return string;
+	}
+	let irregulars = ["","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
+	let prefixes = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
+	let infixes = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
+	let suffixes = ["c","gint","cent","dugent","tregent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
+	
+	let str_n = (n+"");
+	let magnitude = ((n+"").length-3)-2; // minus two for the cents
+	let illionth = Math.floor((magnitude-3+2)/3);
+	
+	str_n = str_n.substr(0,4 + (magnitude+2)%3);
+	let chars = str_n.split("").reverse();
+	let string = "";
+	for (let i = 0; i < chars.length; i++) {
+		if (i == 3) string = "." + string; 
+		string = chars[i] + string;
+	}
+	if (illionth <= 9) string = string + " " + irregulars[illionth];
+	if (illionth >= 10) {
+		digits = (illionth + "").split("").reverse();
+		ending = "illion";
+		if (illionth >= 10 && illionth < 20) ending = suffixes[0] + ending;
+		if (illionth >= 20 && illionth < 100) ending = suffixes[1] + ending;
+		if (illionth >= 100) ending = suffixes[Math.floor(illionth/100)+1] + ending;
+		string = string + " " + prefixes[digits[0]] + ("s".repeat(illionth == 23 ? 1 : 0)) + infixes[digits[1]] + ending;
+		// there's a lot going on here, but that s.repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion"
+	}
+	return prefix + string;
+}
+
+let buildings = [];
+class building {
+	constructor(id, name, max_time, profit, currency="dollars") {
+		this.id = id;
+		this.name = name;
+		this.time = 0;
+		this.max_time = max_time;
+		this.profit = profit;
+		this.currency = currency;
+		buildings.push(this);
+	}
+	tick() {
+		if (this.time > this.max_time) {
+			let loopovers = Math.floor(this.time / this.max_time);
+			eval(this.currency+" += this.profit * BigInt(loopovers);");
+			this.time = this.time % this.max_time;
+		}
+	}
+}
+lemonade_stand = new building(0, "lemonade_stand", 2, 50n, "dollars");
+function get_time() {
+	let t = new Date();
+	return t.getTime();
+}
+let past_loop_time = get_time();
+let cur_loop_time = get_time();
+function loop() {
+	cur_loop_time = get_time();
+	for (let i = 0; i < buildings.length; i++) {
+		buildings[i].time += (cur_loop_time - past_loop_time)/1000;
+		buildings[i].tick();
+		document.getElementById(buildings[i].name+"_progress").children[1].attributes.width.value = (buildings[i].time / buildings[i].max_time) * 196;
+	}
+	document.getElementById("dollars").innerHTML = money(dollars);
+	past_loop_time = get_time();
+	setTimeout(loop, 1000/60);
+}
+loop();
+</script>
+</body>
+</html>
