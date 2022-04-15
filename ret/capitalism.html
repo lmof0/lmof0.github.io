@@ -23,22 +23,83 @@ h1
 {
 	color: #00ff00;
 }
+.button
+{
+	background-color: #000000;
+	display: inline-block;
+	font-family: Consolas,"courier new";
+}
+.button-enabled{color:#ffffff;cursor:pointer;animation-name:button-e;animation-duration:0.2s;}
+.button-disabled{color:#aaaaaa;cursor:default;animation-name:button-d;animation-duration:0.2s;}
+@keyframes button-e {from {color:#aaaaaa} to {color:#ffffff}}
+@keyframes button-d {from {color:#ffffff} to {color:#aaaaaa}}
+.buildingname
+{
+	color:#aaaaaa;
+	display:inline;
+}
+.svgtext
+{
+	font-family:initial;
+	text-align:center;
+	text-anchor:middle;
+}
+.price-cantafford {color:#cd2512;font-size:16px;font-family:initial;display:inline;animation-name:cantafford;animation-duration:0.2s;}
+.price-canafford {color:#25cd12;font-size:16px;font-family:initial;display:inline;animation-name:canafford;animation-duration:0.2s;}
+.noselect {user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;}
+@keyframes canafford {from {color: #cd2512;} to {color: #25cd12;}}
+@keyframes cantafford {from {color: #25cd12;} to {color: #cd2512;}}
+.building
+{
+	border:1px solid #999999;
+	padding:10px;
+	margin:0px 75% 16px 0px
+}
 </style>
 </head>
 <body>
-<center><h1>Capitalism</h1></center>
+<center><h1>Capitalsim</h1></center>
 <hr>
 <h1 id="dollars">$0.00</h1>
-<h2 style="color:#aaaaaa;">Lemonade Stand</h2>
-<svg width="196" height="36" id="lemonade_stand_progress">
-  <rect width="196" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
-  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
-  <text x="64" y="26" fill="black" style="font-family:initial;font-size:30px;text-align:center;">$0.50</text>
-</svg>
+<div id="lemonade_stand" class="building">
+	<h2 class="buildingname">Lemonade Stand </h2>
+	<div style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br><br>
+	<svg width="328" height="36" id="lemonade_stand_progress">
+	  <rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
+	  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
+	  <text x="108" y="24" fill="black" style="font-size:22px;" class="svgtext noselect">
+		something went wrong
+	  </text>
+	  <text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">
+		00:00:00.000
+	  </text>
+	</svg><br>
+	<button class="button noselect button-disabled" id="lemonade_stand_buy" onclick="lemonade_stand.buy()" disabled>buy 1x</button><div class="price-cantafford noselect" id="lemonade_stand_price"> ($10.00)</div><br>
+	<button class="button noselect button-disabled" id="lemonade_stand_buy_10" onclick="lemonade_stand.buy(10)" disabled>buy 10x</button><div class="price-cantafford noselect" id="lemonade_stand_price_10"> ($10,000.00)</div><br>
+	<button class="button noselect button-disabled" id="lemonade_stand_buy_100" onclick="lemonade_stand.buy(100)" disabled>buy 100x</button><div class="price-cantafford noselect" id="lemonade_stand_price_100"> ($1,000,000.00)</div><br>
+</div>
+<div id="newspaper_delivery" class="building">
+	<h2 class="buildingname">Newspaper Delivery </h2>
+	<div style="color:#ffffff;font-size:1.25em;display:inline;" id="newspaper_delivery_amount">&mdash; 0</div><br><br>
+	<svg width="328" height="36" id="newspaper_delivery_progress">
+	  <rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
+	  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
+	  <text x="108" y="24" fill="black" style="font-size:22px;" class="svgtext noselect">
+		something went wrong
+	  </text>
+	  <text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">
+		00:00:00.000
+	  </text>
+	</svg><br>
+	<button class="button noselect button-disabled" id="newspaper_delivery_buy" onclick="newspaper_delivery.buy()" disabled>buy 1x</button><div class="price-cantafford noselect" id="newspaper_delivery_price"> ($10.00)</div><br>
+	<button class="button noselect button-disabled" id="newspaper_delivery_buy_10" onclick="newspaper_delivery.buy(10)" disabled>buy 10x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_10"> ($10,000.00)</div><br>
+	<button class="button noselect button-disabled" id="newspaper_delivery_buy_100" onclick="newspaper_delivery.buy(100)" disabled>buy 100x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_100"> ($1,000,000.00)</div><br>
+</div>
 <script>
 let dollars = 0n;
+let money_display_threshold = 100000000000n;
 function money(n, prefix="$") {
-	if (n < 100000000000n) {
+	if (n < money_display_threshold) {
 		let string = "";
 		let chars = (n + "").split("").reverse();
 		for (let i = 0; i < chars.length; i++)
@@ -54,7 +115,7 @@ function money(n, prefix="$") {
 	let irregulars = ["","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
 	let prefixes = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
 	let infixes = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
-	let suffixes = ["c","gint","cent","dugent","tregent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
+	let suffixes = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
 	
 	let str_n = (n+"");
 	let magnitude = ((n+"").length-3)-2; // minus two for the cents
@@ -74,47 +135,106 @@ function money(n, prefix="$") {
 		if (illionth >= 10 && illionth < 20) ending = suffixes[0] + ending;
 		if (illionth >= 20 && illionth < 100) ending = suffixes[1] + ending;
 		if (illionth >= 100) ending = suffixes[Math.floor(illionth/100)+1] + ending;
-		string = string + " " + prefixes[digits[0]] + ("s".repeat(illionth == 23 ? 1 : 0)) + infixes[digits[1]] + ending;
-		// there's a lot going on here, but that s.repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion"
+		string = string + " " + prefixes[digits[0]] + ("s".repeat(illionth%100 == 23 ? 1 : 0)) + infixes[digits[1]] + ending;
+		// there's a lot going on here, but that s.repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion". this will also occur on any illion number whose base 10 representation ends with "23".
 	}
 	return prefix + string;
+}
+function as_time(t, do_ms=false) {
+	let ms = Math.round((t*1000)%1000);
+	let s = Math.floor(t);
+	let m = Math.floor(s/60);
+	let h = Math.floor(m/60);
+	s %= 60;
+	m %= 60;
+	return ("0".repeat(Math.max(0,2-(h+'').length))) + h + ":" + ("0".repeat(2-(m+'').length)) + m + ":" + ("0".repeat(2-(s+'').length)) + s + ("." + ("0".repeat(3-(ms+'').length)) + ms).repeat(do_ms ? 1 : 0);
 }
 
 let buildings = [];
 class building {
-	constructor(id, name, max_time, profit, currency="dollars") {
+	constructor(id, name, max_time, base_profit, base_price, currency="dollars") {
 		this.id = id;
 		this.name = name;
 		this.time = 0;
 		this.max_time = max_time;
-		this.profit = profit;
+		this.base_profit = base_profit;
+		this.base_price = base_price;
 		this.currency = currency;
+		this.amount = 0;
 		buildings.push(this);
 	}
 	tick() {
+		if (this.amount > 0) this.time += (cur_loop_time - past_loop_time)/1000;
 		if (this.time > this.max_time) {
 			let loopovers = Math.floor(this.time / this.max_time);
-			eval(this.currency+" += this.profit * BigInt(loopovers);");
+			eval(this.currency+" += this.get_profit() * BigInt(loopovers);");
 			this.time = this.time % this.max_time;
 		}
 	}
+	get_price(n=1) {
+		if (n == 0) return 0n;
+		//let multiplier = 100.15**(n+this.amount-2);
+		let multiplier = 100n;
+		for (let i = 0; i < n+this.amount-1; i++) {
+			multiplier *= 115n;
+			multiplier /= 100n;
+		}
+		let price = ((this.base_price)*multiplier)/100n
+		return price+this.get_price(n-1);
+	}
+	get_profit() {
+		return this.base_profit * BigInt(this.amount);
+	}
+	buy(n=1) {
+		eval(this.currency+" -= this.get_price(n);");
+		this.amount += n;
+	}
 }
-lemonade_stand = new building(0, "lemonade_stand", 2, 50n, "dollars");
+lemonade_stand = new building(0, "lemonade_stand", 2, 50n, 200n, "dollars");
+lemonade_stand.amount = 1;
+newspaper_delivery = new building(1, "newspaper_delivery", 4, 1000n, 2500n, "dollars");
 function get_time() {
 	let t = new Date();
 	return t.getTime();
+}
+function get_element(e) {
+	return document.getElementById(e);
 }
 let past_loop_time = get_time();
 let cur_loop_time = get_time();
 function loop() {
 	cur_loop_time = get_time();
 	for (let i = 0; i < buildings.length; i++) {
-		buildings[i].time += (cur_loop_time - past_loop_time)/1000;
 		buildings[i].tick();
-		document.getElementById(buildings[i].name+"_progress").children[1].attributes.width.value = (buildings[i].time / buildings[i].max_time) * 196;
+		let progress_graphic = get_element(buildings[i].name+"_progress");
+		progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].max_time) * 216;
+		let profit_string = money(buildings[i].get_profit());
+		progress_graphic.children[2].innerHTML = profit_string;
+		progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 5))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
+		progress_graphic.children[3].innerHTML = as_time(buildings[i].max_time - buildings[i].time, buildings[i].max_time < 1);
+		get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].amount;
+		
+		let can_purchase = dollars >= buildings[i].get_price();
+		get_element(buildings[i].name+"_price").innerHTML = " (" + money(buildings[i].get_price()) + ")";
+		get_element(buildings[i].name+"_price").className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
+		get_element(buildings[i].name+"_buy").className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
+		get_element(buildings[i].name+"_buy").disabled = !can_purchase;
+		
+		let can_purchase_10 = dollars >= buildings[i].get_price(10);
+		get_element(buildings[i].name+"_price_10").innerHTML = " (" + money(buildings[i].get_price(10)) + ")";
+		get_element(buildings[i].name+"_price_10").className = can_purchase_10 ? "price-canafford noselect" : "price-cantafford noselect";
+		get_element(buildings[i].name+"_buy_10").className = can_purchase_10 ? "button noselect button-enabled" : "button noselect button-disabled";
+		get_element(buildings[i].name+"_buy_10").disabled = !can_purchase_10;
+		
+		let can_purchase_100 = dollars >= buildings[i].get_price(100);
+		get_element(buildings[i].name+"_price_100").innerHTML = " (" + money(buildings[i].get_price(100)) + ")";
+		get_element(buildings[i].name+"_price_100").className = can_purchase_100 ? "price-canafford noselect" : "price-cantafford noselect";
+		get_element(buildings[i].name+"_buy_100").className = can_purchase_100 ? "button noselect button-enabled" : "button noselect button-disabled";
+		get_element(buildings[i].name+"_buy_100").disabled = !can_purchase_100;
 	}
 	document.getElementById("dollars").innerHTML = money(dollars);
 	past_loop_time = get_time();
+	//lemonade_stand.max_time /= 1.01;
 	setTimeout(loop, 1000/60);
 }
 loop();
