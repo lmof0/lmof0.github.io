@@ -33,7 +33,7 @@ h1
 .button-disabled{color:#aaaaaa;cursor:default;animation-name:button-d;animation-duration:0.2s;}
 @keyframes button-e {from {color:#aaaaaa} to {color:#ffffff}}
 @keyframes button-d {from {color:#ffffff} to {color:#aaaaaa}}
-.buildingname
+.title
 {
 	color:#aaaaaa;
 	display:inline;
@@ -43,6 +43,7 @@ h1
 	font-family:initial;
 	text-align:center;
 	text-anchor:middle;
+	text-shadow:2px 2px black;
 }
 .price-cantafford {color:#cd2512;font-size:16px;font-family:initial;display:inline;animation-name:cantafford;animation-duration:0.2s;}
 .price-canafford {color:#25cd12;font-size:16px;font-family:initial;display:inline;animation-name:canafford;animation-duration:0.2s;}
@@ -53,7 +54,14 @@ h1
 {
 	border:1px solid #999999;
 	padding:10px;
-	margin:0px 75% 16px 0px
+	margin:0px 16px 16px 0px;
+	max-width:400px;
+}
+.upgrades
+{
+	border:1px solid gold;
+	padding:10px;
+	margin:0px 16px 16px 0px;
 }
 </style>
 </head>
@@ -62,12 +70,12 @@ h1
 <hr>
 <h1 id="dollars">$0.00</h1>
 <div id="lemonade_stand" class="building">
-	<h2 class="buildingname">Lemonade Stand </h2>
+	<h2 class="title">Lemonade Stand </h2>
 	<div style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br><br>
 	<svg width="328" height="36" id="lemonade_stand_progress">
 	  <rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
 	  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
-	  <text x="108" y="24" fill="black" style="font-size:22px;" class="svgtext noselect">
+	  <text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">
 		something went wrong
 	  </text>
 	  <text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">
@@ -79,12 +87,12 @@ h1
 	<button class="button noselect button-disabled" id="lemonade_stand_buy_100" onclick="lemonade_stand.buy(100)" disabled>buy 100x</button><div class="price-cantafford noselect" id="lemonade_stand_price_100"> ($1,000,000.00)</div><br>
 </div>
 <div id="newspaper_delivery" class="building">
-	<h2 class="buildingname">Newspaper Delivery </h2>
+	<h2 class="title">Newspaper Delivery </h2>
 	<div style="color:#ffffff;font-size:1.25em;display:inline;" id="newspaper_delivery_amount">&mdash; 0</div><br><br>
 	<svg width="328" height="36" id="newspaper_delivery_progress">
 	  <rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
 	  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
-	  <text x="108" y="24" fill="black" style="font-size:22px;" class="svgtext noselect">
+	  <text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">
 		something went wrong
 	  </text>
 	  <text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">
@@ -95,9 +103,80 @@ h1
 	<button class="button noselect button-disabled" id="newspaper_delivery_buy_10" onclick="newspaper_delivery.buy(10)" disabled>buy 10x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_10"> ($10,000.00)</div><br>
 	<button class="button noselect button-disabled" id="newspaper_delivery_buy_100" onclick="newspaper_delivery.buy(100)" disabled>buy 100x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_100"> ($1,000,000.00)</div><br>
 </div>
+<div id="upgrades" class="upgrades">
+	<h2 class="title">Upgrades</h2><br><br>
+	<table style="width:100%;">
+		<tr>
+			<th style="width:25%"></th>
+			<th style="width:25%"></th>
+			<th style="width:25%"></th>
+			<th style="width:25%"></th>
+		</tr>
+		<tr>
+		</tr>
+		<tr>
+		</tr>
+		<!--<tr>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade1" style="width:100%;" disabled>
+				<div id="upgrade1name">Upgrade 1</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x3</div>
+				<div id="upgrade1price" class="price-cantafford noselect">$5,000,000.00</div></button>
+			</th>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade2" style="width:100%;" disabled>
+				<div id="upgrade2name">Upgrade 2</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x33</div>
+				<div id="upgrade2price" class="price-cantafford noselect">$500,000,000.00</div></button>
+			</th>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade3" style="width:100%;" disabled>
+				<div id="upgrade3name">Upgrade 3</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x333</div>
+				<div id="upgrade3price" class="price-cantafford noselect">$2.5 billion</div></button>
+			</th>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade4" style="width:100%;" disabled>
+				<div id="upgrade4name">Upgrade 4</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x5</div>
+				<div id="upgrade4price" class="price-cantafford noselect">$4.9 quinvigintillion</div></button>
+			</th>
+		</tr>
+		<tr>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade5" style="width:100%;" disabled>
+				<div id="upgrade5name">Upgrade 5</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x7</div>
+				<div id="upgrade5price" class="price-cantafford noselect">$5,000,000.00</div></button>
+			</th>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade6" style="width:100%;" disabled>
+				<div id="upgrade6name">Upgrade 6</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x777</div>
+				<div id="upgrade6price" class="price-cantafford noselect">$500,000,000.00</div></button>
+			</th>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade7" style="width:100%;" disabled>
+				<div id="upgrade7name">Upgrade 7</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x7777</div>
+				<div id="upgrade7price" class="price-cantafford noselect">$2.5 billion</div></button>
+			</th>
+			<th>
+				<button class="button noselect button-disabled" id="upgrade8" style="width:100%;" disabled>
+				<div id="upgrade8name">Upgrade 8</div>
+				<div id="upgrade1desc" style="font-style:italic;">Everything profit x999999</div>
+				<div id="upgrade8price" class="price-cantafford noselect">$4.9 quinvigintillion</div></button>
+			</th>
+		</tr>-->
+	</table>
+</div>
 <script>
 let dollars = 0n;
 let money_display_threshold = 100000000000n;
+let irregulars = ["","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
+let prefixes = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
+let infixes = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
+let suffixes = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
 function money(n, prefix="$") {
 	if (n < money_display_threshold) {
 		let string = "";
@@ -112,10 +191,6 @@ function money(n, prefix="$") {
 		string = prefix + string;
 		return string;
 	}
-	let irregulars = ["","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
-	let prefixes = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
-	let infixes = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
-	let suffixes = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
 	
 	let str_n = (n+"");
 	let magnitude = ((n+"").length-3)-2; // minus two for the cents
@@ -125,8 +200,8 @@ function money(n, prefix="$") {
 	let chars = str_n.split("").reverse();
 	let string = "";
 	for (let i = 0; i < chars.length; i++) {
-		if (i == 3) string = "." + string; 
-		string = chars[i] + string;
+		if (i == 3 && string.length > 0) string = "." + string; 
+		if (chars[i] != '0' || string.length > 0) string = chars[i] + string;
 	}
 	if (illionth <= 9) string = string + " " + irregulars[illionth];
 	if (illionth >= 10) {
@@ -136,7 +211,7 @@ function money(n, prefix="$") {
 		if (illionth >= 20 && illionth < 100) ending = suffixes[1] + ending;
 		if (illionth >= 100) ending = suffixes[Math.floor(illionth/100)+1] + ending;
 		string = string + " " + prefixes[digits[0]] + ("s".repeat(illionth%100 == 23 ? 1 : 0)) + infixes[digits[1]] + ending;
-		// there's a lot going on here, but that s.repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion". this will also occur on any illion number whose base 10 representation ends with "23".
+		// there's a lot going on here, but that "s".repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion". this will also occur on any illion number whose base 10 representation ends with "23".
 	}
 	return prefix + string;
 }
@@ -147,52 +222,137 @@ function as_time(t, do_ms=false) {
 	let h = Math.floor(m/60);
 	s %= 60;
 	m %= 60;
-	return ("0".repeat(Math.max(0,2-(h+'').length))) + h + ":" + ("0".repeat(2-(m+'').length)) + m + ":" + ("0".repeat(2-(s+'').length)) + s + ("." + ("0".repeat(3-(ms+'').length)) + ms).repeat(do_ms ? 1 : 0);
+	try {
+		return ("0".repeat(Math.max(0,2-(h+'').length))) + h + ":" + ("0".repeat(2-(m+'').length)) + m + ":" + ("0".repeat(2-(s+'').length)) + s + ("." + ("0".repeat(Math.max(0,3-(ms+'').length))) + ms).repeat(do_ms ? 1 : 0);
+	} catch {
+		return "t was nan";
+	}
 }
 
 let buildings = [];
+let upgrades = [];
 class building {
-	constructor(id, name, max_time, base_profit, base_price, currency="dollars") {
+	constructor(id, name, base_time, base_profit, base_price, base_price_multiplier=1.15, currency="dollars") {
 		this.id = id;
 		this.name = name;
 		this.time = 0;
-		this.max_time = max_time;
+		this.base_time = base_time;
 		this.base_profit = base_profit;
 		this.base_price = base_price;
+		this.base_price_multiplier = base_price_multiplier;
 		this.currency = currency;
 		this.amount = 0;
+		this.profit_multiplier = 1n;
+		// following variables are redundancies for speeding things up
+		this.calculated_price = 0n;
+		this.amount_at_calculated_price = -1;
+		this.recalculate_price = false;
+		
 		buildings.push(this);
 	}
 	tick() {
 		if (this.amount > 0) this.time += (cur_loop_time - past_loop_time)/1000;
-		if (this.time > this.max_time) {
-			let loopovers = Math.floor(this.time / this.max_time);
+		if (this.time > this.get_time()) { // pretty simple. calculating loopovers here results in out-of-tab production, as well as accurate calculation of profits if speeds begin exceeding the refresh rate of the main game loop.
+			let loopovers = Math.floor(this.time / this.get_time());
 			eval(this.currency+" += this.get_profit() * BigInt(loopovers);");
-			this.time = this.time % this.max_time;
+			this.time %= this.get_time();
 		}
 	}
 	get_price(n=1) {
 		if (n == 0) return 0n;
-		//let multiplier = 100.15**(n+this.amount-2);
-		let multiplier = 100n;
-		for (let i = 0; i < n+this.amount-1; i++) {
-			multiplier *= 115n;
-			multiplier /= 100n;
-		}
-		let price = ((this.base_price)*multiplier)/100n
-		return price+this.get_price(n-1);
+		if (n == 1) { // do this bigint arithmetic only when we need to, otherwise this becomes a laggy mess
+			if (this.amount_at_calculated_price != this.amount || this.recalculate_price) {
+				this.recalculate_price = false;
+				let multiplier = 100n;
+				for (let i = 0; i < this.amount; i++) {
+					multiplier *= BigInt(Math.round(this.base_price_multiplier * 100));
+					multiplier /= 100n;
+				}
+				this.calculated_price = (this.base_price * multiplier)/100n;
+			}
+			return this.calculated_price;
+		} // unfortunately, this means we cannot get the price for a quantity of something if the price of that quantity exceeds 1.7*10^308 times its current value
+		let multiplier = this.base_price_multiplier**(n-1);
+		if (multiplier*100 == Infinity) return 0n; // hehe oops guess we hit infinity
+		let bigint_mult = BigInt(Math.round(multiplier*100));
+		let price_for_n = ((this.calculated_price)*bigint_mult)/100n;
+		this.amount_at_calculated_price = this.amount;
+		return price_for_n+this.get_price(n-1);
 	}
 	get_profit() {
-		return this.base_profit * BigInt(this.amount);
+		return this.base_profit * BigInt(this.amount) * BigInt(this.profit_multiplier);
+	}
+	get_time() {
+		return this.base_time;
 	}
 	buy(n=1) {
-		eval(this.currency+" -= this.get_price(n);");
-		this.amount += n;
+		if (eval(this.currency+" >= this.get_price(n);")) {
+			eval(this.currency+" -= this.get_price(n);");
+			this.amount += n;
+		}
 	}
 }
-lemonade_stand = new building(0, "lemonade_stand", 2, 50n, 200n, "dollars");
+class upgrade {
+	constructor(id, name, desc, price, action, currency="dollars") {
+		this.id = id;
+		this.name = name;
+		this.desc = desc;
+		this.price = price;
+		this.action = action;
+		this.currency = currency;
+		this.purchased = false;
+		upgrades.push(this);
+	}
+	buy() {
+		if (eval(this.currency+" >= this.price;")) {
+			eval(this.currency+" -= this.price;");
+			this.purchased = true;
+			get_element("upgrade"+this.id+"entry").remove();
+		}
+	}
+}
+lemonade_stand = new building(0, "lemonade_stand", 2, 50n, 200n, 1.15, "dollars");
 lemonade_stand.amount = 1;
-newspaper_delivery = new building(1, "newspaper_delivery", 4, 1000n, 2500n, "dollars");
+newspaper_delivery = new building(1, "newspaper_delivery", 4, 1000n, 2500n, 1.17, "dollars");
+
+paper_umbrellas = new upgrade(0, "Paper Umbrellas", "Lemonade Stand profit x3", 50000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
+sturdier_bikes = new upgrade(1, "Sturdier Bikes", "Newspaper Delivery profit x3", 300000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
+
+for (let i = 0; i < upgrades.length; i++) {
+	let row = document.getElementById("upgrades").children[3].children[0].children[1+Math.floor(i/4)];
+	let entry = document.createElement("th");
+	entry.setAttribute("id", "upgrade"+i+"entry");
+	let button = document.createElement("button");
+	button.setAttribute("class", "button noselect button-disabled");
+	button.setAttribute("id", "upgrade"+i);
+	button.setAttribute("style", "width:100%;");
+	button.setAttribute("disabled", true);
+	button.setAttribute("onclick", "upgrades["+i+"].buy()");
+	
+	let name = document.createElement("div");
+	name.setAttribute("id", "upgrade"+i+"name");
+	let name_text = document.createTextNode(upgrades[i].name);
+	name.appendChild(name_text);
+	
+	let desc = document.createElement("div");
+	desc.setAttribute("id", "upgrade"+i+"desc");
+	desc.setAttribute("style", "font-style:italic;");
+	let desc_text = document.createTextNode(upgrades[i].desc);
+	desc.appendChild(desc_text);
+	
+	let price = document.createElement("div");
+	price.setAttribute("id", "upgrade"+i+"price");
+	price.setAttribute("class", "price-cantafford noselect");
+	let price_text = document.createTextNode(money(upgrades[i].price));
+	price.appendChild(price_text);
+	
+	button.appendChild(name);
+	button.appendChild(desc);
+	button.appendChild(price);
+	entry.appendChild(button);
+	row.appendChild(entry);
+}
+
 function get_time() {
 	let t = new Date();
 	return t.getTime();
@@ -204,14 +364,27 @@ let past_loop_time = get_time();
 let cur_loop_time = get_time();
 function loop() {
 	cur_loop_time = get_time();
+	let currently_displayed_upgrades = 0;
+	for (let i = 0; i < upgrades.length; i++) {
+		if (upgrades[i].purchased) {
+			upgrades[i].action();
+		} else {
+			let can_afford = eval(upgrades[i].currency+" >= upgrades[i].price;");
+			get_element("upgrade"+upgrades[i].id+"price").setAttribute("class", "price-"+(can_afford ? "can" : "cant")+"afford noselect");
+			get_element("upgrade"+upgrades[i].id).setAttribute("class", "button noselect button-"+(can_afford ? "enabled" : "disabled"));
+			get_element("upgrade"+upgrades[i].id).disabled = !can_afford;
+			currently_displayed_upgrades++;
+		}
+		if (currently_displayed_upgrades > 8) break;
+	}
 	for (let i = 0; i < buildings.length; i++) {
 		buildings[i].tick();
 		let progress_graphic = get_element(buildings[i].name+"_progress");
-		progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].max_time) * 216;
+		progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].get_time()) * 216;
 		let profit_string = money(buildings[i].get_profit());
 		progress_graphic.children[2].innerHTML = profit_string;
 		progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 5))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
-		progress_graphic.children[3].innerHTML = as_time(buildings[i].max_time - buildings[i].time, buildings[i].max_time < 1);
+		progress_graphic.children[3].innerHTML = as_time(buildings[i].get_time() - (buildings[i].time * (buildings[i].get_time() >= 1)), buildings[i].get_time() < 1);
 		get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].amount;
 		
 		let can_purchase = dollars >= buildings[i].get_price();
@@ -231,11 +404,13 @@ function loop() {
 		get_element(buildings[i].name+"_price_100").className = can_purchase_100 ? "price-canafford noselect" : "price-cantafford noselect";
 		get_element(buildings[i].name+"_buy_100").className = can_purchase_100 ? "button noselect button-enabled" : "button noselect button-disabled";
 		get_element(buildings[i].name+"_buy_100").disabled = !can_purchase_100;
+		
+		buildings[i].profit_multiplier = 1n; // this needs to be reset each frame so that upgrade actions do not compound.
 	}
 	document.getElementById("dollars").innerHTML = money(dollars);
 	past_loop_time = get_time();
 	//lemonade_stand.max_time /= 1.01;
-	setTimeout(loop, 1000/60);
+	setTimeout(loop, -(cur_loop_time - past_loop_time));
 }
 loop();
 </script>
