@@ -63,6 +63,25 @@ h1
 	padding:10px;
 	margin:0px 16px 16px 0px;
 }
+details > summary {
+	padding: 4px;
+	width: 200px;
+	background-color: #333333;
+	border: none;
+	box-shadow: 1px 1px 2px #888888;
+	cursor: pointer;
+	font-family: initial;
+	color: #a1ea1e;
+	font-size: 14px;
+}
+details > p {
+	background-color: #333333;
+	padding: 4px;
+	margin: 0;
+	box-shadow: 1px 1px 2px #888888;
+	color: #eeeeee;
+	font-size: 14px;
+}
 </style>
 </head>
 <body>
@@ -71,7 +90,9 @@ h1
 <h1 id="dollars">$0.00</h1>
 <div id="lemonade_stand" class="building">
 	<h2 class="title">Lemonade Stand </h2>
-	<div style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br><br>
+	<div class="noselect" style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br>
+	<div class="noselect" style="color:#ffffff;font-size:1em;display:inline;" id="lemonade_stand_tier">(no tier) &ndash; 9 more to next tier</div><br>
+	<details id="lemonade_stand_tier_effects" hidden><summary>tier effects</summary><p id="lemonade_stand_tier_desc">(no effects)</p></details><br>
 	<svg width="328" height="36" id="lemonade_stand_progress">
 	  <rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
 	  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
@@ -88,7 +109,9 @@ h1
 </div>
 <div id="newspaper_delivery" class="building">
 	<h2 class="title">Newspaper Delivery </h2>
-	<div style="color:#ffffff;font-size:1.25em;display:inline;" id="newspaper_delivery_amount">&mdash; 0</div><br><br>
+	<div class="noselect" style="color:#ffffff;font-size:1.25em;display:inline;" id="newspaper_delivery_amount">&mdash; 0</div><br>
+	<div class="noselect" style="color:#ffffff;font-size:1em;display:inline;" id="newspaper_delivery_tier">(no tier) &ndash; 10 more to next tier</div><br>
+	<details id="newspaper_delivery_tier_effects" hidden><summary>tier effects</summary><p id="newspaper_delivery_tier_desc">(no effects)</p></details><br>
 	<svg width="328" height="36" id="newspaper_delivery_progress">
 	  <rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
 	  <rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
@@ -177,6 +200,9 @@ let irregulars = ["","million","billion","trillion","quadrillion","quintillion",
 let prefixes = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
 let infixes = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
 let suffixes = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
+function get_element(e) {
+	return document.getElementById(e);
+}
 function money(n, prefix="$") {
 	if (n < money_display_threshold) {
 		let string = "";
@@ -215,34 +241,62 @@ function money(n, prefix="$") {
 	}
 	return prefix + string;
 }
+let temporal_suffixes = ["s","ms","&mu;s","ns","ps","fs","as","zs","ys"];
 function as_time(t, do_ms=false) {
-	let ms = Math.round((t*1000)%1000);
-	let s = Math.floor(t);
-	let m = Math.floor(s/60);
-	let h = Math.floor(m/60);
-	s %= 60;
-	m %= 60;
-	try {
-		return ("0".repeat(Math.max(0,2-(h+'').length))) + h + ":" + ("0".repeat(2-(m+'').length)) + m + ":" + ("0".repeat(2-(s+'').length)) + s + ("." + ("0".repeat(Math.max(0,3-(ms+'').length))) + ms).repeat(do_ms ? 1 : 0);
-	} catch {
-		return "t was nan";
+	if (t >= 0.001) {
+		let ms = Math.round((t*1000)%1000);
+		let s = Math.floor(t);
+		let m = Math.floor(s/60);
+		let h = Math.floor(m/60);
+		s %= 60;
+		m %= 60;
+		try {
+			return ("0".repeat(Math.max(0,2-(h+'').length))) + h + ":" + ("0".repeat(2-(m+'').length)) + m + ":" + ("0".repeat(2-(s+'').length)) + s + ("." + ("0".repeat(Math.max(0,3-(ms+'').length))) + ms).repeat(do_ms ? 1 : 0);
+		} catch {
+			return "t was nan";
+		}
 	}
+	//let t_as_string = t.toExponential();
+	//let location_of_e = t_as_string.indexOf("e");
+	//let inv_magnitude = Number(t_as_string.substr(location_of_e+2));
+	let printed_time = t;
+	let suffix_index = 0;
+	while (printed_time < 1) {
+		printed_time *= 1000;
+		suffix_index++;
+	}
+	let suffix = "";
+	if (suffix_index < temporal_suffixes.length) {
+		suffix = temporal_suffixes[suffix_index];
+		printed_time = Math.round(printed_time).toString();
+	} else {
+		let exponent = suffix_index * 3;
+		while (printed_time > 10) {
+			printed_time /= 10;
+			exponent--;
+		}
+		suffix = "e-"+exponent+"s";
+		printed_time = (printed_time+'').substr(0,4);
+	}
+	return printed_time + suffix;
 }
 
 let buildings = [];
 let upgrades = [];
 class building {
-	constructor(id, name, base_time, base_profit, base_price, base_price_multiplier=1.15, currency="dollars") {
+	constructor(id, name, base_speed, base_profit, base_price, base_price_multiplier=1.15, currency="dollars") {
 		this.id = id;
 		this.name = name;
 		this.time = 0;
-		this.base_time = base_time;
+		this.base_speed = base_speed;
 		this.base_profit = base_profit;
 		this.base_price = base_price;
 		this.base_price_multiplier = base_price_multiplier;
 		this.currency = currency;
 		this.amount = 0;
 		this.profit_multiplier = 1n;
+		this.speed_multiplier = 1;
+		this.tiers = [];
 		// following variables are redundancies for speeding things up
 		this.calculated_price = 0n;
 		this.amount_at_calculated_price = -1;
@@ -283,7 +337,12 @@ class building {
 		return this.base_profit * BigInt(this.amount) * BigInt(this.profit_multiplier);
 	}
 	get_time() {
-		return this.base_time;
+		return this.base_speed / this.speed_multiplier; // ugh this is so nonsensical
+		// base speed (used to be base time, which used to be max time) is the time it takes for this building to complete a profit cycle
+		// the "speed" "multiplier" is a number which is multiplicatively modified to be larger
+		// the bigger the "multiplier" is, the more division will be applied to the time it takes for the building to finish
+		// this will, in turn, make the building faster
+		// rrrrr
 	}
 	buy(n=1) {
 		if (eval(this.currency+" >= this.get_price(n);")) {
@@ -293,8 +352,8 @@ class building {
 	}
 }
 class upgrade {
-	constructor(id, name, desc, price, action, currency="dollars") {
-		this.id = id;
+	constructor(name, desc, price, action, currency="dollars") {
+		this.id = upgrades.length;
 		this.name = name;
 		this.desc = desc;
 		this.price = price;
@@ -307,58 +366,116 @@ class upgrade {
 		if (eval(this.currency+" >= this.price;")) {
 			eval(this.currency+" -= this.price;");
 			this.purchased = true;
+			this.remove_button();
+			refresh_upgrade_buttons();
+		}
+	}
+	add_button(place) {
+		let row = document.getElementById("upgrades").children[3].children[0].children[1+Math.floor(place/4)];
+		let entry = document.createElement("th");
+		entry.setAttribute("id", "upgrade"+this.id+"entry");
+		let button = document.createElement("button");
+		button.setAttribute("class", "button noselect button-disabled");
+		button.setAttribute("id", "upgrade"+this.id);
+		button.setAttribute("style", "width:100%;");
+		button.setAttribute("disabled", true);
+		button.setAttribute("onclick", "upgrades["+this.id+"].buy()");
+		
+		let name = document.createElement("div");
+		name.setAttribute("id", "upgrade"+this.id+"name");
+		name.setAttribute("style", "font-family:Arial, Helvetica, sans-serif;");//font-weight:bold;");
+		let name_text = document.createTextNode(upgrades[this.id].name);
+		name.appendChild(name_text);
+		
+		let desc = document.createElement("div");
+		desc.setAttribute("id", "upgrade"+this.id+"desc");
+		desc.setAttribute("style", "font-style:italic;font-family:initial;");
+		let desc_text = document.createTextNode(upgrades[this.id].desc);
+		desc.appendChild(desc_text);
+		
+		let price = document.createElement("div");
+		price.setAttribute("id", "upgrade"+this.id+"price");
+		price.setAttribute("class", "price-cantafford noselect");
+		let price_text = document.createTextNode(money(upgrades[this.id].price));
+		price.appendChild(price_text);
+		
+		button.appendChild(name);
+		button.appendChild(desc);
+		button.appendChild(price);
+		entry.appendChild(button);
+		row.appendChild(entry);
+	}
+	remove_button() {
+		try {
 			get_element("upgrade"+this.id+"entry").remove();
+		} catch {
+			// better luck next time
 		}
 	}
 }
+class tier {
+	constructor(name, desc, amount, action, building_name) {
+		this.name = name;
+		this.desc = desc;
+		this.amount = amount;
+		this.action = action;
+		this.building_name = building_name;
+		eval(building_name + ".tiers.push(this);");
+	}
+	reached() {
+		return eval(this.building_name+".amount") >= this.amount;
+	}
+}
+/* * * Buildings * * */
 lemonade_stand = new building(0, "lemonade_stand", 2, 50n, 200n, 1.15, "dollars");
 lemonade_stand.amount = 1;
 newspaper_delivery = new building(1, "newspaper_delivery", 4, 1000n, 2500n, 1.17, "dollars");
+//car_wash = new building(2, "car_wash", 9.5, 21000n, 80000n, 1.16, "dollars");
+//pizza delivery
+//donut shop
+//shrimp boat
+//hockey team
+//movie studio
+//bank
+//oil company
+//space rollercoaster
+//antimatter shipment
 
-paper_umbrellas = new upgrade(0, "Paper Umbrellas", "Lemonade Stand profit x3", 50000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
-sturdier_bikes = new upgrade(1, "Sturdier Bikes", "Newspaper Delivery profit x3", 300000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
+/* * * Upgrades * * */
+lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", 50000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
+newspaper_delivery_up0 = new upgrade("Sturdier Bikes", "Newspaper Delivery profit x3", 300000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
 
-for (let i = 0; i < upgrades.length; i++) {
-	let row = document.getElementById("upgrades").children[3].children[0].children[1+Math.floor(i/4)];
-	let entry = document.createElement("th");
-	entry.setAttribute("id", "upgrade"+i+"entry");
-	let button = document.createElement("button");
-	button.setAttribute("class", "button noselect button-disabled");
-	button.setAttribute("id", "upgrade"+i);
-	button.setAttribute("style", "width:100%;");
-	button.setAttribute("disabled", true);
-	button.setAttribute("onclick", "upgrades["+i+"].buy()");
-	
-	let name = document.createElement("div");
-	name.setAttribute("id", "upgrade"+i+"name");
-	let name_text = document.createTextNode(upgrades[i].name);
-	name.appendChild(name_text);
-	
-	let desc = document.createElement("div");
-	desc.setAttribute("id", "upgrade"+i+"desc");
-	desc.setAttribute("style", "font-style:italic;");
-	let desc_text = document.createTextNode(upgrades[i].desc);
-	desc.appendChild(desc_text);
-	
-	let price = document.createElement("div");
-	price.setAttribute("id", "upgrade"+i+"price");
-	price.setAttribute("class", "price-cantafford noselect");
-	let price_text = document.createTextNode(money(upgrades[i].price));
-	price.appendChild(price_text);
-	
-	button.appendChild(name);
-	button.appendChild(desc);
-	button.appendChild(price);
-	entry.appendChild(button);
-	row.appendChild(entry);
+everything_up0 = new upgrade("Marketeer", "Everything profit x3", 1000000n, action=()=>{for (let i = 0; i < buildings.length; i++) {if (buildings[i].currency == "dollars") {buildings[i].profit_multiplier*=3n;}}}, "dollars");
+
+lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", 1500000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
+newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", 9000000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
+
+/* * * Tiers * * */
+lemonade_stand_tier0 = new tier("Lemonade Novice", "Lemonade Stand speed x2", 25, action=()=>{lemonade_stand.speed_multiplier*=2;}, "lemonade_stand");
+lemonade_stand_tier1 = new tier("Lemongineer", "Lemonade Stand speed x2", 50, action=()=>{lemonade_stand.speed_multiplier*=2;}, "lemonade_stand");
+lemonade_stand_tier2 = new tier("Lemon Officianado", "Lemonade Stand profit x2", 100, action=()=>{lemonade_stand.profit_multiplier*=2n;}, "lemonade_stand");
+
+newspaper_delivery_tier0 = new tier("Extra extra!", "Newspaper Delivery speed x2", 25, action=()=>{newspaper_delivery.speed_multiplier*=2;}, "newspaper_delivery");
+newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery profit x2", 50, action=()=>{newspaper_delivery.profit_multiplier*=2n;}, "newspaper_delivery");
+newspaper_delivery_tier2 = new tier("Breaking News", "Newspaper Delivery profit x2", 100, action=()=>{newspaper_delivery.profit_multiplier*=2n;}, "newspaper_delivery");
+
+function refresh_upgrade_buttons(remove=true) {
+	let i = 0;
+	let place_to_fill = 0;
+	for (let i = 0; i < upgrades.length; i++) {
+		if (!upgrades[i].purchased) {
+			if (remove) upgrades[i].remove_button();
+			upgrades[i].add_button(place_to_fill);
+			place_to_fill++;
+		}
+		if (place_to_fill > 8) break;
+	}
 }
+refresh_upgrade_buttons(false);
 
 function get_time() {
 	let t = new Date();
 	return t.getTime();
-}
-function get_element(e) {
-	return document.getElementById(e);
 }
 let past_loop_time = get_time();
 let cur_loop_time = get_time();
@@ -378,13 +495,36 @@ function loop() {
 		if (currently_displayed_upgrades > 8) break;
 	}
 	for (let i = 0; i < buildings.length; i++) {
+		let full_tier_desc = "";
+		for (let ii = 0; ii < buildings[i].tiers.length; ii++) {
+			if (buildings[i].tiers[ii].reached()) {
+				buildings[i].tiers[ii].action();
+				if (ii != 0) full_tier_desc += "<br>";
+				full_tier_desc += buildings[i].tiers[ii].desc;
+			}
+			else {
+				let tier_name = "";
+				if (ii > 0) tier_name = buildings[i].tiers[ii-1].name;
+				else tier_name = "(no tier)";
+				get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].amount) + " more until next tier";
+				//full_tier_desc += tier_desc;
+				break;
+			}
+			if (ii == buildings[i].tiers.length - 1) { // we didn't hit that preemptive break, so we must be at the end.
+				get_element(buildings[i].name+"_tier").innerHTML = "Tier " + (ii+1).toString() + ": " + buildings[i].tiers[ii].name + " &ndash; tier MAX";
+				//full_tier_desc += buildings[i].tiers[ii].desc;
+			}
+		}
+		get_element(buildings[i].name+"_tier_desc").innerHTML = full_tier_desc;
+		get_element(buildings[i].name+"_tier_effects").hidden = full_tier_desc == "";
 		buildings[i].tick();
+		
 		let progress_graphic = get_element(buildings[i].name+"_progress");
 		progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].get_time()) * 216;
 		let profit_string = money(buildings[i].get_profit());
 		progress_graphic.children[2].innerHTML = profit_string;
 		progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 5))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
-		progress_graphic.children[3].innerHTML = as_time(buildings[i].get_time() - (buildings[i].time * (buildings[i].get_time() >= 1)), buildings[i].get_time() < 1);
+		progress_graphic.children[3].innerHTML = as_time(buildings[i].get_time() - (buildings[i].time * (buildings[i].get_time() > 1)), buildings[i].get_time() <= 1);
 		get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].amount;
 		
 		let can_purchase = dollars >= buildings[i].get_price();
@@ -406,6 +546,8 @@ function loop() {
 		get_element(buildings[i].name+"_buy_100").disabled = !can_purchase_100;
 		
 		buildings[i].profit_multiplier = 1n; // this needs to be reset each frame so that upgrade actions do not compound.
+		buildings[i].speed_multiplier = 1; // same tbh
+		// however, you can't reset them before the profit and time indicators are drawn!
 	}
 	document.getElementById("dollars").innerHTML = money(dollars);
 	past_loop_time = get_time();
