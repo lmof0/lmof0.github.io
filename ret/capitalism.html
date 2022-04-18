@@ -221,15 +221,19 @@ function as_time(t, do_ms=false) {
 	while (printed_time < 1) {
 		printed_time *= 1000;
 		suffix_index++;
+	}
+	if (suffix_index < temporal_suffixes.length) {
+		return Math.round(printed_time) + temporal_suffixes[suffix_index];
+	} else {
 		let exponent = suffix_index * 3;
-		while (printed_time > 10) {
+		while (printed_time >= 10) {
 			printed_time /= 10;
 			exponent--;
 		}
 		suffix = "e-"+exponent+"s";
 		printed_time = (printed_time+'').substr(0,4);
+		return printed_time + suffix;
 	}
-	return printed_time + suffix;
 }
 
 let buildings = [];
