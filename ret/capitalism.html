@@ -38,6 +38,13 @@ h1
 	color:#aaaaaa;
 	display:inline;
 }
+.important-text
+{
+	animation-name: notify;
+	animation-duration: 1s;
+	animation-iteration-count: infinite;
+}
+@keyframes notify {from {color:#ffff00} to {color:#00ff00}}
 .svgtext
 {
 	font-family:initial;
@@ -88,6 +95,7 @@ details > p {
 <center><h1>Capitalsim</h1></center>
 <hr>
 <h1 id="dollars">$0.00</h1>
+<div id="buildings"><!--
 <div id="lemonade_stand" class="building">
 	<h2 class="title">Lemonade Stand </h2>
 	<div class="noselect" style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br>
@@ -103,7 +111,7 @@ details > p {
 		00:00:00.000
 	  </text>
 	</svg><br>
-	<button class="button noselect button-disabled" id="lemonade_stand_buy" onclick="lemonade_stand.buy()" disabled>buy 1x</button><div class="price-cantafford noselect" id="lemonade_stand_price"> ($10.00)</div><br>
+	<button class="button noselect button-disabled" id="lemonade_stand_buy_1" onclick="lemonade_stand.buy(1)" disabled>buy 1x</button><div class="price-cantafford noselect" id="lemonade_stand_price_1"> ($10.00)</div><br>
 	<button class="button noselect button-disabled" id="lemonade_stand_buy_10" onclick="lemonade_stand.buy(10)" disabled>buy 10x</button><div class="price-cantafford noselect" id="lemonade_stand_price_10"> ($10,000.00)</div><br>
 	<button class="button noselect button-disabled" id="lemonade_stand_buy_100" onclick="lemonade_stand.buy(100)" disabled>buy 100x</button><div class="price-cantafford noselect" id="lemonade_stand_price_100"> ($1,000,000.00)</div><br>
 </div>
@@ -122,12 +130,13 @@ details > p {
 		00:00:00.000
 	  </text>
 	</svg><br>
-	<button class="button noselect button-disabled" id="newspaper_delivery_buy" onclick="newspaper_delivery.buy()" disabled>buy 1x</button><div class="price-cantafford noselect" id="newspaper_delivery_price"> ($10.00)</div><br>
+	<button class="button noselect button-disabled" id="newspaper_delivery_buy_1" onclick="newspaper_delivery.buy(1)" disabled>buy 1x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_1"> ($10.00)</div><br>
 	<button class="button noselect button-disabled" id="newspaper_delivery_buy_10" onclick="newspaper_delivery.buy(10)" disabled>buy 10x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_10"> ($10,000.00)</div><br>
 	<button class="button noselect button-disabled" id="newspaper_delivery_buy_100" onclick="newspaper_delivery.buy(100)" disabled>buy 100x</button><div class="price-cantafford noselect" id="newspaper_delivery_price_100"> ($1,000,000.00)</div><br>
+</div>-->
 </div>
 <div id="upgrades" class="upgrades">
-	<h2 class="title">Upgrades</h2><br><br>
+	<h2 id="upgrades_title" class="title">Upgrades</h2><br><br>
 	<table style="width:100%;">
 		<tr>
 			<th style="width:25%"></th>
@@ -139,58 +148,6 @@ details > p {
 		</tr>
 		<tr>
 		</tr>
-		<!--<tr>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade1" style="width:100%;" disabled>
-				<div id="upgrade1name">Upgrade 1</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x3</div>
-				<div id="upgrade1price" class="price-cantafford noselect">$5,000,000.00</div></button>
-			</th>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade2" style="width:100%;" disabled>
-				<div id="upgrade2name">Upgrade 2</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x33</div>
-				<div id="upgrade2price" class="price-cantafford noselect">$500,000,000.00</div></button>
-			</th>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade3" style="width:100%;" disabled>
-				<div id="upgrade3name">Upgrade 3</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x333</div>
-				<div id="upgrade3price" class="price-cantafford noselect">$2.5 billion</div></button>
-			</th>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade4" style="width:100%;" disabled>
-				<div id="upgrade4name">Upgrade 4</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x5</div>
-				<div id="upgrade4price" class="price-cantafford noselect">$4.9 quinvigintillion</div></button>
-			</th>
-		</tr>
-		<tr>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade5" style="width:100%;" disabled>
-				<div id="upgrade5name">Upgrade 5</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x7</div>
-				<div id="upgrade5price" class="price-cantafford noselect">$5,000,000.00</div></button>
-			</th>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade6" style="width:100%;" disabled>
-				<div id="upgrade6name">Upgrade 6</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x777</div>
-				<div id="upgrade6price" class="price-cantafford noselect">$500,000,000.00</div></button>
-			</th>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade7" style="width:100%;" disabled>
-				<div id="upgrade7name">Upgrade 7</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x7777</div>
-				<div id="upgrade7price" class="price-cantafford noselect">$2.5 billion</div></button>
-			</th>
-			<th>
-				<button class="button noselect button-disabled" id="upgrade8" style="width:100%;" disabled>
-				<div id="upgrade8name">Upgrade 8</div>
-				<div id="upgrade1desc" style="font-style:italic;">Everything profit x999999</div>
-				<div id="upgrade8price" class="price-cantafford noselect">$4.9 quinvigintillion</div></button>
-			</th>
-		</tr>-->
 	</table>
 </div>
 <script>
@@ -264,12 +221,6 @@ function as_time(t, do_ms=false) {
 	while (printed_time < 1) {
 		printed_time *= 1000;
 		suffix_index++;
-	}
-	let suffix = "";
-	if (suffix_index < temporal_suffixes.length) {
-		suffix = temporal_suffixes[suffix_index];
-		printed_time = Math.round(printed_time).toString();
-	} else {
 		let exponent = suffix_index * 3;
 		while (printed_time > 10) {
 			printed_time /= 10;
@@ -283,9 +234,12 @@ function as_time(t, do_ms=false) {
 
 let buildings = [];
 let upgrades = [];
+let buy_amounts = ["1","10","100"]; // bluh
+// bleghhhhh
 class building {
-	constructor(id, name, base_speed, base_profit, base_price, base_price_multiplier=1.15, currency="dollars") {
-		this.id = id;
+	constructor(name, display_name, base_speed, base_profit, base_price, base_price_multiplier=1.15, currency="dollars") {
+		this.id = buildings.length;
+		this.display_name = display_name;
 		this.name = name;
 		this.time = 0;
 		this.base_speed = base_speed;
@@ -297,15 +251,151 @@ class building {
 		this.profit_multiplier = 1n;
 		this.speed_multiplier = 1;
 		this.tiers = [];
+		this.freebies = 0;
 		// following variables are redundancies for speeding things up
 		this.calculated_price = 0n;
 		this.amount_at_calculated_price = -1;
 		this.recalculate_price = false;
 		
-		buildings.push(this);
+		buildings.push(this); // push this building object to the list of building objects to be ticked by the game loop.
+		// the code below will create a <div> element for the actual interface of the building and at it to the main building element.
+		
+		let buildings_element = document.getElementById("buildings");
+		let building_element = document.createElement("div");
+		building_element.setAttribute("id", name);
+		building_element.setAttribute("class", "building");
+		
+		let building_title = document.createElement("h2");
+		building_title.setAttribute("class", "title");
+		let building_title_innerHTML = document.createTextNode(display_name+" ");
+		building_title.appendChild(building_title_innerHTML);
+		
+		let building_amount = document.createElement("div");
+		building_amount.setAttribute("class", "noselect");
+		building_amount.setAttribute("style", "color:#ffffff;font-size:1.25em;display:inline;");
+		building_amount.setAttribute("id", name+"_amount");
+		
+		/*<div class="noselect" style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br>*/
+		
+		let building_tier = document.createElement("div");
+		building_tier.setAttribute("class", "noselect");
+		building_tier.setAttribute("style", "color:#ffffff;font-size:1em;display:inline;");
+		building_tier.setAttribute("id", name+"_tier");
+		
+		/*<div class="noselect" style="color:#ffffff;font-size:1em;display:inline;" id="lemonade_stand_tier">(no tier) &ndash; 9 more to next tier</div><br>*/
+		
+		let tier_effects = document.createElement("details");
+		tier_effects.setAttribute("id", name+"_tier_effects");
+		tier_effects.setAttribute("hidden", true);
+		
+		let tier_effects_summary = document.createElement("summary");
+		tier_effects_summary.setAttribute("class", "noselect");
+		let tier_effects_summary_text = document.createTextNode("tier effects"); // long winded
+		tier_effects_summary.appendChild(tier_effects_summary_text);
+		
+		let tier_effects_desc = document.createElement("p");
+		tier_effects_desc.setAttribute("id", name+"_tier_desc");
+		
+		tier_effects.appendChild(tier_effects_summary);
+		tier_effects.appendChild(tier_effects_desc);
+		
+		/*<details id="lemonade_stand_tier_effects" hidden><summary>tier effects</summary><p id="lemonade_stand_tier_desc">(no effects)</p></details><br>*/
+		
+		//let building_progress_svg = document.createElement("svg");
+		//building_progress_svg.setAttribute("width", "328");
+		//building_progress_svg.setAttribute("height", "36");
+		//building_progress_svg.setAttribute("id", name+"_progress");
+		/*building_progress_svg.innerHTML = '<rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />';
+		building_progress_svg.innerHTML += '<rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />';
+		building_progress_svg.innerHTML += '<text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">something went wrong</text><text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">00:00:00.000</text>';*/
+		
+		
+		//building_progress_svg.innerHTML += '<rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />';
+		/*
+		let bg_rect = document.createElement("rect");
+		bg_rect.setAttribute("width", "216");
+		bg_rect.setAttribute("height", "36");
+		bg_rect.setAttribute("style", "fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)");
+		bg_rect.ownerSVGElement = building_progress_svg;
+		let pg_rect = document.createElement("rect");
+		pg_rect.setAttribute("width", "0");
+		pg_rect.setAttribute("height", "36");
+		pg_rect.setAttribute("style", "fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)");
+		pg_rect.ownerSVGElement = building_progress_svg;
+		let profit_text = document.createElement("text");
+		profit_text.setAttribute("x", "108");
+		profit_text.setAttribute("y", "24");
+		profit_text.setAttribute("fill", "#cccccc");
+		profit_text.setAttribute("style", "font-size:22px;");
+		profit_text.setAttribute("class", "svgtext noselect");
+		profit_text.ownerSVGElement = building_progress_svg;
+		let profit_text_innerHTML = document.createTextNode("something went wrong");
+		profit_text.appendChild(profit_text_innerHTML);
+		let time_text = document.createElement("text");
+		time_text.setAttribute("x", "224");
+		time_text.setAttribute("y", "24");
+		time_text.setAttribute("fill", "white");
+		time_text.setAttribute("class", "noselect");
+		time_text.setAttribute("style", "font-size:18px;text-anchor:start;text-align:start;font-family:initial;");
+		time_text.ownerSVGElement = building_progress_svg;
+		building_progress_svg.appendChild(bg_rect);
+		building_progress_svg.appendChild(pg_rect);
+		building_progress_svg.appendChild(profit_text);
+		building_progress_svg.appendChild(time_text);*/
+		/*
+		<svg width="328" height="36" id="lemonade_stand_progress">
+			<rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)" />
+			<rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)" />
+			<text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">
+				something went wrong
+			</text>
+			<text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">
+				00:00:00.000
+			</text>
+		</svg><br>*/
+		
+		building_element.appendChild(building_title);
+		building_element.appendChild(building_amount);
+		building_element.appendChild(document.createElement("br"));
+		building_element.appendChild(building_tier);
+		building_element.appendChild(document.createElement("br"));
+		building_element.appendChild(tier_effects);
+		building_element.appendChild(document.createElement("br"));
+		building_element.innerHTML += '<svg width="328" height="36" id="'+name+'_progress"><rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)"></rect><rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)"></rect><text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">something went wrong</text><text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">00:00:00.000</text></svg>';
+		//building_element.appendChild(building_progress_svg);
+		building_element.appendChild(document.createElement("br"));
+		
+		for (let i = 0; i < buy_amounts.length; i++) { // this is a bit weird but it makes the code less runny
+			let buy_button = document.createElement("button");
+			buy_button.setAttribute("class", "button noselect button-disabled");
+			buy_button.setAttribute("id", name+"_buy_"+buy_amounts[i]);
+			buy_button.setAttribute("onclick", name+".buy("+buy_amounts[i]+")");
+			buy_button.setAttribute("disabled", true);
+			let buy_button_innerHTML = document.createTextNode("buy "+buy_amounts[i]+"x");
+			buy_button.appendChild(buy_button_innerHTML);
+			
+			let buy_button_price = document.createElement("div");
+			buy_button_price.setAttribute("class", "price-cantafford noselect");
+			buy_button_price.setAttribute("id", name+"_price_"+buy_amounts[i]);
+			
+			building_element.appendChild(buy_button);
+			building_element.appendChild(buy_button_price);
+			building_element.appendChild(document.createElement("br"));
+		}
+		
+		/*<button class="button noselect button-disabled" id="lemonade_stand_buy" onclick="lemonade_stand.buy()" disabled>buy 1x</button>
+		<div class="price-cantafford noselect" id="lemonade_stand_price"> ($10.00)</div><br>
+		<button class="button noselect button-disabled" id="lemonade_stand_buy_10" onclick="lemonade_stand.buy(10)" disabled>buy 10x</button>
+		<div class="price-cantafford noselect" id="lemonade_stand_price_10"> ($10,000.00)</div><br>
+		<button class="button noselect button-disabled" id="lemonade_stand_buy_100" onclick="lemonade_stand.buy(100)" disabled>buy 100x</button>
+		<div class="price-cantafford noselect" id="lemonade_stand_price_100"> ($1,000,000.00)</div><br>*/
+		
+		buildings_element.appendChild(building_element);
+		
+		// that's soil folks
 	}
 	tick() {
-		if (this.amount > 0) this.time += (cur_loop_time - past_loop_time)/1000;
+		if (this.get_amount() > 0) this.time += (cur_loop_time - past_loop_time)/1000;
 		if (this.time > this.get_time()) { // pretty simple. calculating loopovers here results in out-of-tab production, as well as accurate calculation of profits if speeds begin exceeding the refresh rate of the main game loop.
 			let loopovers = Math.floor(this.time / this.get_time());
 			eval(this.currency+" += this.get_profit() * BigInt(loopovers);");
@@ -330,11 +420,11 @@ class building {
 		if (multiplier*100 == Infinity) return 0n; // hehe oops guess we hit infinity
 		let bigint_mult = BigInt(Math.round(multiplier*100));
 		let price_for_n = ((this.calculated_price)*bigint_mult)/100n;
-		this.amount_at_calculated_price = this.amount;
+		this.amount_at_calculated_price = this.amount; // we do not take freebies into account, because they are free.
 		return price_for_n+this.get_price(n-1);
 	}
 	get_profit() {
-		return this.base_profit * BigInt(this.amount) * BigInt(this.profit_multiplier);
+		return this.base_profit * BigInt(this.get_amount()) * BigInt(this.profit_multiplier);
 	}
 	get_time() {
 		return this.base_speed / this.speed_multiplier; // ugh this is so nonsensical
@@ -343,6 +433,9 @@ class building {
 		// the bigger the "multiplier" is, the more division will be applied to the time it takes for the building to finish
 		// this will, in turn, make the building faster
 		// rrrrr
+	}
+	get_amount() {
+		return this.amount + this.freebies;
 	}
 	buy(n=1) {
 		if (eval(this.currency+" >= this.get_price(n);")) {
@@ -423,15 +516,15 @@ class tier {
 		eval(building_name + ".tiers.push(this);");
 	}
 	reached() {
-		return eval(this.building_name+".amount") >= this.amount;
+		return eval(this.building_name+".get_amount()") >= this.amount;
 	}
 }
 /* * * Buildings * * */
-lemonade_stand = new building(0, "lemonade_stand", 2, 50n, 200n, 1.15, "dollars");
-lemonade_stand.amount = 1;
-newspaper_delivery = new building(1, "newspaper_delivery", 4, 1000n, 2500n, 1.17, "dollars");
-//car_wash = new building(2, "car_wash", 9.5, 21000n, 80000n, 1.16, "dollars");
-//pizza delivery
+lemonade_stand = new building("lemonade_stand", "Lemonade Stand", 2, 50n, 2n * 100n, 1.15, "dollars");
+lemonade_stand.freebies = 1;
+newspaper_delivery = new building("newspaper_delivery", "Newspaper Delivery", 4, 10n * 100n, 25n * 100n, 1.17, "dollars");
+car_wash = new building("car_wash", "Car Wash", 9.5, 210n * 100n, 800n * 100n, 1.16, "dollars");
+pizza_delivery = new building("pizza_delivery", "Pizza Delivery", 12, 650n * 100n, 6500n * 100n, 1.16, "dollars");
 //donut shop
 //shrimp boat
 //hockey team
@@ -444,20 +537,35 @@ newspaper_delivery = new building(1, "newspaper_delivery", 4, 1000n, 2500n, 1.17
 /* * * Upgrades * * */
 lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", 50000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
 newspaper_delivery_up0 = new upgrade("Sturdier Bikes", "Newspaper Delivery profit x3", 300000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
+car_wash_up0 = new upgrade("Bubblier Soaps", "Car Wash profit x3", 1500000n, action=()=>{car_wash.profit_multiplier*=3n;}, "dollars");
+pizza_delivery_up0 = new upgrade("Garlic Sauce", "Pizza Delivery profit x3", 4000000n, action=()=>{pizza_delivery.profit_multiplier*=3n;}, "dollars");
 
-everything_up0 = new upgrade("Marketeer", "Everything profit x3", 1000000n, action=()=>{for (let i = 0; i < buildings.length; i++) {if (buildings[i].currency == "dollars") {buildings[i].profit_multiplier*=3n;}}}, "dollars");
+everything_up0 = new upgrade("Marketeer", "Everything profit x3", 9000000n, action=()=>{for (let i = 0; i < buildings.length; i++) {if (buildings[i].currency == "dollars") {buildings[i].profit_multiplier*=3n;}}}, "dollars");
 
-lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", 1500000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
-newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", 9000000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
+lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", 15000000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
+newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", 90000000n, action=()=>{newspaper_delivery.profit_multiplier*=3n;}, "dollars");
+car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", 270000000n, action=()=>{car_wash.profit_multiplier*=3n;}, "dollars");
+pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", 490000000n, action=()=>{pizza_delivery.profit_multiplier*=3n;}, "dollars");
+
+everything_up1 = new upgrade("Clever Strategies", "Everything profit x3", 1000000000n, action=()=>{for (let i = 0; i < buildings.length; i++) {if (buildings[i].currency == "dollars") {buildings[i].profit_multiplier*=3n;}}}, "dollars");
 
 /* * * Tiers * * */
 lemonade_stand_tier0 = new tier("Lemonade Novice", "Lemonade Stand speed x2", 25, action=()=>{lemonade_stand.speed_multiplier*=2;}, "lemonade_stand");
 lemonade_stand_tier1 = new tier("Lemongineer", "Lemonade Stand speed x2", 50, action=()=>{lemonade_stand.speed_multiplier*=2;}, "lemonade_stand");
 lemonade_stand_tier2 = new tier("Lemon Officianado", "Lemonade Stand profit x2", 100, action=()=>{lemonade_stand.profit_multiplier*=2n;}, "lemonade_stand");
+lemonade_stand_tier3 = new tier("Professional Juicer", "Lemonade Stand profit x2", 150, action=()=>{lemonade_stand.speed_multiplier*=2;}, "lemonade_stand");
 
 newspaper_delivery_tier0 = new tier("Extra extra!", "Newspaper Delivery speed x2", 25, action=()=>{newspaper_delivery.speed_multiplier*=2;}, "newspaper_delivery");
 newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery profit x2", 50, action=()=>{newspaper_delivery.profit_multiplier*=2n;}, "newspaper_delivery");
 newspaper_delivery_tier2 = new tier("Breaking News", "Newspaper Delivery profit x2", 100, action=()=>{newspaper_delivery.profit_multiplier*=2n;}, "newspaper_delivery");
+
+car_wash_tier0 = new tier("Soap Novice", "Car Wash speed x2", 25, action=()=>{car_wash.speed_multiplier*=2;}, "car_wash");
+car_wash_tier1 = new tier("Cleanliness Agent", "Car Wash profit x2", 50, action=()=>{car_wash.profit_multiplier*=2n;}, "car_wash");
+car_wash_tier2 = new tier("Avid Soap-Salesman", "Car Wash profit x2", 100, action=()=>{car_wash.profit_multiplier*=2n;}, "car_wash");
+
+pizza_delivery_tier0 = new tier("Pizza Time", "Pizza Delivery speed x2", 25, action=()=>{pizza_delivery.speed_multiplier*=2;}, "pizza_delivery");
+pizza_delivery_tier1 = new tier("Pizza Parlor", "Pizza Delivery speed x2", 50, action=()=>{pizza_delivery.speed_multiplier*=2;}, "pizza_delivery");
+pizza_delivery_tier2 = new tier("Pizza Pie", "Pizza Delivery speed x2", 100, action=()=>{pizza_delivery.speed_multiplier*=2;}, "pizza_delivery");
 
 function refresh_upgrade_buttons(remove=true) {
 	let i = 0;
@@ -468,7 +576,7 @@ function refresh_upgrade_buttons(remove=true) {
 			upgrades[i].add_button(place_to_fill);
 			place_to_fill++;
 		}
-		if (place_to_fill > 8) break;
+		if (place_to_fill >= 8) break;
 	}
 }
 refresh_upgrade_buttons(false);
@@ -482,6 +590,7 @@ let cur_loop_time = get_time();
 function loop() {
 	cur_loop_time = get_time();
 	let currently_displayed_upgrades = 0;
+	get_element("upgrades_title").attributes.class.value = "title";
 	for (let i = 0; i < upgrades.length; i++) {
 		if (upgrades[i].purchased) {
 			upgrades[i].action();
@@ -490,9 +599,10 @@ function loop() {
 			get_element("upgrade"+upgrades[i].id+"price").setAttribute("class", "price-"+(can_afford ? "can" : "cant")+"afford noselect");
 			get_element("upgrade"+upgrades[i].id).setAttribute("class", "button noselect button-"+(can_afford ? "enabled" : "disabled"));
 			get_element("upgrade"+upgrades[i].id).disabled = !can_afford;
+			if (can_afford) get_element("upgrades_title").attributes.class.value = "title important-text";
 			currently_displayed_upgrades++;
 		}
-		if (currently_displayed_upgrades > 8) break;
+		if (currently_displayed_upgrades >= 8) break;
 	}
 	for (let i = 0; i < buildings.length; i++) {
 		let full_tier_desc = "";
@@ -506,7 +616,7 @@ function loop() {
 				let tier_name = "";
 				if (ii > 0) tier_name = buildings[i].tiers[ii-1].name;
 				else tier_name = "(no tier)";
-				get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].amount) + " more until next tier";
+				get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].get_amount()) + " more until next tier";
 				//full_tier_desc += tier_desc;
 				break;
 			}
@@ -523,27 +633,17 @@ function loop() {
 		progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].get_time()) * 216;
 		let profit_string = money(buildings[i].get_profit());
 		progress_graphic.children[2].innerHTML = profit_string;
-		progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 5))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
+		progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 4.75))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
 		progress_graphic.children[3].innerHTML = as_time(buildings[i].get_time() - (buildings[i].time * (buildings[i].get_time() > 1)), buildings[i].get_time() <= 1);
-		get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].amount;
+		get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].get_amount();
 		
-		let can_purchase = dollars >= buildings[i].get_price();
-		get_element(buildings[i].name+"_price").innerHTML = " (" + money(buildings[i].get_price()) + ")";
-		get_element(buildings[i].name+"_price").className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
-		get_element(buildings[i].name+"_buy").className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
-		get_element(buildings[i].name+"_buy").disabled = !can_purchase;
-		
-		let can_purchase_10 = dollars >= buildings[i].get_price(10);
-		get_element(buildings[i].name+"_price_10").innerHTML = " (" + money(buildings[i].get_price(10)) + ")";
-		get_element(buildings[i].name+"_price_10").className = can_purchase_10 ? "price-canafford noselect" : "price-cantafford noselect";
-		get_element(buildings[i].name+"_buy_10").className = can_purchase_10 ? "button noselect button-enabled" : "button noselect button-disabled";
-		get_element(buildings[i].name+"_buy_10").disabled = !can_purchase_10;
-		
-		let can_purchase_100 = dollars >= buildings[i].get_price(100);
-		get_element(buildings[i].name+"_price_100").innerHTML = " (" + money(buildings[i].get_price(100)) + ")";
-		get_element(buildings[i].name+"_price_100").className = can_purchase_100 ? "price-canafford noselect" : "price-cantafford noselect";
-		get_element(buildings[i].name+"_buy_100").className = can_purchase_100 ? "button noselect button-enabled" : "button noselect button-disabled";
-		get_element(buildings[i].name+"_buy_100").disabled = !can_purchase_100;
+		for (let qty = 0; qty < buy_amounts.length; qty++) {
+			let can_purchase = dollars >= buildings[i].get_price(Number(buy_amounts[qty]));
+			get_element(buildings[i].name+"_price_"+buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buy_amounts[qty]))) + ")";
+			get_element(buildings[i].name+"_price_"+buy_amounts[qty]).className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
+			get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
+			get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).disabled = !can_purchase;
+		}
 		
 		buildings[i].profit_multiplier = 1n; // this needs to be reset each frame so that upgrade actions do not compound.
 		buildings[i].speed_multiplier = 1; // same tbh
