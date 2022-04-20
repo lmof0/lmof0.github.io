@@ -94,7 +94,17 @@ details > p {
 <body>
 <center><h1>Capitalsim</h1></center>
 <hr>
-<h1 id="dollars">$0.00</h1>
+<div id="settings" style="position:absolute;right:16px;border:4px solid #ffffff;color:#ffffff;width:440px;font-family:initial;padding:4px;">
+	<div style="text-align:center">settings</div>
+	<label for="formatting_mode">number formatting: </label>
+	<select name="formatting_mode" id="formatting_mode" class="button" style="color:#ffffff;">
+		<option value="0">long (million, billion, etc.)</option>
+		<option value="1">short (M, B, T, Qa, Qi, etc.)</option>
+		<option value="2">none (1.234e+99 etc.)</option>
+	</select>
+</div>
+<h1 id="dollars" style="padding:4px;border:1px solid #00ff00;position:sticky;position:-webkit-sticky;top:4px;margin:0px 16px 16px 0px;width:33%;background-color:rgba(0,0,0,0.65);text-shadow:2px 2px black;color:#00ff00;">$0.00</h1>
+<!--<h1 id="moon_credits" style="padding:4px;border:1px solid #0054ff;position:sticky;position:-webkit-sticky;top:64px;margin:0px 16px 16px 0px;width:33%;background-color:rgba(0,0,0,0.65);text-shadow:2px 2px black;color:#0054ff;">0.00</h1>-->
 <div id="buildings"><!--
 <div id="lemonade_stand" class="building">
 	<h2 class="title">Lemonade Stand </h2>
@@ -151,53 +161,121 @@ details > p {
 	</table>
 </div>
 <script>
-let dollars = 0n;
-let money_display_threshold = 100000000000n;
-let irregulars = ["","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
-let prefixes = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
-let infixes = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
-let suffixes = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
+class currency {
+	constructor(name, symbol) {
+		this.name = name;
+		this.symbol = symbol;
+		// maybe desc later?
+		
+		this.amount = 0n;
+		this.total = 0n;
+		this.all_time = 0n;
+	}
+	earn(earning) {
+		this.amount += earning;
+		this.total += earning;
+		this.all_time += earning;
+	}
+	spend(expenditure) {
+		this.amount -= expenditure;
+	}
+	get_amount() {return this.amount;}
+	get_total() {return this.total;}
+	get_all_time() {return this.all_time;}
+}
+class world {
+	constructor(name, currency, buildings, upgrades, tiers) {
+		this.name = name;
+		this.currency = currency;
+		this.buildings = buildings;
+		this.upgrades = upgrades;
+	}
+}
+let dollars = new currency("dollar", "$");
+let moon_credits = new currency("moon credit", String.fromCharCode(9789));
+let mars_dollars = new currency("mars dollar", String.fromCharCode(8380));
+let termins = new currency("termin", String.fromCharCode(10810));
+//let dollars = 0n;
+let money_display_threshold = 100000000n;
+
+let irregulars_long = ["","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
+let prefixes_long = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
+let infixes_long = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
+let suffixes_long = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","amongent"];
+
+let irregulars_short = ["","M","B","T","Qa","Qi","Sx","Sp","Oc","No"];
+let prefixes_short = ["","Un","Do","Tr","Qa","Qi","Sx","Sp","Oc","No"];
+let infixes_short = ["","D","V","T","Qa","Qi","Sx","Sp","O","N"];
+let suffixes_short = ["c","g","Cn","Dcn","Tcn","Qan","Qin","Scn","Spn","Ocn","Non","Amg"];
+
 function get_element(e) {
 	return document.getElementById(e);
 }
-function money(n, prefix="$") {
-	if (n < money_display_threshold) {
-		let string = "";
-		let chars = (n + "").split("").reverse();
-		for (let i = 0; i < chars.length; i++)
-		{  // we have to move over 2 places for the cents
-			if (i%3 == 0+2 && i > 0+2) string = "," + string;
-			if (i == 2) string = "." + string;
-			string = chars[i] + string;
+
+function formatting(irregulars, prefixes, infixes, suffixes, illion="illion", spacing=" ") {
+	return function (n, prefix="$") {
+		if (n < money_display_threshold) {
+			let string = "";
+			let chars = (n + "").split("").reverse();
+			for (let i = 0; i < chars.length; i++)
+			{  // we have to move over 2 places for the cents
+				if (i%3 == 0+2 && i > 0+2) string = "," + string;
+				if (i == 2) string = "." + string;
+				string = chars[i] + string;
+			}
+			if (string.length <3) string = ("0.0").substr(0,4-string.length) + string;
+			string = prefix + string;
+			return string;
 		}
-		if (string.length <3) string = ("0.0").substr(0,4-string.length) + string;
-		string = prefix + string;
-		return string;
+		
+		let str_n = (n+"");
+		let magnitude = ((n+"").length-3)-2; // minus two for the cents
+		let illionth = Math.floor((magnitude-3+2)/3);
+		
+		str_n = str_n.substr(0,4 + (magnitude+2)%3);
+		let chars = str_n.split("").reverse();
+		let string = "";
+		for (let i = 0; i < chars.length; i++) {
+			if (i == 3 && string.length > 0) string = "." + string;
+			if (chars[i] != '0' || string.length > 0 || i >= 3) string = chars[i] + string;
+		}
+		let ending = illion;
+		if (illionth <= 9) string = string + spacing + irregulars[illionth];
+		if (illionth >= 10 && Math.floor(illionth/100)+1 < suffixes.length) {
+			digits = (illionth + "").split("").reverse();
+			if (illionth >= 10 && illionth < 20) ending = suffixes[0] + ending;
+			if (illionth >= 20 && illionth < 100) ending = suffixes[1] + ending;
+			if (illionth >= 100) ending = suffixes[Math.floor(illionth/100)+1] + ending;
+			string = string + spacing + prefixes[digits[0]] + infixes[digits[1]] + ending;//("s".repeat(illionth%100 == 23 ? 1 : 0)) + infixes[digits[1]] + ending;
+			// there's a lot going on here, but that "s".repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion". this will also occur on any illion number whose base 10 representation ends with "23".
+		}
+		if (Math.floor(illionth/100)+1 >= suffixes.length) {
+			let ord_indicators = ["th","st","nd","rd","th","th","th","th","th","th"];
+			let ord_indicator = ord_indicators[Number(((illionth+'').split("").reverse())[0])];
+			return prefix + string + " " + illionth + ord_indicator + "&ndash;" + ending;
+		}
+		return prefix + string;
 	}
-	
-	let str_n = (n+"");
-	let magnitude = ((n+"").length-3)-2; // minus two for the cents
-	let illionth = Math.floor((magnitude-3+2)/3);
-	
-	str_n = str_n.substr(0,4 + (magnitude+2)%3);
-	let chars = str_n.split("").reverse();
-	let string = "";
-	for (let i = 0; i < chars.length; i++) {
-		if (i == 3 && string.length > 0) string = "." + string; 
-		if (chars[i] != '0' || string.length > 0) string = chars[i] + string;
-	}
-	if (illionth <= 9) string = string + " " + irregulars[illionth];
-	if (illionth >= 10) {
-		digits = (illionth + "").split("").reverse();
-		ending = "illion";
-		if (illionth >= 10 && illionth < 20) ending = suffixes[0] + ending;
-		if (illionth >= 20 && illionth < 100) ending = suffixes[1] + ending;
-		if (illionth >= 100) ending = suffixes[Math.floor(illionth/100)+1] + ending;
-		string = string + " " + prefixes[digits[0]] + ("s".repeat(illionth%100 == 23 ? 1 : 0)) + infixes[digits[1]] + ending;
-		// there's a lot going on here, but that "s".repeat part is so that "trevigintillion" (which is the 23rd) is written with an 's', as "tresvigintillion". this will also occur on any illion number whose base 10 representation ends with "23".
-	}
-	return prefix + string;
 }
+function raw_formatting(n, prefix="$") {
+	if (n < money_display_threshold) return formattings[0](n, prefix);
+	let chars = (n+'').substr(0,4).split("").reverse();
+	let string = "";
+	for (let i = 0; i < 4; i++) {
+		if (i == 3 && string.length > 0) string = "." + string;
+		if (chars[i] != '0' || string.length > 0 || i >= 3) string = chars[i] + string;
+	}
+	let mag = (n+'').length-3; // minus two (or something?) for cents
+	return prefix + string + "e+" + mag;
+}
+formattings = [
+	formatting(irregulars_long, prefixes_long, infixes_long, suffixes_long),
+	formatting(irregulars_short, prefixes_short, infixes_short, suffixes_short, "", ""),
+	raw_formatting
+];
+let formatting_mode = 0;
+let money =(n, prefix="$")=> {return formattings[formatting_mode](n,prefix);}
+
 let temporal_suffixes = ["s","ms","&mu;s","ns","ps","fs","as","zs","ys"];
 function as_time(t, do_ms=false) {
 	if (t >= 0.001) {
@@ -273,6 +351,11 @@ class building {
 		building_title.setAttribute("class", "title");
 		let building_title_innerHTML = document.createTextNode(display_name+" ");
 		building_title.appendChild(building_title_innerHTML);
+		
+		// hide all the details before the first buy
+		let building_interface = document.createElement("div");
+		building_interface.setAttribute("id", name+"_interface");
+		building_interface.setAttribute("style", "display:none;");
 		
 		let building_amount = document.createElement("div");
 		building_amount.setAttribute("class", "noselect");
@@ -359,15 +442,15 @@ class building {
 		</svg><br>*/
 		
 		building_element.appendChild(building_title);
-		building_element.appendChild(building_amount);
-		building_element.appendChild(document.createElement("br"));
-		building_element.appendChild(building_tier);
-		building_element.appendChild(document.createElement("br"));
-		building_element.appendChild(tier_effects);
-		building_element.appendChild(document.createElement("br"));
-		building_element.innerHTML += '<svg width="328" height="36" id="'+name+'_progress"><rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)"></rect><rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)"></rect><text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">something went wrong</text><text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">00:00:00.000</text></svg>';
+		building_interface.appendChild(building_amount);
+		building_interface.appendChild(document.createElement("br"));
+		building_interface.appendChild(building_tier);
+		building_interface.appendChild(document.createElement("br"));
+		building_interface.appendChild(tier_effects);
+		building_interface.appendChild(document.createElement("br"));
+		building_interface.innerHTML += '<svg width="328" height="36" id="'+name+'_progress"><rect width="216" height="36" style="fill:rgb(0,40,0);stroke-width:1;stroke:rgb(0,40,0)"></rect><rect width="0" height="36" style="fill:rgb(0,150,0);stroke-width:0;stroke:rgb(0,40,0)"></rect><text x="108" y="24" fill="#cccccc" style="font-size:22px;" class="svgtext noselect">something went wrong</text><text x="224" y="24" fill="white" class="noselect" style="font-size:18px;text-anchor:start;text-align:start;font-family:initial;">00:00:00.000</text></svg>';
 		//building_element.appendChild(building_progress_svg);
-		building_element.appendChild(document.createElement("br"));
+		building_interface.appendChild(document.createElement("br"));
 		
 		for (let i = 0; i < buy_amounts.length; i++) { // this is a bit weird but it makes the code less runny
 			let buy_button = document.createElement("button");
@@ -382,9 +465,9 @@ class building {
 			buy_button_price.setAttribute("class", "price-cantafford noselect");
 			buy_button_price.setAttribute("id", name+"_price_"+buy_amounts[i]);
 			
-			building_element.appendChild(buy_button);
-			building_element.appendChild(buy_button_price);
-			building_element.appendChild(document.createElement("br"));
+			building_interface.appendChild(buy_button);
+			building_interface.appendChild(buy_button_price);
+			building_interface.appendChild(document.createElement("br"));
 		}
 		
 		/*<button class="button noselect button-disabled" id="lemonade_stand_buy" onclick="lemonade_stand.buy()" disabled>buy 1x</button>
@@ -394,6 +477,28 @@ class building {
 		<button class="button noselect button-disabled" id="lemonade_stand_buy_100" onclick="lemonade_stand.buy(100)" disabled>buy 100x</button>
 		<div class="price-cantafford noselect" id="lemonade_stand_price_100"> ($1,000,000.00)</div><br>*/
 		
+		building_element.appendChild(building_interface);
+		
+		let invest_button_br = document.createElement("br");
+		invest_button_br.setAttribute("id", name+"_invest_button_br");
+		building_element.appendChild(invest_button_br);
+		
+		// special button to grab attention to a new unlockable building
+		let invest_button = document.createElement("button");
+		invest_button.setAttribute("id", name+"_invest_button");
+		invest_button.setAttribute("class", "button noselect button-disabled");
+		invest_button.setAttribute("onclick", name+".buy()");
+		invest_button.setAttribute("disabled", true);
+		invest_button.setAttribute("style", "font-size:22px;margin:12px;");
+		let invest_button_text = document.createTextNode("Buy for ");
+		let invest_button_price = document.createElement("div");
+		invest_button_price.setAttribute("style", "display:inline;font-size:22px;");
+		invest_button_price.setAttribute("class", "price-cantafford noselect");
+		invest_button_price.setAttribute("id", name+"_invest_button_price");
+		invest_button.appendChild(invest_button_text);
+		invest_button.appendChild(invest_button_price);
+		building_element.appendChild(invest_button);
+		
 		buildings_element.appendChild(building_element);
 		
 		// that's soil folks
@@ -402,7 +507,7 @@ class building {
 		if (this.get_amount() > 0) this.time += (cur_loop_time - past_loop_time)/1000;
 		if (this.time > this.get_time()) { // pretty simple. calculating loopovers here results in out-of-tab production, as well as accurate calculation of profits if speeds begin exceeding the refresh rate of the main game loop.
 			let loopovers = Math.floor(this.time / this.get_time());
-			eval(this.currency+" += this.get_profit() * BigInt(loopovers);");
+			eval(this.currency+".earn(this.get_profit() * BigInt(loopovers));");
 			this.time %= this.get_time();
 		}
 	}
@@ -424,7 +529,7 @@ class building {
 		if (multiplier*100 == Infinity) return 0n; // hehe oops guess we hit infinity
 		let bigint_mult = BigInt(Math.round(multiplier*100));
 		let price_for_n = ((this.calculated_price)*bigint_mult)/100n;
-		this.amount_at_calculated_price = this.amount; // we do not take freebies into account, because they are free.
+		this.amount_at_calculated_price = this.amount; // we do not take freebies into account, because they are free. thus, we get the amount count directly, instead of get_amount, which would include free buildings.
 		return price_for_n+this.get_price(n-1);
 	}
 	get_profit() {
@@ -442,8 +547,8 @@ class building {
 		return this.amount + this.freebies;
 	}
 	buy(n=1) {
-		if (eval(this.currency+" >= this.get_price(n);")) {
-			eval(this.currency+" -= this.get_price(n);");
+		if (eval(this.currency+".get_amount() >= this.get_price(n);")) {
+			eval(this.currency+".spend(this.get_price(n));");
 			this.amount += n;
 		}
 	}
@@ -460,8 +565,8 @@ class upgrade {
 		upgrades.push(this);
 	}
 	buy() {
-		if (eval(this.currency+" >= this.price;")) {
-			eval(this.currency+" -= this.price;");
+		if (eval(this.currency+".get_amount() >= this.price;")) {
+			eval(this.currency+".spend(this.price);");
 			this.purchased = true;
 			this.remove_button();
 			refresh_upgrade_buttons();
@@ -493,7 +598,7 @@ class upgrade {
 		let price = document.createElement("div");
 		price.setAttribute("id", "upgrade"+this.id+"price");
 		price.setAttribute("class", "price-cantafford noselect");
-		let price_text = document.createTextNode(money(upgrades[this.id].price));
+		let price_text = document.createTextNode(formattings[formatting_mode](upgrades[this.id].price));
 		price.appendChild(price_text);
 		
 		button.appendChild(name);
@@ -528,7 +633,7 @@ lemonade_stand = new building("lemonade_stand", "Lemonade Stand", 2, 50n, 2n * 1
 lemonade_stand.freebies = 1;
 newspaper_delivery = new building("newspaper_delivery", "Newspaper Delivery", 4, 10n * 100n, 25n * 100n, 1.17, "dollars");
 car_wash = new building("car_wash", "Car Wash", 9.5, 210n * 100n, 800n * 100n, 1.16, "dollars");
-pizza_delivery = new building("pizza_delivery", "Pizza Delivery", 12, 650n * 100n, 6500n * 100n, 1.16, "dollars");
+pizza_delivery = new building("pizza_delivery", "Pizza Delivery", 12, 650n * 100n, 7500n * 100n, 1.16, "dollars");
 //donut shop
 //shrimp boat
 //hockey team
@@ -537,6 +642,10 @@ pizza_delivery = new building("pizza_delivery", "Pizza Delivery", 12, 650n * 100
 //oil company
 //space rollercoaster
 //antimatter shipment
+
+//amogus = new building("amogus", "Amogus (2019)", 0.5, 10000n * 100n, 1n * 100n, 1.13, "dollars");
+//amogus_tier0 = new tier("sus crewmate", "amogus speed x999", 100, action=()=>{amogus.speed_multiplier*=999;}, "amogus");
+//amogus_tier1 = new tier("sus crewmate x2", "amogus speed x999", 200, action=()=>{amogus.speed_multiplier*=999;}, "amogus");
 
 /* * * Upgrades * * */
 lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", 50000n, action=()=>{lemonade_stand.profit_multiplier*=3n;}, "dollars");
@@ -599,8 +708,9 @@ function loop() {
 		if (upgrades[i].purchased) {
 			upgrades[i].action();
 		} else {
-			let can_afford = eval(upgrades[i].currency+" >= upgrades[i].price;");
+			let can_afford = eval(upgrades[i].currency+".get_amount() >= upgrades[i].price;");
 			get_element("upgrade"+upgrades[i].id+"price").setAttribute("class", "price-"+(can_afford ? "can" : "cant")+"afford noselect");
+			get_element("upgrade"+upgrades[i].id+"price").innerHTML = formattings[formatting_mode](upgrades[i].price);
 			get_element("upgrade"+upgrades[i].id).setAttribute("class", "button noselect button-"+(can_afford ? "enabled" : "disabled"));
 			get_element("upgrade"+upgrades[i].id).disabled = !can_afford;
 			if (can_afford) get_element("upgrades_title").attributes.class.value = "title important-text";
@@ -609,51 +719,70 @@ function loop() {
 		if (currently_displayed_upgrades >= 8) break;
 	}
 	for (let i = 0; i < buildings.length; i++) {
-		let full_tier_desc = "";
-		for (let ii = 0; ii < buildings[i].tiers.length; ii++) {
-			if (buildings[i].tiers[ii].reached()) {
-				buildings[i].tiers[ii].action();
-				if (ii != 0) full_tier_desc += "<br>";
-				full_tier_desc += buildings[i].tiers[ii].desc;
+		if (buildings[i].get_amount() > 0) {
+			get_element(buildings[i].name+"_interface").setAttribute("style", "display:contents;");
+			get_element(buildings[i].name+"_invest_button").setAttribute("style", "display:none;");
+			get_element(buildings[i].name+"_invest_button_br").setAttribute("style", "display:none;");
+			let full_tier_desc = "";
+			for (let ii = 0; ii < buildings[i].tiers.length; ii++) {
+				if (buildings[i].tiers[ii].reached()) {
+					buildings[i].tiers[ii].action();
+					if (ii != 0) full_tier_desc += "<br>";
+					full_tier_desc += buildings[i].tiers[ii].name + ": " + buildings[i].tiers[ii].desc;
+				}
+				else {
+					let tier_name = "";
+					if (ii > 0) tier_name = buildings[i].tiers[ii-1].name;
+					else tier_name = "(no tier)";
+					get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].get_amount()) + " more until next tier";
+					//full_tier_desc += tier_desc;
+					break;
+				}
+				if (ii == buildings[i].tiers.length - 1) { // we didn't hit that preemptive break, so we must be at the end.
+					get_element(buildings[i].name+"_tier").innerHTML = "Tier " + (ii+1).toString() + ": " + buildings[i].tiers[ii].name + " &ndash; tier MAX";
+					//full_tier_desc += buildings[i].tiers[ii].desc;
+				}
 			}
-			else {
-				let tier_name = "";
-				if (ii > 0) tier_name = buildings[i].tiers[ii-1].name;
-				else tier_name = "(no tier)";
-				get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].get_amount()) + " more until next tier";
-				//full_tier_desc += tier_desc;
-				break;
+			get_element(buildings[i].name+"_tier_desc").innerHTML = full_tier_desc;
+			get_element(buildings[i].name+"_tier_effects").hidden = full_tier_desc == "";
+			buildings[i].tick();
+			
+			let progress_graphic = get_element(buildings[i].name+"_progress");
+			progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].get_time()) * 216;
+			let profit_string = formattings[formatting_mode](buildings[i].get_profit());
+			progress_graphic.children[2].innerHTML = profit_string;
+			progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 4.75))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
+			progress_graphic.children[3].innerHTML = as_time(buildings[i].get_time() - (buildings[i].time * (buildings[i].get_time() > 1)), buildings[i].get_time() <= 1);
+			get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].get_amount();
+			
+			for (let qty = 0; qty < buy_amounts.length; qty++) {
+				let can_purchase = dollars.get_amount() >= buildings[i].get_price(Number(buy_amounts[qty]));
+				get_element(buildings[i].name+"_price_"+buy_amounts[qty]).innerHTML = " (" + formattings[formatting_mode](buildings[i].get_price(Number(buy_amounts[qty]))) + ")";
+				get_element(buildings[i].name+"_price_"+buy_amounts[qty]).className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
+				get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
+				get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).disabled = !can_purchase;
 			}
-			if (ii == buildings[i].tiers.length - 1) { // we didn't hit that preemptive break, so we must be at the end.
-				get_element(buildings[i].name+"_tier").innerHTML = "Tier " + (ii+1).toString() + ": " + buildings[i].tiers[ii].name + " &ndash; tier MAX";
-				//full_tier_desc += buildings[i].tiers[ii].desc;
+			
+			buildings[i].profit_multiplier = 1n; // this needs to be reset each frame so that upgrade actions do not compound.
+			buildings[i].speed_multiplier = 1; // same tbh
+			// however, you can't reset them before the profit and time indicators are drawn!
+		} else {
+			get_element(buildings[i].name+"_interface").setAttribute("style", "display:none;");
+			let can_purchase = dollars.get_amount() >= buildings[i].get_price();
+			get_element(buildings[i].name+"_invest_button_price").innerHTML = " " + formattings[formatting_mode](buildings[i].get_price());
+			get_element(buildings[i].name+"_invest_button_price").className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
+			get_element(buildings[i].name+"_invest_button").className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
+			get_element(buildings[i].name+"_invest_button").disabled = !can_purchase;
+			
+			if (dollars.get_total() < buildings[i].get_price() / 2n) {
+				get_element(buildings[i].name).hidden = true;
+			} else {
+				get_element(buildings[i].name).hidden = false;
 			}
 		}
-		get_element(buildings[i].name+"_tier_desc").innerHTML = full_tier_desc;
-		get_element(buildings[i].name+"_tier_effects").hidden = full_tier_desc == "";
-		buildings[i].tick();
-		
-		let progress_graphic = get_element(buildings[i].name+"_progress");
-		progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].get_time()) * 216;
-		let profit_string = money(buildings[i].get_profit());
-		progress_graphic.children[2].innerHTML = profit_string;
-		progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 4.75))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
-		progress_graphic.children[3].innerHTML = as_time(buildings[i].get_time() - (buildings[i].time * (buildings[i].get_time() > 1)), buildings[i].get_time() <= 1);
-		get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + buildings[i].get_amount();
-		
-		for (let qty = 0; qty < buy_amounts.length; qty++) {
-			let can_purchase = dollars >= buildings[i].get_price(Number(buy_amounts[qty]));
-			get_element(buildings[i].name+"_price_"+buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buy_amounts[qty]))) + ")";
-			get_element(buildings[i].name+"_price_"+buy_amounts[qty]).className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
-			get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
-			get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).disabled = !can_purchase;
-		}
-		
-		buildings[i].profit_multiplier = 1n; // this needs to be reset each frame so that upgrade actions do not compound.
-		buildings[i].speed_multiplier = 1; // same tbh
-		// however, you can't reset them before the profit and time indicators are drawn!
 	}
-	document.getElementById("dollars").innerHTML = money(dollars);
+	document.getElementById("dollars").innerHTML = money(dollars.get_amount());
+	formatting_mode = Number(get_element("formatting_mode").value);
 	past_loop_time = get_time();
 	//lemonade_stand.max_time /= 1.01;
 	setTimeout(loop, -(cur_loop_time - past_loop_time));
