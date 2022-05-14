@@ -202,11 +202,11 @@ label, select {color:#ffffff;font-family:initial;}
 	<center><button id="angel_restart_button" class="button noselect button-disabled" disabled>Restart for 0 angels</button></center>
 	<div style="font-family:initial;"><i>holy</i> smokes! look at those profits!</div>
 </div>
-<div id="fps" class="fps"></div>
+<div id="fps" class="fps"><small>this is an fps counter. i have it disabled for now :)</small></div>
 <script src="decimal.js"></script>
 <script>
 //let t = new Date();
-let absolute_limit = Decimal("1e+4000"); // i will have no more of this
+let absolute_limit = Decimal("1e+4000000000000000"); // i will have no more of this
 let cuberoot_threshold = Decimal(Number.MAX_VALUE); // ridiculous folly
 let zero =()=> {return new Decimal('0');}
 //let t2 = new Date();
@@ -449,6 +449,7 @@ function get_element(e) {
 function formatting(irregulars, prefixes, infixes, suffixes, illion="illion", spacing=" ") {
 	return function (input, prefix="$", decimals=2) { // decimals controls how many of the digits (starting on the right) do we treat as being after a decimal point.
 		let n = Decimal(input);
+		if (!n.isFinite()) return prefix + "Infinity";
 		if (n.lt(money_display_threshold)) {
 			let string = "";
 			let chars = n.toFixed(decimals).split("").reverse();
@@ -465,10 +466,7 @@ function formatting(irregulars, prefixes, infixes, suffixes, illion="illion", sp
 		let magnitude = n.e;
 		let illionth = Math.floor((magnitude-3)/3); // illions start at 6
 		let significand = Decimal(n); // a new decimal of value n
-		for (let divs_of_ten = 0; significand.e >= 3 && divs_of_ten < 16003; divs_of_ten+=3) { // limit it so infinity/NaN doesn't get it stuck and wreck the entire page
-			//significand = significand.div(1000);
-			significand.e -= 3;
-		}
+		significand.e -= 3 * (illionth + 1);
 		
 		let chars = significand.toFixed(3,3).replaceAll('.','').split("").reverse();
 		let string = "";
@@ -493,23 +491,27 @@ function formatting(irregulars, prefixes, infixes, suffixes, illion="illion", sp
 		}
 		if (Math.floor(illionth/100)+1 >= suffixes.length) { // in case all else fails (probably shouldn't come to this/be used)
 			let ord_indicators = ["th","st","nd","rd","th","th","th","th","th","th"];
-			let ord_indicator = ord_indicators[Number(((illionth+'').split("").reverse())[0])];
-			return prefix + string + " " + illionth + ord_indicator + "&ndash;illion";
+			let ord_indicator = (illionth < 10**6 ? ord_indicators[Number(((illionth+'').split("").reverse())[0])] : 'th');
+			return prefix + string + " " + beautify(illionth) + ord_indicator + "&ndash;illion";
 		}
 		return prefix + string;
 	}
 }
 function raw_formatting(input, prefix="$", decimals=2) {
 	let n = Decimal(input);
+	if (!n.isFinite()) return prefix + "Infinity";
 	if (n.lt(money_display_threshold)) return formattings[0](n, prefix, decimals);
 	let str = n.toPrecision(4);
-	str = str.split('').reverse();
-	let formatted = '';
-	for (i in str) { // get rid of extraneous zeroes, and if we get all of them (i.e., our formatted string is small enough when we hit the dot) then just add the last digit and break.
-		if (str[i] == "." && formatted.length < 4) {formatted = str[str.length-1] + formatted; break;}
-		if (str[i] != "0") formatted = str[i] + formatted;
+	let significand = str.substr(0,5);
+	let backwards = significand.split('').reverse();
+	for (let i = 0; i < backwards.length; i++) { // get rid of extraneous zeroes, and if we get all of them (i.e., our formatted string is small enough when we hit the dot) then just add the last digit and break.
+		if (backwards[i] != "0" && backwards[i] != ".") {significand = str.substr(0, backwards.length - i); break;}
+	
+		//if (str[i] == "." && formatted.length < (n.e+'').length + 3) {formatted = str[str.length-1] + formatted; break;}
+		//if (str[i] != "0" || i < str.indexOf("e")) formatted = str[i] + formatted;
 	}
-	return prefix + formatted;
+	return prefix + significand + "e" + (n.e>=0?'+':'-') + raw_formatting(n.e,'',0);
+	//catch {return "NaN";} // tehe
 }
 formattings = [
 	formatting(irregulars_long, prefixes_long, infixes_long, suffixes_long),
@@ -561,10 +563,10 @@ function as_time(time, do_ms=false) {
 
 //let buildings = [];
 //let upgrades = [];
-let buy_amounts = [1,10,100,1000]; // bluh
+//let buy_amounts = [1,10,100,1000]; // bluh
 // bleghhhhh
 class building {
-	constructor(name, display_name, base_speed, base_profit, base_price, base_price_multiplier=1.15, world=earth, currency=undefined, starting_freebies=0) {
+	constructor(name, display_name, base_speed, base_profit, base_price, base_price_multiplier=1.15, world=earth, buy_amounts=[1,10,100,1000], currency=undefined, starting_freebies=0) {
 		this.id = world.buildings.length;
 		this.display_name = display_name;
 		this.name = name;
@@ -581,9 +583,12 @@ class building {
 		this.starting_freebies = starting_freebies;
 		this.freebies = starting_freebies;
 		this.world = world;
+		this.buy_amounts = buy_amounts;
 		// following variables are redundancies for speeding things up
 		this.calculated_prices = [];
 		this.recalculate_prices = true;
+		//this.unlocked = false;
+		this.gui_override_update_price = false;
 		
 		world.buildings.push(this); // push this building object to the list of building objects to be ticked by the game loop.
 		// the code below will create a <div> element for the actual interface of the building and add it to the main building element.
@@ -698,18 +703,18 @@ class building {
 		//building_element.appendChild(building_progress_svg);
 		building_interface.appendChild(document.createElement("br"));
 		
-		for (let i = 0; i < buy_amounts.length; i++) { // this is a bit weird but it makes the code less runny
+		for (let i = 0; i < this.buy_amounts.length; i++) { // this is a bit weird but it makes the code less runny
 			let buy_button = document.createElement("button");
 			buy_button.setAttribute("class", "button noselect button-disabled");
-			buy_button.setAttribute("id", name+"_buy_"+buy_amounts[i]);
-			buy_button.setAttribute("onclick", name+".buy("+buy_amounts[i]+")");
+			buy_button.setAttribute("id", name+"_buy_"+this.buy_amounts[i]);
+			buy_button.setAttribute("onclick", name+".buy("+this.buy_amounts[i]+")");
 			buy_button.setAttribute("disabled", true);
-			let buy_button_innerHTML = document.createTextNode("buy "+beautify(buy_amounts[i])+"x");
+			let buy_button_innerHTML = document.createTextNode("buy "+beautify(this.buy_amounts[i])+"x");
 			buy_button.appendChild(buy_button_innerHTML);
 			
 			let buy_button_price = document.createElement("div");
 			buy_button_price.setAttribute("class", "price-cantafford noselect");
-			buy_button_price.setAttribute("id", name+"_price_"+buy_amounts[i]);
+			buy_button_price.setAttribute("id", name+"_price_"+this.buy_amounts[i]);
 			
 			building_interface.appendChild(buy_button);
 			building_interface.appendChild(buy_button_price);
@@ -769,15 +774,15 @@ class building {
 		let price_of_i = this.base_price.times(this.base_price_multiplier.pow(this.amount-1));
 		let total_price = zero();//Decimal(price_of_i);
 		let prices = []; // values
-		for (let i = 0; prices.length < buy_amounts.length; i++) {
+		for (let i = 0; prices.length < this.buy_amounts.length; i++) {
 			price_of_i = price_of_i.times(this.base_price_multiplier);
 			total_price = total_price.plus(price_of_i);
-			if (buy_amounts.indexOf(i+1) != -1) prices.push(total_price);
+			if (this.buy_amounts.indexOf(i+1) != -1) prices.push(total_price);
 		}
 		this.calculated_prices = prices;
 	}
 	get_price(n=1) {
-		if (n == 0 || buy_amounts.indexOf(n) == -1) return zero();
+		if (n == 0 || this.buy_amounts.indexOf(n) == -1) return zero();
 		//let multiplier = this.base_price_multiplier.pow(this.amount+n-1); // notice, freebies are not taken into account
 		//let price_for_n = this.base_price.times(multiplier);
 		/*let price_of_i = 0;
@@ -791,7 +796,7 @@ class building {
 		}
 		if (do_recalculations) {this.calculated_price = total_price; this.recalculate_price = false;}*/
 		if (this.recalculate_prices) {this.recalculate_price_values(); this.recalculate_prices = false;}
-		return this.calculated_prices[buy_amounts.indexOf(n)];
+		return this.calculated_prices[this.buy_amounts.indexOf(n)];
 	}
 	get_profit() {
 		let base = this.base_profit.times(this.get_amount()).times(this.profit_multiplier);
@@ -823,7 +828,7 @@ class building {
 		this.recalculate_prices = true;
 	}
 	on_unlock() {
-		
+		this.gui_override_update_price = true;
 	}
 	get_save_data() {
 		let string = "";
@@ -924,7 +929,7 @@ class tier {
 	}
 }
 /* * * Buildings * * */
-lemonade_stand = new building("lemonade_stand", "Lemonade Stand", Decimal(2), Decimal(0.50), Decimal(2.00), Decimal(1.15), earth, undefined, 1);
+lemonade_stand = new building("lemonade_stand", "Lemonade Stand", Decimal(2), Decimal(0.50), Decimal(2.00), Decimal(1.15), earth, [1,10,100,1000], undefined, 1);
 newspaper_delivery = new building("newspaper_delivery", "Newspaper Delivery", Decimal(4), Decimal(10.00), Decimal(25.00), Decimal(1.17), earth);
 car_wash = new building("car_wash", "Car Wash", Decimal(9.5), Decimal(210), Decimal(800), Decimal(1.165), earth);
 pizza_delivery = new building("pizza_delivery", "Pizza Delivery", Decimal(12), Decimal(650), Decimal(7500), Decimal(1.16), earth);
@@ -938,6 +943,7 @@ pizza_delivery = new building("pizza_delivery", "Pizza Delivery", Decimal(12), D
 //antimatter shipment
 //cookie factory
 //glue
+//paperclip machine
 
 moon_shoes = new building("moon_shoes", "Moon Shoes", Decimal(1.5), Decimal(1.00), Decimal(5.00), Decimal(1.14), moon);
 //moon_shoes.freebies = 1; // temp
@@ -948,12 +954,14 @@ moon_shoes = new building("moon_shoes", "Moon Shoes", Decimal(1.5), Decimal(1.00
 //helium-3 farm
 //cheese mines
 //amusement park
-//werewolf colonies
+//werewolf colony
 //giant laser
 //moonolith (this and forward are much more expensive)
 //bromine plant
 //vampire city
 //time agents
+//destiny reactor
+//film lab
 
 potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decimal(0.05), Decimal(1.00), Decimal(1.05), mars);
 //mars chocolate
@@ -969,6 +977,7 @@ potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decima
 //electric cars
 //dusters
 //asteroid miners
+//chocolate bars
 
 //amogus = new building("amogus", "Amogus (2019)", 0.5, 10000n * 100n, 1n * 100n, 1.13, "dollars");
 //amogus_tier0 = new tier("sus crewmate", "amogus speed x999", 100, action=()=>{amogus.speed_multiplier*=999;}, "amogus");
@@ -1078,6 +1087,8 @@ let dt = 0; // delta t
 let dts = []; // track record of last 60 dts
 let mft = 0; // mean frametime
 let fps = 0; // frames per second
+let tof = 0; // time of frames
+let nof = 0; // number of frames
 barrelroll =()=> {roll=true;}
 let roll = false;
 
@@ -1085,6 +1096,12 @@ let roll = false;
 let GUI_moon_unlocked = null;
 let GUI_show_cost_of_next_angel = null;
 let GUI_buildings_unlocked = []; // oh boy
+for (let w = 0; w < worlds.length; w++) {
+	let array = new Array(worlds[w].buildings.length).fill(false);
+	GUI_buildings_unlocked.push([].concat(array));
+	// leaving space for any other building-specific metadata that needs to be kept track of
+}
+let GUI_number_formatting = -1; // used for letting the price labels know that they should get updated
 
 function loop() {
 	cur_loop_time = get_time();
@@ -1102,7 +1119,9 @@ function loop() {
 				if (get_element("upgrades_world_selector").value == world.name) { // we can't update button graphics if the buttons are on another planet!
 					let can_afford = upgrades[i].currency.get_amount().gte(upgrades[i].price);
 					get_element("upgrade"+upgrades[i].id+"price").setAttribute("class", "price-can"+(can_afford ? "" : "t")+"afford noselect");
-					get_element("upgrade"+upgrades[i].id+"price").innerHTML = money(upgrades[i].price, currency.symbol);
+					if (GUI_number_formatting != formatting_mode) {
+						get_element("upgrade"+upgrades[i].id+"price").innerHTML = money(upgrades[i].price, currency.symbol);
+					}
 					get_element("upgrade"+upgrades[i].id).setAttribute("class", "button noselect button-"+(can_afford ? "enabled" : "disabled"));
 					get_element("upgrade"+upgrades[i].id).disabled = !can_afford;
 					if (can_afford) get_element("upgrades_title").attributes.class.value = "title important-text";
@@ -1112,12 +1131,23 @@ function loop() {
 			if (currently_displayed_upgrades >= 8) break;
 		}
 		for (let i = 0; i < buildings.length; i++) {
+			let building_unlocked = buildings[i].get_amount() > 0;
+			if (GUI_buildings_unlocked[w][i] != building_unlocked) {
+				GUI_buildings_unlocked[w][i] = building_unlocked; // at world at building
+				if (building_unlocked) {
+					get_element(buildings[i].name).hidden = false;
+					get_element(buildings[i].name+"_interface").setAttribute("style", "display:contents;");
+					get_element(buildings[i].name+"_invest_button").setAttribute("style", "display:none;");
+					get_element(buildings[i].name+"_invest_button_br").setAttribute("style", "display:none;");
+				} else {
+					get_element(buildings[i].name).hidden = true;
+					get_element(buildings[i].name+"_interface").setAttribute("style", "display:none;");
+					get_element(buildings[i].name+"_invest_button").setAttribute("style", "font-size:22px;margin:12px;");
+					get_element(buildings[i].name+"_invest_button_br").setAttribute("style", "display:initial;");
+				}
+			}
+			let gui_update_prices = buildings[i].recalculate_prices || (GUI_number_formatting != formatting_mode) || buildings[i].gui_override_update_price; // wow i don't even need a big list of lists thingy nice. this is before tick because tick will reset the recalculate_prices boolean if it's true.
 			if (buildings[i].get_amount() > 0) {
-				get_element(buildings[i].name).hidden = false;
-				get_element(buildings[i].name+"_interface").setAttribute("style", "display:contents;");
-				get_element(buildings[i].name+"_invest_button").setAttribute("style", "display:none;");
-				get_element(buildings[i].name+"_invest_button_br").setAttribute("style", "display:none;");
-				// there's gotta be a better and more efficient way to update the visibility of these elements. if performance so preoccupies you, consider looking into this.
 				let full_tier_desc = "";
 				for (let ii = 0; ii < buildings[i].tiers.length; ii++) {
 					if (buildings[i].tiers[ii].reached()) {
@@ -1153,23 +1183,22 @@ function loop() {
 				progress_graphic.children[3].innerHTML = as_time(displayed_time, buildings[i].get_epoch().lte(1));
 				get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + beautify(buildings[i].get_amount());
 				
-				for (let qty = 0; qty < buy_amounts.length; qty++) {
-					let can_purchase = currency.get_amount().gte(buildings[i].get_price(Number(buy_amounts[qty])));
-					get_element(buildings[i].name+"_price_"+buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buy_amounts[qty])), currency.symbol) + ")";
-					get_element(buildings[i].name+"_price_"+buy_amounts[qty]).className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
-					get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
-					get_element(buildings[i].name+"_buy_"+buy_amounts[qty]).disabled = !can_purchase;
+				for (let qty = 0; qty < buildings[i].buy_amounts.length; qty++) {
+					let can_purchase = currency.get_amount().gte(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])));
+					if (gui_update_prices) {
+						get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])), currency.symbol) + ")";
+					}
+					get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
+					get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
+					get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).disabled = !can_purchase;
 				}
 				
 				buildings[i].profit_multiplier = Decimal(1); // this needs to be reset each frame so that upgrade actions do not compound.
 				buildings[i].speed_multiplier = Decimal(1); // same tbh
 				// however, you can't reset them before the profit and time indicators are drawn! (that's why they're down here in an awkward place)
 			} else {
-				get_element(buildings[i].name+"_interface").setAttribute("style", "display:none;");
-				get_element(buildings[i].name+"_invest_button").setAttribute("style", "font-size:22px;margin:12px;");
-				get_element(buildings[i].name+"_invest_button_br").setAttribute("style", "display:initial;");
 				let can_purchase = currency.get_amount().gte(buildings[i].get_price());
-				get_element(buildings[i].name+"_invest_button_price").innerHTML = " " + money(buildings[i].get_price(), currency.symbol);
+				if (gui_update_prices) get_element(buildings[i].name+"_invest_button_price").innerHTML = " " + money(buildings[i].get_price(), currency.symbol);
 				get_element(buildings[i].name+"_invest_button_price").className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
 				get_element(buildings[i].name+"_invest_button").className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
 				get_element(buildings[i].name+"_invest_button").disabled = !can_purchase;
@@ -1180,6 +1209,8 @@ function loop() {
 					get_element(buildings[i].name).hidden = false;
 				}
 			}
+			
+			if (gui_update_prices) buildings[i].gui_override_update_price = false; // can't forget that!
 		}
 		world.currency.tick();
 		world.calculate_claimable_angels();
@@ -1251,16 +1282,22 @@ function loop() {
 		document.getElementsByTagName("body")[0].style.transform = "rotate("+((cur_loop_time/250)%360)+"deg)";
 	}
 	
+	if (GUI_number_formatting != formatting_mode) {GUI_number_formatting = formatting_mode;}
 	formatting_mode = Number(get_element("formatting_mode").value);
 	past_loop_time = get_time();
 	//lemonade_stand.max_time /= 1.01;
 	dt = -(cur_loop_time - past_loop_time);
+	/* * * frametime stuff * * */ // <-- if there's a slash after the asterisk, the counter will appear. to disable the fps counter, simply remove the slash!
 	dts.push(dt);
 	if (dts.length > 60) {dts.reverse();dts.pop();dts.reverse()}
 	for (let i = 0; i < dts.length; i++) {mft+=dts[i];}
 	mft /= dts.length;
 	fps = 1000/mft;
-	get_element("fps").innerHTML = "lps: "+((fps+'').substr(0,6))+", dt="+dt;
+	tof += dt;
+	nof ++;
+	// tpf is time per frame
+	get_element("fps").innerHTML = "lps: "+((fps+'').substr(0,6))+", dt="+dt+", tpf="+((tof/nof)+'').substr(0,6);
+	// */
 	setTimeout(loop, Math.max(dt,10));
 }
 loop();
