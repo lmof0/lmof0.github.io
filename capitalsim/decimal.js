@@ -40,7 +40,7 @@
 
       // The maximum number of significant digits of the result of a calculation or base conversion.
       // E.g. `Decimal.config({ precision: 20 });`
-      precision: 12,                         // 1 to MAX_DIGITS
+      precision: 15,                         // 1 to MAX_DIGITS
 
       // The rounding mode used when rounding to `precision`.
       //

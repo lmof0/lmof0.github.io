@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>a website: capitalism</title>
-<link href="../default.css" rel="stylesheet" type="text/css">
+<!--<link href="../default.css" rel="stylesheet" type="text/css">-->
 <!--
 alright buddy here's the todo:
 i like the modularity of this thing, but it needs improvement
@@ -81,7 +81,7 @@ h1
 	max-width:400px;
 }
 table, th, tr {font-family:inherit;font-weight:inherit;}
-.th-building {padding:0}
+.td-building {padding:0}
 .upgrades
 {
 	border:1px solid gold;
@@ -206,7 +206,7 @@ label, select {color:#ffffff;font-family:initial;}
 <script src="decimal.js"></script>
 <script>
 //let t = new Date();
-let absolute_limit = Decimal("1e+4000000000000000"); // i will have no more of this
+let absolute_limit = Decimal("1e+9000000000000000"); // i will have no more of this
 let cuberoot_threshold = Decimal(Number.MAX_VALUE); // ridiculous folly
 let zero =()=> {return new Decimal('0');}
 //let t2 = new Date();
@@ -251,6 +251,22 @@ function bin_cuberoot(n) {
 	}
 	return mid;
 }*/
+function fastpow(n, exponent) {
+	if (!Number.isSafeInteger(exponent)) return Decimal(1).div(0);
+	if (!Decimal.isDecimal(n)) n = Decimal(n);
+	let blocks = [n];
+	let bits = Math.ceil(Math.log2(exponent));//exponent.toString(2).length; // what?????????
+	for (let i = 1; i < bits; i++) {
+		blocks.push(blocks[i-1].times(blocks[i-1]));
+	}
+	let answer = Decimal(1);
+	for (let i = 0; i < bits; i++) {
+		if (Math.floor(exponent / (1<<i)) & 1 == 1) {
+			answer = answer.times(blocks[i]);
+		}
+	}
+	return answer;
+}//console.log(fastpow(Decimal(1.15), P).toString() + "; " + Decimal(1.15).pow(P).toString()); P*=10 
 class currency {
 	constructor(name, display_name, symbol) {
 		this.name = name;
@@ -408,12 +424,13 @@ let mars_symbol = String.fromCharCode(8380);
 let mars_dollars = new currency("mars_dollars", "mars dollar", mars_symbol);
 let mars_angels = new currency("mars_angels", "mars angel", mars_symbol + angel_symbol);
 
-let termins = new currency("termins", "termin", String.fromCharCode(10810)); // singular: Termin
+let termins = new currency("termins", "termin", String.fromCharCode(10810)); // singular: Termin (mercury?)
 let eternity_points = 0n; // megabucks i guess
 //String.fromCharCode(1000); weird backwards s
 //String.fromCharCode(10000); pencil
 //String.fromCharCode(3497); mogus
 //String.fromCharCode(0x237c); unknown
+//String.fromCharCode(999); squiggly line thing ("s"?)
 sesame=(c=dollars)=>{c.earn(absolute_limit);}
 sall =()=> {for (let i = 0; i < worlds.length; i++) {worlds[i].currency.earn(absolute_limit);}}
 
@@ -589,6 +606,8 @@ class building {
 		this.recalculate_prices = true;
 		//this.unlocked = false;
 		this.gui_override_update_price = false;
+		this.gui_override_update_amount = true;
+		this.gui_override_update_profit = false;
 		
 		world.buildings.push(this); // push this building object to the list of building objects to be ticked by the game loop.
 		// the code below will create a <div> element for the actual interface of the building and add it to the main building element.
@@ -609,14 +628,14 @@ class building {
 		building_interface.setAttribute("style", "display:none;");
 		
 		let building_amount = document.createElement("div");
-		building_amount.setAttribute("class", "noselect");
+		//building_amount.setAttribute("class", "noselect");
 		building_amount.setAttribute("style", "color:#ffffff;font-size:1.25em;display:inline;");
 		building_amount.setAttribute("id", name+"_amount");
 		
 		/*<div class="noselect" style="color:#ffffff;font-size:1.25em;display:inline;" id="lemonade_stand_amount">&mdash; 1</div><br>*/
 		
 		let building_tier = document.createElement("div");
-		building_tier.setAttribute("class", "noselect");
+		//building_tier.setAttribute("class", "noselect");
 		building_tier.setAttribute("style", "color:#ffffff;font-size:1em;display:inline;");
 		building_tier.setAttribute("id", name+"_tier");
 		
@@ -713,7 +732,7 @@ class building {
 			buy_button.appendChild(buy_button_innerHTML);
 			
 			let buy_button_price = document.createElement("div");
-			buy_button_price.setAttribute("class", "price-cantafford noselect");
+			buy_button_price.setAttribute("class", "price-cantafford");
 			buy_button_price.setAttribute("id", name+"_price_"+this.buy_amounts[i]);
 			
 			building_interface.appendChild(buy_button);
@@ -750,9 +769,10 @@ class building {
 		invest_button.appendChild(invest_button_price);
 		building_element.appendChild(invest_button);
 		
-		let th = document.createElement("th"); // create its place in the whole table
-		th.setAttribute("class", "th-building"); // get rid of 1px padding
-		buildings_element.children[0].children[1+this.id].appendChild(th); // put it in the building's place, like a wrapper
+		let td = document.createElement("td"); // create its place in the whole table
+		td.setAttribute("class", "td-building"); // get rid of 1px padding
+		td.setAttribute("style", "vertical-align:top");
+		buildings_element.children[0].children[1+this.id].appendChild(td); // put it in the building's place, like a wrapper
 		
 		buildings_element.children[0].children[1+this.id].children[this.world.id].appendChild(building_element);
 		
@@ -771,14 +791,24 @@ class building {
 		}
 	}
 	recalculate_price_values() {
-		let price_of_i = this.base_price.times(this.base_price_multiplier.pow(this.amount-1));
-		let total_price = zero();//Decimal(price_of_i);
+		//let price_of_i = this.base_price.times(this.base_price_multiplier.pow(this.amount-1));
+		//let total_price = zero();//Decimal(price_of_i);
 		let prices = []; // values
-		for (let i = 0; prices.length < this.buy_amounts.length; i++) {
+		let sum_multiplier = this.base_price_multiplier.div(this.base_price_multiplier.minus(1));
+		for (let i = 0; i < this.buy_amounts.length; i++) { // FAST!!!!!
+		// based on the fact that B^n + B^(n-1) + ... + B^2 + B + 1 = (B/B-1)B^n
+			let p = this.buy_amounts[i]+this.amount-1;
+			let S = this.amount;
+			let mult_adjustment = 0;
+			if (p-S+1 < 100) mult_adjustment = sum_multiplier / (this.base_price_multiplier.pow(p-S+1));
+			let base_multiplier = this.base_price_multiplier.pow(this.buy_amounts[i]+this.amount-1);
+			prices.push(base_multiplier.times(sum_multiplier.minus(mult_adjustment)).times(this.base_price));
+		}
+		/*for (let i = 0; prices.length < this.buy_amounts.length; i++) {
 			price_of_i = price_of_i.times(this.base_price_multiplier);
 			total_price = total_price.plus(price_of_i);
 			if (this.buy_amounts.indexOf(i+1) != -1) prices.push(total_price);
-		}
+		}*/
 		this.calculated_prices = prices;
 	}
 	get_price(n=1) {
@@ -963,7 +993,7 @@ moon_shoes = new building("moon_shoes", "Moon Shoes", Decimal(1.5), Decimal(1.00
 //destiny reactor
 //film lab
 
-potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decimal(0.05), Decimal(1.00), Decimal(1.05), mars);
+potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decimal(0.05), Decimal(1.00), Decimal(1.05), mars, [1,10,100,1000,10000]);
 //mars chocolate
 //space pirates
 //plutonium mines
@@ -984,51 +1014,71 @@ potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decima
 //amogus_tier1 = new tier("sus crewmate x2", "amogus speed x999", 200, action=()=>{amogus.speed_multiplier*=999;}, "amogus");
 
 /* * * Upgrades * * */
-lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", Decimal(500), action=()=>{lemonade_stand.profit_multiplier = lemonade_stand.profit_multiplier.times(3);}, earth);
-newspaper_delivery_up0 = new upgrade("Lasanga Comics", "Newspaper Delivery profit x3", Decimal(3000), action=()=>{newspaper_delivery.profit_multiplier = newspaper_delivery.profit_multiplier.times(3);}, earth);
-car_wash_up0 = new upgrade("Bubblier Soaps", "Car Wash profit x3", Decimal(15000), action=()=>{car_wash.profit_multiplier = car_wash.profit_multiplier.times(3);}, earth);
-pizza_delivery_up0 = new upgrade("Garlic Sauce", "Pizza Delivery profit x3", Decimal(40000), action=()=>{pizza_delivery.profit_multiplier = pizza_delivery.profit_multiplier.times(3);}, earth);
+let multiply_profit =(building, mult)=> {
+	return function () {
+		building.profit_multiplier = building.profit_multiplier.times(mult);
+		building.gui_override_update_profit = true;
+	}
+}
+let multiply_speed =(building, mult)=> {
+	return function () {
+		building.speed_multiplier = building.speed_multiplier.times(mult);
+	}
+}
+let multiply_world_profit =(world, mult)=> {
+	return function () {
+		for (let i = 0; i < world.buildings.length; i++) {
+			world.buildings[i].profit_multiplier = world.buildings[i].profit_multiplier.times(mult);
+			world.buildings[i].gui_override_update_profit = true;
+		}
+	}
+}
 
-everything_up0 = new upgrade("Marketeer", "Everything profit x3", Decimal(90000), action=()=>{for (let i = 0; i < earth.buildings.length; i++) {earth.buildings[i].profit_multiplier = earth.buildings[i].profit_multiplier.times(3);}}, earth);
+lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", Decimal(500), multiply_profit(lemonade_stand, 3), earth);
+newspaper_delivery_up0 = new upgrade("Lasanga Comics", "Newspaper Delivery profit x3", Decimal(3000), multiply_profit(newspaper_delivery, 3), earth);
+car_wash_up0 = new upgrade("Bubblier Soaps", "Car Wash profit x3", Decimal(15000), multiply_profit(car_wash, 3), earth);
+pizza_delivery_up0 = new upgrade("Garlic Sauce", "Pizza Delivery profit x3", Decimal(40000), multiply_profit(pizza_delivery, 3), earth);
 
-lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", Decimal(150000), action=()=>{lemonade_stand.profit_multiplier = lemonade_stand.profit_multiplier.times(3);}, earth);
-newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", Decimal(900000), action=()=>{newspaper_delivery.profit_multiplier = newspaper_delivery.profit_multiplier.times(3);}, earth);
-car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", Decimal(2700000), action=()=>{car_wash.profit_multiplier = car_wash.profit_multiplier.times(3);}, earth);
-pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", Decimal(4900000), action=()=>{pizza_delivery.profit_multiplier = pizza_delivery.profit_multiplier.times(3);}, earth);
+everything_up0 = new upgrade("Marketeer", "Everything profit x3", Decimal(90000), multiply_world_profit(earth, 3), earth);
 
-everything_up1 = new upgrade("Clever Strategies", "Everything profit x3", Decimal(10000000), action=()=>{for (let i = 0; i < earth.buildings.length; i++) {earth.buildings[i].profit_multiplier = earth.buildings[i].profit_multiplier.times(3);}}, earth);
+lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", Decimal(150000), multiply_profit(lemonade_stand, 3), earth);
+newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", Decimal(900000), multiply_profit(newspaper_delivery, 3), earth);
+car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", Decimal(2700000), multiply_profit(car_wash, 3), earth);
+pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", Decimal(4900000), multiply_profit(pizza_delivery, 3), earth);
 
-everything_up2 = new upgrade("Highly Lucrative Proposition", "Everything profit x3", Decimal(500000000000), action=()=>{for (let i = 0; i < earth.buildings.length; i++) {earth.buildings[i].profit_multiplier = earth.buildings[i].profit_multiplier.times(3);}}, earth);
+everything_up1 = new upgrade("Clever Strategies", "Everything profit x3", Decimal(10000000), multiply_world_profit(earth, 3), earth);
 
-moon_shoes_up0 = new upgrade("Titanium-toed", "Moon Shoes profit x3", Decimal(8000), action=()=>{moon_shoes.profit_multiplier = moon_shoes.profit_multiplier.times(3);}, moon);
+everything_up2 = new upgrade("Highly Lucrative Proposition", "Everything profit x3", Decimal(500000000000), multiply_world_profit(earth, 3), earth);
 
-potato_stand_up0 = new upgrade("Fresh Fertilizer", "Potato Stand profit x9", Decimal(10000), action=()=>{potato_stand.profit_multiplier = potato_stand.profit_multiplier.times(9);}, mars);
-potato_stand_up1 = new upgrade("Hydrazine Cans", "Potato Stand profit x19", Decimal(10000000), action=()=>{potato_stand.profit_multiplier = potato_stand.profit_multiplier.times(19);}, mars);
+moon_shoes_up0 = new upgrade("Titanium-toed", "Moon Shoes profit x3", Decimal(8000), multiply_profit(moon_shoes, 3), moon);
+
+potato_stand_up0 = new upgrade("Fresh Fertilizer", "Potato Stand profit x9", Decimal(10000), multiply_profit(potato_stand, 9), mars);
+potato_stand_up1 = new upgrade("Hydrazine Cans", "Potato Stand profit x19", Decimal(10000000), multiply_profit(potato_stand, 19), mars);
 
 /* * * Tiers * * */
-lemonade_stand_tier0 = new tier("Lemonade Novice", "Lemonade Stand speed x2", 25, action=()=>{lemonade_stand.speed_multiplier = lemonade_stand.speed_multiplier.times(2);}, lemonade_stand);
-lemonade_stand_tier1 = new tier("Lemongineer", "Lemonade Stand speed x2", 50, action=()=>{lemonade_stand.speed_multiplier = lemonade_stand.speed_multiplier.times(2);}, lemonade_stand);
-lemonade_stand_tier2 = new tier("Lemon Officianado", "Lemonade Stand profit x3", 100, action=()=>{lemonade_stand.profit_multiplier = lemonade_stand.profit_multiplier.times(3);}, lemonade_stand);
-lemonade_stand_tier3 = new tier("Professional Juicer", "Lemonade Stand speed x2", 150, action=()=>{lemonade_stand.speed_multiplier = lemonade_stand.speed_multiplier.times(2);}, lemonade_stand);
-lemonade_stand_tier4 = new tier("Lemondacious", "Lemonade Stand speed x2", 200, action=()=>{lemonade_stand.speed_multiplier = lemonade_stand.speed_multiplier.times(2);}, lemonade_stand);
+lemonade_stand_tier0 = new tier("Lemonade Novice", "Lemonade Stand speed x2", 25, multiply_speed(lemonade_stand, 2), lemonade_stand);
+lemonade_stand_tier1 = new tier("Lemongineer", "Lemonade Stand speed x2", 50, multiply_speed(lemonade_stand, 2), lemonade_stand);
+lemonade_stand_tier2 = new tier("Lemon Officianado", "Lemonade Stand profit x3", 100, multiply_profit(lemonade_stand, 3), lemonade_stand);
+lemonade_stand_tier3 = new tier("Professional Juicer", "Lemonade Stand speed x2", 150, multiply_speed(lemonade_stand, 2), lemonade_stand);
+lemonade_stand_tier4 = new tier("Lemondacious", "Lemonade Stand speed x2", 200, multiply_speed(lemonade_stand, 2), lemonade_stand);
 
-newspaper_delivery_tier0 = new tier("Extra extra!", "Newspaper Delivery speed x2", 25, action=()=>{newspaper_delivery.speed_multiplier = newspaper_delivery.speed_multiplier.times(2);}, newspaper_delivery);
-newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery profit x2", 50, action=()=>{newspaper_delivery.profit_multiplier = newspaper_delivery.profit_multiplier.times(2);}, newspaper_delivery);
-newspaper_delivery_tier2 = new tier("Breaking News", "Newspaper Delivery profit x2", 100, action=()=>{newspaper_delivery.profit_multiplier = newspaper_delivery.profit_multiplier.times(2);}, newspaper_delivery);
-newspaper_delivery_tier3 = new tier("Lemonade Ads", "Lemonade Stand profit x3", 125, action=()=>{lemonade_stand.profit_multiplier = lemonade_stand.profit_multiplier.times(3);}, newspaper_delivery);
+newspaper_delivery_tier0 = new tier("Extra extra!", "Newspaper Delivery speed x2", 25, multiply_speed(newspaper_delivery, 2), newspaper_delivery);
+newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery profit x2", 50, multiply_profit(newspaper_delivery, 2), newspaper_delivery);
+newspaper_delivery_tier2 = new tier("Breaking News", "Newspaper Delivery profit x2", 100, multiply_profit(newspaper_delivery, 2), newspaper_delivery);
+newspaper_delivery_tier3 = new tier("Lemonade Ads", "Lemonade Stand profit x3", 125, multiply_profit(lemonade_stand, 3), newspaper_delivery);
 
-car_wash_tier0 = new tier("Soap Novice", "Car Wash speed x2", 25, action=()=>{car_wash.speed_multiplier = car_wash.speed_multiplier.times(2);}, car_wash);
-car_wash_tier1 = new tier("Cleanliness Agent", "Car Wash profit x2", 50, action=()=>{car_wash.profit_multiplier = car_wash.profit_multiplier.times(2);}, car_wash);
-car_wash_tier2 = new tier("Avid Soap-Salesman", "Car Wash profit x2", 100, action=()=>{car_wash.profit_multiplier = car_wash.profit_multiplier.times(2);}, car_wash);
+car_wash_tier0 = new tier("Soap Novice", "Car Wash speed x2", 25, multiply_speed(car_wash, 2), car_wash);
+car_wash_tier1 = new tier("Cleanliness Agent", "Car Wash profit x2", 50, multiply_profit(car_wash, 2), car_wash);
+car_wash_tier2 = new tier("Avid Soap-Salesman", "Car Wash profit x2", 100, multiply_profit(car_wash, 2), car_wash);
 
-pizza_delivery_tier0 = new tier("Pizza Time", "Pizza Delivery speed x2", 25, action=()=>{pizza_delivery.speed_multiplier = pizza_delivery.speed_multiplier.times(2);}, pizza_delivery);
-pizza_delivery_tier1 = new tier("Pizza Parlor", "Pizza Delivery speed x2", 50, action=()=>{pizza_delivery.speed_multiplier = pizza_delivery.speed_multiplier.times(2);}, pizza_delivery);
-pizza_delivery_tier2 = new tier("Pizza Pie", "Pizza Delivery speed x2", 100, action=()=>{pizza_delivery.speed_multiplier = pizza_delivery.speed_multiplier.times(2);}, pizza_delivery);
+pizza_delivery_tier0 = new tier("Pizza Time", "Pizza Delivery speed x2", 25, multiply_speed(pizza_delivery, 2), pizza_delivery);
+pizza_delivery_tier1 = new tier("Pizza Parlor", "Pizza Delivery speed x2", 50, multiply_speed(pizza_delivery, 2), pizza_delivery);
+pizza_delivery_tier2 = new tier("Pizza Pie", "Pizza Delivery speed x2", 100, multiply_speed(pizza_delivery, 2), pizza_delivery);
 
-moon_shoes_tier0 = new tier("One Small Step", "Moon Shoes speed x3", 25, action=()=>{moon_shoes.speed_multiplier = moon_shoes.speed_multiplier.times(3);}, moon_shoes);
-moon_shoes_tier1 = new tier("And a Giant Leap", "Moon Shoes speed x2", 50, action=()=>{moon_shoes.speed_multiplier = moon_shoes.speed_multiplier.times(2);}, moon_shoes);
+moon_shoes_tier0 = new tier("One Small Step", "Moon Shoes speed x3", 25, multiply_speed(moon_shoes, 3), moon_shoes);
+moon_shoes_tier1 = new tier("And a Giant Leap", "Moon Shoes speed x2", 50, multiply_speed(moon_shoes, 2), moon_shoes);
 
-potato_stand_tier0 = new tier("Hey There!", "Potato Stand profit x4", 25, action=()=>{potato_stand.profit_multiplier = potato_stand.profit_multiplier.times(4);}, potato_stand);
+potato_stand_tier0 = new tier("Hey There!", "Potato Stand profit x4", 25, multiply_profit(potato_stand, 4), potato_stand);
 
 function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=false) {
 	if (get_element("upgrades_world_selector").value != world.name) return; // don't try to mess with stuff if it isn't actually being displayed/updated.
@@ -1089,6 +1139,7 @@ let mft = 0; // mean frametime
 let fps = 0; // frames per second
 let tof = 0; // time of frames
 let nof = 0; // number of frames
+let tpf = 0; // time per frame
 barrelroll =()=> {roll=true;}
 let roll = false;
 
@@ -1096,9 +1147,12 @@ let roll = false;
 let GUI_moon_unlocked = null;
 let GUI_show_cost_of_next_angel = null;
 let GUI_buildings_unlocked = []; // oh boy
+let GUI_building_amounts = []; // oh boy x2
 for (let w = 0; w < worlds.length; w++) {
 	let array = new Array(worlds[w].buildings.length).fill(false);
 	GUI_buildings_unlocked.push([].concat(array));
+	let amounts = new Array(worlds[w].buildings.length).fill(-1);
+	GUI_building_amounts.push([].concat(amounts));
 	// leaving space for any other building-specific metadata that needs to be kept track of
 }
 let GUI_number_formatting = -1; // used for letting the price labels know that they should get updated
@@ -1107,11 +1161,16 @@ function loop() {
 	cur_loop_time = get_time();
 	let currently_displayed_upgrades = 0;
 	get_element("upgrades_title").attributes.class.value = "title";
+	let gui_formatting_changed = (GUI_number_formatting != formatting_mode);
 	for (let w = 0; w < worlds.length; w++) {
 		let world = worlds[w];
 		let upgrades = world.upgrades;
 		let buildings = world.buildings;
 		let currency = world.currency;
+		world.currency.tick();
+		world.calculate_claimable_angels();
+		world.calculate_cost_of_next_angel();
+		world.calculate_total_angel_boost();
 		for (let i = 0; i < upgrades.length; i++) {
 			if (upgrades[i].purchased) {
 				upgrades[i].action();
@@ -1133,7 +1192,7 @@ function loop() {
 		for (let i = 0; i < buildings.length; i++) {
 			let building_unlocked = buildings[i].get_amount() > 0;
 			if (GUI_buildings_unlocked[w][i] != building_unlocked) {
-				GUI_buildings_unlocked[w][i] = building_unlocked; // at world at building
+				//GUI_buildings_unlocked[w][i] = building_unlocked; // at world at building
 				if (building_unlocked) {
 					get_element(buildings[i].name).hidden = false;
 					get_element(buildings[i].name+"_interface").setAttribute("style", "display:contents;");
@@ -1146,7 +1205,9 @@ function loop() {
 					get_element(buildings[i].name+"_invest_button_br").setAttribute("style", "display:initial;");
 				}
 			}
-			let gui_update_prices = buildings[i].recalculate_prices || (GUI_number_formatting != formatting_mode) || buildings[i].gui_override_update_price; // wow i don't even need a big list of lists thingy nice. this is before tick because tick will reset the recalculate_prices boolean if it's true.
+			let gui_update_prices = buildings[i].recalculate_prices || gui_formatting_changed || buildings[i].gui_override_update_price; // wow i don't even need a big list of lists thingy nice. this is before tick because tick will reset the recalculate_prices boolean if it's true.
+			let gui_update_amount_info = (GUI_building_amounts[w][i] != buildings[i].get_amount()) || gui_formatting_changed || buildings[i].gui_override_update_amount; // includes info pertaining to tiers and the profit indicator on the progress bar
+			
 			if (buildings[i].get_amount() > 0) {
 				let full_tier_desc = "";
 				for (let ii = 0; ii < buildings[i].tiers.length; ii++) {
@@ -1159,43 +1220,56 @@ function loop() {
 						let tier_name = "";
 						if (ii > 0) tier_name = buildings[i].tiers[ii-1].name;
 						else tier_name = "(no tier)";
-						get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].get_amount()) + " more until next tier";
+						if (gui_update_amount_info) {
+							get_element(buildings[i].name+"_tier").innerHTML = "Tier " + ii + ": " + tier_name + " &ndash; " + (buildings[i].tiers[ii].amount - buildings[i].get_amount()) + " more until next tier";
+						}
 						//full_tier_desc += tier_desc;
 						break;
 					}
 					if (ii == buildings[i].tiers.length - 1) { // we didn't hit that preemptive break, so we must be at the end.
-						get_element(buildings[i].name+"_tier").innerHTML = "Tier " + (ii+1).toString() + ": " + buildings[i].tiers[ii].name + " &ndash; tier MAX";
+						if (gui_update_amount_info) {
+							get_element(buildings[i].name+"_tier").innerHTML = "Tier " + (ii+1).toString() + ": " + buildings[i].tiers[ii].name + " &ndash; tier MAX";
+						}
 						//full_tier_desc += buildings[i].tiers[ii].desc;
 					}
 				}
-				get_element(buildings[i].name+"_tier_desc").innerHTML = full_tier_desc;
-				get_element(buildings[i].name+"_tier_effects").hidden = full_tier_desc == "";
+				if (gui_update_amount_info) {
+					get_element(buildings[i].name+"_tier_desc").innerHTML = full_tier_desc;
+					get_element(buildings[i].name+"_tier_effects").hidden = full_tier_desc == "";
+				}
 				
 				buildings[i].tick();
 				
 				let progress_graphic = get_element(buildings[i].name+"_progress");
 				progress_graphic.children[1].attributes.width.value = (buildings[i].time / buildings[i].get_epoch()) * 216;
-				let profit_string = money(buildings[i].get_profit(), currency.symbol);
-				progress_graphic.children[2].innerHTML = profit_string;
-				progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 4.35))+"px;";//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
+				
+				if (gui_update_amount_info || buildings[i].gui_override_update_profit) {
+					let profit_string = money(buildings[i].get_profit(), currency.symbol);
+					progress_graphic.children[2].innerHTML = profit_string;
+					progress_graphic.children[2].attributes.style.value = "font-size:"+(22 - (profit_string.length / 4.35))+"px;";
+					buildings[i].gui_override_update_profit = false;
+				}//"font-family:initial;font-size:"+(22 - (profit_string.length / 5))+"px;text-align:center;text-anchor:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;";
+				
 				let displayed_time = buildings[i].get_epoch();
 				if (displayed_time > 1) displayed_time = displayed_time.minus(buildings[i].time);
 				progress_graphic.children[3].innerHTML = as_time(displayed_time, buildings[i].get_epoch().lte(1));
-				get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + beautify(buildings[i].get_amount());
+				if (gui_update_amount_info) {
+					get_element(buildings[i].name+"_amount").innerHTML = "&mdash; " + beautify(buildings[i].get_amount());
+				}
 				
 				for (let qty = 0; qty < buildings[i].buy_amounts.length; qty++) {
 					let can_purchase = currency.get_amount().gte(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])));
 					if (gui_update_prices) {
 						get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])), currency.symbol) + ")";
 					}
-					get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "price-canafford noselect" : "price-cantafford noselect";
+					get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "price-canafford" : "price-cantafford";
 					get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
 					get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).disabled = !can_purchase;
+					if (gui_formatting_changed || GUI_buildings_unlocked[w][i] != building_unlocked) {
+						get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).innerHTML = "buy " + beautify(buildings[i].buy_amounts[qty]) + (buildings[i].buy_amounts[qty]<money_display_threshold?"x":"");
+					}
 				}
 				
-				buildings[i].profit_multiplier = Decimal(1); // this needs to be reset each frame so that upgrade actions do not compound.
-				buildings[i].speed_multiplier = Decimal(1); // same tbh
-				// however, you can't reset them before the profit and time indicators are drawn! (that's why they're down here in an awkward place)
 			} else {
 				let can_purchase = currency.get_amount().gte(buildings[i].get_price());
 				if (gui_update_prices) get_element(buildings[i].name+"_invest_button_price").innerHTML = " " + money(buildings[i].get_price(), currency.symbol);
@@ -1210,12 +1284,22 @@ function loop() {
 				}
 			}
 			
+			buildings[i].profit_multiplier = Decimal(1); // this needs to be reset each frame so that upgrade actions do not compound.
+			buildings[i].speed_multiplier = Decimal(1); // same tbh
+			// however, you can't reset them before the profit and time indicators are drawn! (that's why they're down here in an awkward place)
+			
 			if (gui_update_prices) buildings[i].gui_override_update_price = false; // can't forget that!
+			if (gui_update_amount_info) { // or this!
+				GUI_building_amounts[w][i] = buildings[i].get_amount();
+				buildings[i].gui_override_update_amount = false;
+			}
+			if (GUI_buildings_unlocked[w][i] != building_unlocked) GUI_buildings_unlocked[w][i] = building_unlocked;
 		}
-		world.currency.tick();
-		world.calculate_claimable_angels();
-		world.calculate_cost_of_next_angel();
-		world.calculate_total_angel_boost();
+		
+		//world.currency.tick(); this stuff was moved because its delay was messing with 1st loop building profit calculations
+		//world.calculate_claimable_angels();
+		//world.calculate_cost_of_next_angel();
+		//world.calculate_total_angel_boost();
 		if (dollars.get_all_time().gt(10**9)) { // specific gating for the discovery of investors
 			get_element("angels").className = "angels";
 			if (get_element("angels_world_selector").value == world.name) { // otherwise you get the wacky conflicts hehe tehe
@@ -1282,7 +1366,7 @@ function loop() {
 		document.getElementsByTagName("body")[0].style.transform = "rotate("+((cur_loop_time/250)%360)+"deg)";
 	}
 	
-	if (GUI_number_formatting != formatting_mode) {GUI_number_formatting = formatting_mode;}
+	if (gui_formatting_changed) {GUI_number_formatting = formatting_mode;}
 	formatting_mode = Number(get_element("formatting_mode").value);
 	past_loop_time = get_time();
 	//lemonade_stand.max_time /= 1.01;
@@ -1295,8 +1379,8 @@ function loop() {
 	fps = 1000/mft;
 	tof += dt;
 	nof ++;
-	// tpf is time per frame
-	get_element("fps").innerHTML = "lps: "+((fps+'').substr(0,6))+", dt="+dt+", tpf="+((tof/nof)+'').substr(0,6);
+	tpf = tof/nof;
+	get_element("fps").innerHTML = "lps: "+((fps+'').substr(0,6))+", dt="+dt+", tpf="+(tpf+'').substr(0,6);
 	// */
 	setTimeout(loop, Math.max(dt,10));
 }
