@@ -12,7 +12,7 @@ the numbers too, but again, improvement
 so here's a tangible list:
 1 d make a move from these clunky BigInts to something much faster (expanding on the idea of a double, mayhaps?), and thus granting much better framerates for 1e+4000 and potentially beyond
 2 - add a horizontal scrollbar to the building table, allowing for arbitrarily many planets.
-3 - only display the money type corresponding to where the mouse is (or something along those lines; make the currency display more compact and less redundant)
+3 d only display the money type corresponding to where the mouse is (or something along those lines; make the currency display more compact and less redundant)
 4 - add a dedicated system for angel upgrades
 
 -->
@@ -125,12 +125,24 @@ label, select {color:#ffffff;font-family:initial;}
 	font-family:initial;
 	background-color:black;
 }
+.world-currency {
+	padding:4px;
+	/*border:1px solid #00ff00;*/
+	position:absolute;
+	top:0px;
+	margin:0px 16px 16px 0px;
+	width:100%;
+	background-color:rgba(0,0,0,0.65);
+	text-shadow:2px 2px black;
+	/*color:#00ff00;*/
+	line-height:120%;
+}
 </style>
 </head>
 <body>
 <center><h1>Capitalsim</h1></center>
 <hr>
-<div id="settings" style="position:absolute;right:16px;border:4px solid #ffffff;color:#ffffff;width:440px;font-family:initial;padding:4px;">
+<div id="settings" style="position:absolute;right:16px;border:4px solid #ffffff;color:#ffffff;width:440px;font-family:initial;padding:4px;background-color:#000000;">
 	<div style="text-align:center">settings</div>
 	<label for="formatting_mode">number formatting: </label>
 	<select name="formatting_mode" id="formatting_mode" class="button">
@@ -138,12 +150,23 @@ label, select {color:#ffffff;font-family:initial;}
 		<option value="1">short (M, B, T, Qa, Qi, etc.)</option>
 		<option value="2">none (1.234e+99 etc.)</option>
 	</select>
+	<br>
+	<label for="currency_transition_speed">currency transition speed: </label>
+	<input type="range" id="currency_transition_speed" name="currency_transition_speed" min="1.1" max="3" value="1.5" step="0.1" style="vertical-align:middle"><div style="display:inline;" id="displayed_transition_speed">1.5</div>
 </div>
-<h1 id="dollars" style="padding:4px;border:1px solid #00ff00;position:sticky;position:-webkit-sticky;top:4px;margin:0px 16px 16px 0px;width:38%;background-color:rgba(0,0,0,0.65);text-shadow:2px 2px black;color:#00ff00;line-height:120%;">$0.00</h1>
 
-<h1 id="moon_credits" style="padding:4px;border:1px solid #0054ff;position:sticky;position:-webkit-sticky;top:68px;margin:0px 16px 16px 0px;width:38%;background-color:rgba(0,0,0,0.65);text-shadow:2px 2px black;color:#0054ff;line-height:120%;" class="hidden">0.00</h1>
+<div id="currencies" style="width:38%;height:48px;margin:0px 16px 16px 0px;position:sticky;position:-webkit-sticky;top:4px;">
 
-<h1 id="mars_dollars" style="padding:4px;border:1px solid #cf3000;position:sticky;position:-webkit-sticky;top:132px;margin:0px 16px 16px 0px;width:38%;background-color:rgba(0,0,0,0.65);text-shadow:2px 2px black;color:#cf3000;line-height:120%;" class="hidden">0.00</h1>
+<!-- top:4px; -->
+	<h1 id="dollars" style="border:1px solid #00ff00;top:0px;color:#00ff00;">$0.00</h1>
+
+<!-- top:68px; -->
+	<h1 id="moon_credits" style="border:1px solid #0054ff;top:0px;color:#0054ff;" class="hidden">0.00</h1>
+
+<!-- top:132px; -->
+	<h1 id="mars_dollars" style="border:1px solid #cf3000;top:0px;color:#cf3000;" class="hidden">0.00</h1>
+	
+</div>
 
 <table id="buildings" style="width:100%;padding:0;border-collapse:collapse;border-spacing:0;">
 	<tr>
@@ -171,7 +194,7 @@ label, select {color:#ffffff;font-family:initial;}
 </table>
 <!--<div id="earth-buildings"></div>
 <div id="moon-buildings"></div>-->
-<div id="upgrades" class="upgrades">
+<div id="upgrades" class="upgrades" onmousemove="focus_currency(GUI_displayed_upgrades)">
 	<h2 id="upgrades_title" class="title">Upgrades</h2><br>
 	<label for="upgrades_world_selector" id="upgrades_world_selector_label" class="hidden">for world: </label>
 	<select name="upgrades_world_selector" id="upgrades_world_selector" class="button hidden">
@@ -189,7 +212,7 @@ label, select {color:#ffffff;font-family:initial;}
 		</tr>
 	</table>
 </div>
-<div id="angels" class="angels">
+<div id="angels" class="angels" onmousemove="focus_currency(GUI_displayed_angels)">
 	<h2 id="angels_title" class="title">Angel Investors</h2><br>
 	<label for="angels_world_selector" id="angels_world_selector_label" class="hidden">for world: </label>
 	<select name="angels_world_selector" id="angels_world_selector" class="button hidden">
@@ -332,13 +355,13 @@ class world {
 		
 		// add this planet to the selectors
 		let upgrades_gui_option = document.createElement("option");
-		upgrades_gui_option.setAttribute("value", name);
+		upgrades_gui_option.setAttribute("value", id);
 		upgrades_gui_option.setAttribute("id", "upgrades_option_"+id);
 		upgrades_gui_option.setAttribute("class", "hidden");
 		upgrades_gui_option.innerHTML = display_name;
 		get_element("upgrades_world_selector").appendChild(upgrades_gui_option);
 		let angels_gui_option = document.createElement("option");
-		angels_gui_option.setAttribute("value", name);
+		angels_gui_option.setAttribute("value", id);
 		angels_gui_option.setAttribute("id", "angels_option_"+id);
 		angels_gui_option.setAttribute("class", "hidden");
 		angels_gui_option.innerHTML = display_name;
@@ -616,6 +639,7 @@ class building {
 		let building_element = document.createElement("div");
 		building_element.setAttribute("id", name);
 		building_element.setAttribute("class", "building");
+		building_element.setAttribute("onmouseenter", "focus_currency("+this.world.id+")");
 		
 		let building_title = document.createElement("h2");
 		building_title.setAttribute("class", "title");
@@ -1081,9 +1105,10 @@ moon_shoes_tier1 = new tier("And a Giant Leap", "Moon Shoes speed x2", 50, multi
 potato_stand_tier0 = new tier("Hey There!", "Potato Stand profit x4", 25, multiply_profit(potato_stand, 4), potato_stand);
 
 function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=false) {
-	if (get_element("upgrades_world_selector").value != world.name) return; // don't try to mess with stuff if it isn't actually being displayed/updated.
+	if (Number(get_element("upgrades_world_selector").value) != world.id) return; // don't try to mess with stuff if it isn't actually being displayed/updated.
 	let i = 0;
 	let place_to_fill = 0;
+	//console.log("changed to "+world.id);
 	if (destroy_elements) {
 		for (let i = 0; i < 8; i++) { // this simply clears all buttons which happen to be in the actual panel element, as opposed to removing ones that are supposed to be there.
 			try {
@@ -1143,7 +1168,7 @@ let tpf = 0; // time per frame
 barrelroll =()=> {roll=true;}
 let roll = false;
 
-/* special booleans for gui updates */
+/* special vars for gui updates / redundancies for optimizing */
 let GUI_moon_unlocked = null;
 let GUI_show_cost_of_next_angel = null;
 let GUI_buildings_unlocked = []; // oh boy
@@ -1156,12 +1181,21 @@ for (let w = 0; w < worlds.length; w++) {
 	// leaving space for any other building-specific metadata that needs to be kept track of
 }
 let GUI_number_formatting = -1; // used for letting the price labels know that they should get updated
+let GUI_displayed_currency = 0;
+let GUI_currency_box_pos = new Array(worlds.length).fill(0);
+let GUI_displayed_upgrades = 0;
+let GUI_displayed_angels = 0;
+
+let focus_currency =(world)=> {GUI_displayed_currency = world;}
 
 function loop() {
 	cur_loop_time = get_time();
 	let currently_displayed_upgrades = 0;
 	get_element("upgrades_title").attributes.class.value = "title";
 	let gui_formatting_changed = (GUI_number_formatting != formatting_mode);
+	let gui_transition_speed = get_element("currency_transition_speed").value;
+	get_element("displayed_transition_speed").innerHTML = gui_transition_speed;
+	GUI_displayed_upgrades = Number(get_element("upgrades_world_selector").value); // it scares me how sensitive to loop timing this thing is. if you put it after the upgrades render update loop, it will try grabbing button elements that existed the frame before. keep this thing here!
 	for (let w = 0; w < worlds.length; w++) {
 		let world = worlds[w];
 		let upgrades = world.upgrades;
@@ -1175,7 +1209,7 @@ function loop() {
 			if (upgrades[i].purchased) {
 				upgrades[i].action();
 			} else {
-				if (get_element("upgrades_world_selector").value == world.name) { // we can't update button graphics if the buttons are on another planet!
+				if (GUI_displayed_upgrades == world.id) { // we can't update button graphics if the buttons are on another planet!
 					let can_afford = upgrades[i].currency.get_amount().gte(upgrades[i].price);
 					get_element("upgrade"+upgrades[i].id+"price").setAttribute("class", "price-can"+(can_afford ? "" : "t")+"afford noselect");
 					if (GUI_number_formatting != formatting_mode) {
@@ -1302,7 +1336,7 @@ function loop() {
 		//world.calculate_total_angel_boost();
 		if (dollars.get_all_time().gt(10**9)) { // specific gating for the discovery of investors
 			get_element("angels").className = "angels";
-			if (get_element("angels_world_selector").value == world.name) { // otherwise you get the wacky conflicts hehe tehe
+			if (GUI_displayed_angels == world.id) { // otherwise you get the wacky conflicts hehe tehe
 				let angel_name = world.angel_investors.display_name;
 				let pluralize = world.claimable_angels.valueOf() != "1";
 				// ugh so much setup required just to display the cost of the next angel.
@@ -1349,8 +1383,15 @@ function loop() {
 		world_unlock_button.className = requirements_met ? "button noselect button-enabled" : "button noselect button-disabled";
 		if (!world.requirement_discovery() || world.unlocked) get_element(world.name+"_unlock_button").className += " hidden"; // have we met the requirements for the discovery of this world? if not, add "hidden" to the list of css classes. also, if we've unlocked the world already, then we don't need this button.
 		
-		get_element(currency.name).innerHTML = money(currency.get_amount(), currency.symbol);
-		get_element(currency.name).className = world.unlocked ? "" : "hidden";
+		if (world.id == GUI_displayed_currency) {
+			get_element(currency.name).innerHTML = money(currency.get_amount(), currency.symbol);
+			get_element(currency.name).className = "world-currency" + (world.unlocked ? " " : " hidden");
+			GUI_currency_box_pos[world.id] /= gui_transition_speed;
+		} else {
+			GUI_currency_box_pos[world.id] += GUI_currency_box_pos[world.id]<1?1:0;
+			GUI_currency_box_pos[world.id] = Math.min(1000, GUI_currency_box_pos[world.id] * gui_transition_speed);
+		}
+		if (GUI_currency_box_pos[world.id] < 999 && GUI_currency_box_pos[world.id] > 1) get_element(currency.name).style.top = "-"+GUI_currency_box_pos[world.id]+"%";
 	}
 	if (moon.unlocked != GUI_moon_unlocked) {
 		GUI_moon_unlocked = moon.unlocked; // now we know!
@@ -1366,6 +1407,7 @@ function loop() {
 		document.getElementsByTagName("body")[0].style.transform = "rotate("+((cur_loop_time/250)%360)+"deg)";
 	}
 	
+	GUI_displayed_angels = Number(get_element("angels_world_selector").value);
 	if (gui_formatting_changed) {GUI_number_formatting = formatting_mode;}
 	formatting_mode = Number(get_element("formatting_mode").value);
 	past_loop_time = get_time();
