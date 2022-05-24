@@ -14,6 +14,7 @@ so here's a tangible list:
 2 - add a horizontal scrollbar to the building table, allowing for arbitrarily many planets.
 3 d only display the money type corresponding to where the mouse is (or something along those lines; make the currency display more compact and less redundant)
 4 - add a dedicated system for angel upgrades
+5 d saving!
 
 -->
 <style>
@@ -144,6 +145,9 @@ label, select {color:#ffffff;font-family:initial;}
 <hr>
 <div id="settings" style="position:absolute;right:16px;border:4px solid #ffffff;color:#ffffff;width:440px;font-family:initial;padding:4px;background-color:#000000;">
 	<div style="text-align:center">settings</div>
+	<!--<label for="save_button">save: </label>-->
+	<button name="save_button" id="save_button" class="button button-enabled noselect" onclick="save()">Save Game</button><small style="color:#aaaaaa;">&emsp;(game autosaves every 30 seconds)</small>
+	<br>
 	<label for="formatting_mode">number formatting: </label>
 	<select name="formatting_mode" id="formatting_mode" class="button">
 		<option value="0">long (million, billion, etc.)</option>
@@ -194,7 +198,7 @@ label, select {color:#ffffff;font-family:initial;}
 </table>
 <!--<div id="earth-buildings"></div>
 <div id="moon-buildings"></div>-->
-<div id="upgrades" class="upgrades" onmousemove="focus_currency(GUI_displayed_upgrades)">
+<div id="upgrades" class="upgrades" onmouseenter="focus_currency(GUI_displayed_upgrades)">
 	<h2 id="upgrades_title" class="title">Upgrades</h2><br>
 	<label for="upgrades_world_selector" id="upgrades_world_selector_label" class="hidden">for world: </label>
 	<select name="upgrades_world_selector" id="upgrades_world_selector" class="button hidden">
@@ -212,7 +216,7 @@ label, select {color:#ffffff;font-family:initial;}
 		</tr>
 	</table>
 </div>
-<div id="angels" class="angels" onmousemove="focus_currency(GUI_displayed_angels)">
+<div id="angels" class="angels" onmouseenter="focus_currency(GUI_displayed_angels)">
 	<h2 id="angels_title" class="title">Angel Investors</h2><br>
 	<label for="angels_world_selector" id="angels_world_selector_label" class="hidden">for world: </label>
 	<select name="angels_world_selector" id="angels_world_selector" class="button hidden">
@@ -326,6 +330,12 @@ class currency {
 		string += this.all_time;
 		return string;
 	}
+	set_from_save_data(string) {
+		let data = string.split(",");
+		this.amount = Decimal(data[0]);
+		this.total = Decimal(data[1]);
+		this.all_time = Decimal(data[2]);
+	}
 }
 let worlds = [];
 class world {
@@ -419,7 +429,7 @@ class world {
 		string += this.currency.get_save_data() + ";";
 		string += this.angel_investors.get_save_data() + ";";
 		for (let i = 0; i < this.buildings.length; i++) {
-			string += this.buildings[i].get_save_data() + (i != this.buildings.length-1 ? "." : "");
+			string += this.buildings[i].get_save_data() + (i != this.buildings.length-1 ? "^" : "");
 		}
 		string += ";";
 		for (let i = 0; i < this.upgrades.length; i++) {
@@ -428,6 +438,21 @@ class world {
 		string += ";";
 		string += this.unlocked ? "1" : "0";
 		return string;
+	}
+	set_from_save_data(string) {
+		let data = string.split(";");
+		if (data[0] != this.id+'') throw 'this world is not loading its corresponding data';
+		this.currency.set_from_save_data(data[1]);
+		this.angel_investors.set_from_save_data(data[2]);
+		let building_data = data[3].split("^");
+		for (let i = 0; i < this.buildings.length; i++) {
+			this.buildings[i].set_from_save_data(building_data[i]);
+		}
+		let upgrade_data = data[4];
+		for (let i = 0; i < this.upgrades.length; i++) {
+			this.upgrades[i].set_from_save_data(upgrade_data[i]);
+		}
+		this.unlocked = (data[5] == "1");
 	}
 }
 get_element("angel_restart_button").addEventListener("click", ()=>{
@@ -470,17 +495,17 @@ let money_display_threshold = Decimal('1000000'); // 1 million
 let irregulars_long = ["thousand","million","billion","trillion","quadrillion","quintillion","sextillion","septillion","octillion","nonillion"];
 let prefixes_long = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
 let infixes_long = ["","de","vi","tri","quadra","quinqua","sexa","septua","octa","nona"];
-let suffixes_long = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","mill","centimill","ducentimill","trecentimill"];
+let suffixes_long = ["c","gint","cent","ducent","trecent","quadringent","quingent","sescent","septingent","octingent","nongent","mill","centimill","ducentimill","trecentimill","quadringmill"];
 
 let irregulars_short = ["","M","B","T","Qa","Qi","Sx","Sp","Oc","No"];
 let prefixes_short = ["","Un","Do","Tr","Qa","Qi","Sx","Sp","Oc","No"];
 let infixes_short = ["","D","V","T","Qa","Qi","Sx","Sp","O","N"];
-let suffixes_short = ["c","g","Cn","Dcn","Tcn","Qan","Qin","Scn","Spn","Ocn","Non","Ml","CMl","DMl","TMl"];
+let suffixes_short = ["c","g","Cn","Dcn","Tcn","Qan","Qin","Scn","Spn","Ocn","Non","Ml","CMl","DMl","TMl","QaMl"];
 
 let irregulars_silly = ["","sillion","zillion","rillion","yillion","pillion","lillion","willion","jillion","gillion"];
 let prefixes_silly = ["","silly","zilly","really","yelly","pilly","lily","wily","jilly","gilly"];
 let infixes_silly = ["","sa","zilli","realli","yeli","pilli","lili","wheeli","jelli","gili"];
-let suffixes_silly = ["z","zilliz","bigjav","biggerjav","biggijav","yiljav","piljav","lijav","willajav","jillijavaj","gilliv","gakyak","wawas","kryll","vrill"];
+let suffixes_silly = ["z","zilliz","bigjav","biggerjav","biggijav","yiljav","piljav","lijav","willajav","jillijavaj","gilliv","gakyak","wawas","kryll","tawas","vrill"];
 
 function get_element(e) {
 	return document.getElementById(e);
@@ -892,6 +917,12 @@ class building {
 		string += this.freebies;
 		return string;
 	}
+	set_from_save_data(string) {
+		let data = string.split(",");
+		this.time = Decimal(data[0]);
+		this.amount = Number(data[1]);
+		this.freebies = Number(data[2]);
+	}
 }
 class upgrade {
 	constructor(name, desc, price, action, world=earth, currency=undefined) {
@@ -968,6 +999,9 @@ class upgrade {
 		string += this.purchased?"1":"0";
 		return string;
 	}
+	set_from_save_data(string) {
+		this.purchased = string=="1";
+	}
 }
 class tier {
 	constructor(name, desc, amount, action, building) {
@@ -987,8 +1021,8 @@ lemonade_stand = new building("lemonade_stand", "Lemonade Stand", Decimal(2), De
 newspaper_delivery = new building("newspaper_delivery", "Newspaper Delivery", Decimal(4), Decimal(10.00), Decimal(25.00), Decimal(1.17), earth);
 car_wash = new building("car_wash", "Car Wash", Decimal(9.5), Decimal(210), Decimal(800), Decimal(1.165), earth);
 pizza_delivery = new building("pizza_delivery", "Pizza Delivery", Decimal(12), Decimal(650), Decimal(7500), Decimal(1.16), earth);
-//donut shop
-//shrimp boat
+donut_shop = new building("donut_shop", "Donut Shop", Decimal(30), Decimal(1000), Decimal(30000), Decimal(1.158), earth);
+shrimp_boat = new building("shrimp_boat", "Shrimp Boat", Decimal(55), Decimal(24000), Decimal(750000), Decimal(1.156), earth);
 //hockey team
 //movie studio
 //bank
@@ -1062,15 +1096,17 @@ lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", 
 newspaper_delivery_up0 = new upgrade("Lasanga Comics", "Newspaper Delivery profit x3", Decimal(3000), multiply_profit(newspaper_delivery, 3), earth);
 car_wash_up0 = new upgrade("Bubblier Soaps", "Car Wash profit x3", Decimal(15000), multiply_profit(car_wash, 3), earth);
 pizza_delivery_up0 = new upgrade("Garlic Sauce", "Pizza Delivery profit x3", Decimal(40000), multiply_profit(pizza_delivery, 3), earth);
+donut_shop_up0 = new upgrade("Jelly-filled", "Donut Shop profit x3", Decimal(80000), multiply_profit(donut_shop, 3), earth);
+shrimp_boat_up0 = new upgrade("Tougher nets", "Shrimp Boat profit x3", Decimal(900000), multiply_profit(shrimp_boat, 3), earth);
 
-everything_up0 = new upgrade("Marketeer", "Everything profit x3", Decimal(90000), multiply_world_profit(earth, 3), earth);
+everything_up0 = new upgrade("Marketeer", "Everything profit x3", Decimal(1000000), multiply_world_profit(earth, 3), earth);
 
-lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", Decimal(150000), multiply_profit(lemonade_stand, 3), earth);
-newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", Decimal(900000), multiply_profit(newspaper_delivery, 3), earth);
-car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", Decimal(2700000), multiply_profit(car_wash, 3), earth);
-pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", Decimal(4900000), multiply_profit(pizza_delivery, 3), earth);
+lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", Decimal(1500000), multiply_profit(lemonade_stand, 3), earth);
+newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", Decimal(9000000), multiply_profit(newspaper_delivery, 3), earth);
+car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", Decimal(27000000), multiply_profit(car_wash, 3), earth);
+pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", Decimal(49000000), multiply_profit(pizza_delivery, 3), earth);
 
-everything_up1 = new upgrade("Clever Strategies", "Everything profit x3", Decimal(10000000), multiply_world_profit(earth, 3), earth);
+everything_up1 = new upgrade("Cleverer Strategies", "Everything profit x3", Decimal(100000000), multiply_world_profit(earth, 3), earth);
 
 everything_up2 = new upgrade("Highly Lucrative Proposition", "Everything profit x3", Decimal(500000000000), multiply_world_profit(earth, 3), earth);
 
@@ -1085,19 +1121,34 @@ lemonade_stand_tier1 = new tier("Lemongineer", "Lemonade Stand speed x2", 50, mu
 lemonade_stand_tier2 = new tier("Lemon Officianado", "Lemonade Stand profit x3", 100, multiply_profit(lemonade_stand, 3), lemonade_stand);
 lemonade_stand_tier3 = new tier("Professional Juicer", "Lemonade Stand speed x2", 150, multiply_speed(lemonade_stand, 2), lemonade_stand);
 lemonade_stand_tier4 = new tier("Lemondacious", "Lemonade Stand speed x2", 200, multiply_speed(lemonade_stand, 2), lemonade_stand);
+lemonade_stand_tier5 = new tier("Lemon League", "Lemonade Stand speed x2", 250, multiply_speed(lemonade_stand, 2), lemonade_stand);
 
 newspaper_delivery_tier0 = new tier("Extra extra!", "Newspaper Delivery speed x2", 25, multiply_speed(newspaper_delivery, 2), newspaper_delivery);
 newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery profit x2", 50, multiply_profit(newspaper_delivery, 2), newspaper_delivery);
 newspaper_delivery_tier2 = new tier("Breaking News", "Newspaper Delivery profit x2", 100, multiply_profit(newspaper_delivery, 2), newspaper_delivery);
-newspaper_delivery_tier3 = new tier("Lemonade Ads", "Lemonade Stand profit x3", 125, multiply_profit(lemonade_stand, 3), newspaper_delivery);
+newspaper_delivery_tier3 = new tier("Lemonade Advertisements", "Lemonade Stand profit x3", 125, multiply_profit(lemonade_stand, 3), newspaper_delivery);
+newspaper_delivery_tier4 = new tier("Car Wash Advertisements", "Car Wash profit x3", 150, multiply_profit(car_wash, 3), newspaper_delivery);
 
 car_wash_tier0 = new tier("Soap Novice", "Car Wash speed x2", 25, multiply_speed(car_wash, 2), car_wash);
 car_wash_tier1 = new tier("Cleanliness Agent", "Car Wash profit x2", 50, multiply_profit(car_wash, 2), car_wash);
-car_wash_tier2 = new tier("Avid Soap-Salesman", "Car Wash profit x2", 100, multiply_profit(car_wash, 2), car_wash);
+car_wash_tier2 = new tier("Avid Soap-Salesperson", "Car Wash profit x2", 100, multiply_profit(car_wash, 2), car_wash);
+car_wash_tier3 = new tier("Cleaning Enthusiast", "Car Wash profit x2", 150, multiply_profit(car_wash, 2), car_wash);
+car_wash_tier4 = new tier("Stepping on the gas", "Car Wash speed x2", 200, multiply_speed(car_wash, 2), car_wash);
 
 pizza_delivery_tier0 = new tier("Pizza Time", "Pizza Delivery speed x2", 25, multiply_speed(pizza_delivery, 2), pizza_delivery);
 pizza_delivery_tier1 = new tier("Pizza Parlor", "Pizza Delivery speed x2", 50, multiply_speed(pizza_delivery, 2), pizza_delivery);
 pizza_delivery_tier2 = new tier("Pizza Pie", "Pizza Delivery speed x2", 100, multiply_speed(pizza_delivery, 2), pizza_delivery);
+pizza_delivery_tier3 = new tier("Perfect Pizza", "Pizza Delivery profit x2", 150, multiply_profit(pizza_delivery, 2), pizza_delivery);
+pizza_delivery_tier4 = new tier("and Presto! It's Pizza!", "Pizza Delivery profit x2", 200, multiply_profit(pizza_delivery, 2), pizza_delivery);
+
+donut_shop_tier0 = new tier("A Holey Investment", "Donut Shop speed x2", 25, multiply_speed(donut_shop, 2), donut_shop);
+donut_shop_tier1 = new tier("Icing on the top", "Donut Shop profit x3", 50, multiply_profit(donut_shop, 3), donut_shop);
+donut_shop_tier2 = new tier("Nothing beats it", "Donut Shop profit x3", 100, multiply_profit(donut_shop, 3), donut_shop);
+donut_shop_tier3 = new tier("It's spelled \"Doughnut\"", "Doughnut Shop profit x2", 150, multiply_profit(donut_shop, 2), donut_shop);
+
+shrimp_boat_tier0 = new tier("On the high seas", "Shrimp Boat profit x2", 25, multiply_profit(shrimp_boat, 2), shrimp_boat);
+shrimp_boat_tier1 = new tier("Making a Krilling", "Shrimp Boat profit x2", 50, multiply_profit(shrimp_boat, 2), shrimp_boat);
+shrimp_boat_tier2 = new tier("Crustaceous", "Shrimp Boat profit x3", 100, multiply_profit(shrimp_boat, 3), shrimp_boat);
 
 moon_shoes_tier0 = new tier("One Small Step", "Moon Shoes speed x3", 25, multiply_speed(moon_shoes, 3), moon_shoes);
 moon_shoes_tier1 = new tier("And a Giant Leap", "Moon Shoes speed x2", 50, multiply_speed(moon_shoes, 2), moon_shoes);
@@ -1132,9 +1183,10 @@ function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=fals
 }
 refresh_upgrade_buttons(false);
 get_element("upgrades_world_selector").addEventListener("change", function(event) {
-	let world_id = get_element("upgrades_world_selector").selectedIndex;
-	let world = worlds[world_id];
-	refresh_upgrade_buttons(true, world, true);
+	GUI_update_upgrades_display_world = true;
+});
+get_element("angels_world_selector").addEventListener("change", function(event) {
+	GUI_update_angels_display_world = true;
 });
 
 function get_time() {
@@ -1143,19 +1195,42 @@ function get_time() {
 }
 
 function save() {
-	let savedata = "";
+	let savedata = cur_loop_time + "/";
 	for (let w = 0; w < worlds.length; w++) {
 		savedata += worlds[w].get_save_data() + "|";
 	}
 	window.localStorage.setItem("capitalsim_savedata", savedata); //aaand save
+	//console.log("saved game");
 	return savedata;
 }
 
 function load() {
 	let savedata = window.localStorage.getItem("capitalsim_savedata"); //aaand load
+	if (savedata==null) return;
+	past_loop_time = savedata.split("/")[0];
+	savedata = savedata.substr(savedata.indexOf("/")+1);
 	let worlds_data = savedata.split("|");
-	
+	for (let w = 0; w < worlds.length; w++) {
+		//console.log("loading world "+w);
+		//console.log(worlds_data[w]);
+		worlds[w].set_from_save_data(worlds_data[w]);
+	}
+	// done!
 }
+
+function wipe_save() {
+	window.localStorage.removeItem("capitalsim_savedata");
+}
+
+let should_autosave = false;
+let autosave_time = 30000;
+function autosave_loop() {
+	should_autosave = true;
+	setTimeout(autosave_loop, autosave_time);
+}
+setTimeout(autosave_loop, autosave_time);
+
+/* it'&/s time */
 let past_loop_time = get_time();
 let cur_loop_time = get_time();
 let dt = 0; // delta t
@@ -1185,9 +1260,12 @@ let GUI_displayed_currency = 0;
 let GUI_currency_box_pos = new Array(worlds.length).fill(0);
 let GUI_displayed_upgrades = 0;
 let GUI_displayed_angels = 0;
+let GUI_update_upgrades_display_world = true;
+let GUI_update_angels_display_world = true;
 
 let focus_currency =(world)=> {GUI_displayed_currency = world;}
-
+load();
+let time_since_last_online = cur_loop_time - past_loop_time;
 function loop() {
 	cur_loop_time = get_time();
 	let currently_displayed_upgrades = 0;
@@ -1196,6 +1274,23 @@ function loop() {
 	let gui_transition_speed = get_element("currency_transition_speed").value;
 	get_element("displayed_transition_speed").innerHTML = gui_transition_speed;
 	GUI_displayed_upgrades = Number(get_element("upgrades_world_selector").value); // it scares me how sensitive to loop timing this thing is. if you put it after the upgrades render update loop, it will try grabbing button elements that existed the frame before. keep this thing here!
+	if (GUI_update_upgrades_display_world) {
+		let world_id = get_element("upgrades_world_selector").selectedIndex;
+		let world = worlds[world_id];
+		refresh_upgrade_buttons(true, world, true);
+		focus_currency(world_id);
+		GUI_update_upgrades_display_world = false;
+	}
+	if (GUI_update_angels_display_world) {
+		let world_id = get_element("angels_world_selector").selectedIndex;
+		focus_currency(world_id);
+		GUI_update_angels_display_world = false;
+	}
+	if (should_autosave) {
+		should_autosave = false;
+		save();
+	}
+	
 	for (let w = 0; w < worlds.length; w++) {
 		let world = worlds[w];
 		let upgrades = world.upgrades;
