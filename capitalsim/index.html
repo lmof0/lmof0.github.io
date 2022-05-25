@@ -445,11 +445,11 @@ class world {
 		this.currency.set_from_save_data(data[1]);
 		this.angel_investors.set_from_save_data(data[2]);
 		let building_data = data[3].split("^");
-		for (let i = 0; i < this.buildings.length; i++) {
+		for (let i = 0; i < building_data.length; i++) {
 			this.buildings[i].set_from_save_data(building_data[i]);
 		}
 		let upgrade_data = data[4];
-		for (let i = 0; i < this.upgrades.length; i++) {
+		for (let i = 0; i < upgrade_data.length; i++) {
 			this.upgrades[i].set_from_save_data(upgrade_data[i]);
 		}
 		this.unlocked = (data[5] == "1");
@@ -628,10 +628,10 @@ function as_time(time, do_ms=false) {
 
 //let buildings = [];
 //let upgrades = [];
-//let buy_amounts = [1,10,100,1000]; // bluh
+let default_buy_amounts = [1,10,100,1000,10000,100000,1000000,10000000,100000000]; // bluh
 // bleghhhhh
 class building {
-	constructor(name, display_name, base_speed, base_profit, base_price, base_price_multiplier=1.15, world=earth, buy_amounts=[1,10,100,1000], currency=undefined, starting_freebies=0) {
+	constructor(name, display_name, base_speed, base_profit, base_price, base_price_multiplier=1.15, world=earth, buy_amounts=default_buy_amounts, currency=undefined, starting_freebies=0) {
 		this.id = world.buildings.length;
 		this.display_name = display_name;
 		this.name = name;
@@ -784,9 +784,12 @@ class building {
 			buy_button_price.setAttribute("class", "price-cantafford");
 			buy_button_price.setAttribute("id", name+"_price_"+this.buy_amounts[i]);
 			
+			let buy_button_br = document.createElement("br");
+			buy_button_br.setAttribute("id", name+"_button_br_"+this.buy_amounts[i]);
+			
 			building_interface.appendChild(buy_button);
 			building_interface.appendChild(buy_button_price);
-			building_interface.appendChild(document.createElement("br"));
+			building_interface.appendChild(buy_button_br);
 		}
 		
 		/*<button class="button noselect button-disabled" id="lemonade_stand_buy" onclick="lemonade_stand.buy()" disabled>buy 1x</button>
@@ -1017,14 +1020,14 @@ class tier {
 	}
 }
 /* * * Buildings * * */
-lemonade_stand = new building("lemonade_stand", "Lemonade Stand", Decimal(2), Decimal(0.50), Decimal(2.00), Decimal(1.15), earth, [1,10,100,1000], undefined, 1);
+lemonade_stand = new building("lemonade_stand", "Lemonade Stand", Decimal(2), Decimal(0.50), Decimal(2.00), Decimal(1.15), earth, default_buy_amounts, undefined, 1);
 newspaper_delivery = new building("newspaper_delivery", "Newspaper Delivery", Decimal(4), Decimal(10.00), Decimal(25.00), Decimal(1.17), earth);
 car_wash = new building("car_wash", "Car Wash", Decimal(9.5), Decimal(210), Decimal(800), Decimal(1.165), earth);
 pizza_delivery = new building("pizza_delivery", "Pizza Delivery", Decimal(12), Decimal(650), Decimal(7500), Decimal(1.16), earth);
 donut_shop = new building("donut_shop", "Donut Shop", Decimal(30), Decimal(1000), Decimal(30000), Decimal(1.158), earth);
 shrimp_boat = new building("shrimp_boat", "Shrimp Boat", Decimal(55), Decimal(24000), Decimal(750000), Decimal(1.156), earth);
-//hockey team
-//movie studio
+hockey_team = new building("hockey_team", "Hockey Team", Decimal(80), Decimal(96500.99), Decimal(1750000), Decimal(1.154), earth);
+movie_studio = new building("movie_studio", "Movie Studio", Decimal(180), Decimal(500000), Decimal(6280001), Decimal(1.152), earth);
 //bank
 //oil company
 //space rollercoaster (this and forward are much more expensive)
@@ -1051,7 +1054,7 @@ moon_shoes = new building("moon_shoes", "Moon Shoes", Decimal(1.5), Decimal(1.00
 //destiny reactor
 //film lab
 
-potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decimal(0.05), Decimal(1.00), Decimal(1.05), mars, [1,10,100,1000,10000]);
+potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decimal(0.05), Decimal(1.00), Decimal(1.05), mars);
 //mars chocolate
 //space pirates
 //plutonium mines
@@ -1097,18 +1100,26 @@ newspaper_delivery_up0 = new upgrade("Lasanga Comics", "Newspaper Delivery profi
 car_wash_up0 = new upgrade("Bubblier Soaps", "Car Wash profit x3", Decimal(15000), multiply_profit(car_wash, 3), earth);
 pizza_delivery_up0 = new upgrade("Garlic Sauce", "Pizza Delivery profit x3", Decimal(40000), multiply_profit(pizza_delivery, 3), earth);
 donut_shop_up0 = new upgrade("Jelly-filled", "Donut Shop profit x3", Decimal(80000), multiply_profit(donut_shop, 3), earth);
-shrimp_boat_up0 = new upgrade("Tougher nets", "Shrimp Boat profit x3", Decimal(900000), multiply_profit(shrimp_boat, 3), earth);
+shrimp_boat_up0 = new upgrade("Tougher Nets", "Shrimp Boat profit x3", Decimal(900000), multiply_profit(shrimp_boat, 3), earth);
+hockey_team_up0 = new upgrade("Aerodynamic Pucks", "Hockey Team profit x3", Decimal(2200000), multiply_profit(hockey_team, 3), earth);
+movie_studio_up0 = new upgrade("Filmed on real silver", "Movie Studio profit x3", Decimal(4400000), multiply_profit(movie_studio, 3), earth);
 
-everything_up0 = new upgrade("Marketeer", "Everything profit x3", Decimal(1000000), multiply_world_profit(earth, 3), earth);
+everything_up0 = new upgrade("Marketeer", "Everything profit x3", Decimal(10000000), multiply_world_profit(earth, 3), earth);
 
-lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", Decimal(1500000), multiply_profit(lemonade_stand, 3), earth);
-newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", Decimal(9000000), multiply_profit(newspaper_delivery, 3), earth);
-car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", Decimal(27000000), multiply_profit(car_wash, 3), earth);
-pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", Decimal(49000000), multiply_profit(pizza_delivery, 3), earth);
+lemonade_stand_up1 = new upgrade("Flashy Banners", "Lemonade Stand profit x3", Decimal(15000000), multiply_profit(lemonade_stand, 3), earth);
+newspaper_delivery_up1 = new upgrade("Crossword Puzzles", "Newspaper Delivery profit x3", Decimal(90000000), multiply_profit(newspaper_delivery, 3), earth);
+car_wash_up1 = new upgrade("Absorbier Sponges", "Car Wash profit x3", Decimal(270000000), multiply_profit(car_wash, 3), earth);
+pizza_delivery_up1 = new upgrade("Fresh Toppings", "Pizza Delivery profit x3", Decimal(490000000), multiply_profit(pizza_delivery, 3), earth);
+donut_shop_up1 = new upgrade("Coffee-filled", "Donut Shop profit x3", Decimal(810000000), multiply_profit(donut_shop, 3), earth);
+shrimp_boat_up1 = new upgrade("Larger Water Vehicles", "Shrimp Boat profit x3", Decimal(1210000000), multiply_profit(shrimp_boat, 3), earth);
+hockey_team_up1 = new upgrade("Slippery Soap Ice", "Hockey Team profit x3", Decimal(2440000000), multiply_profit(hockey_team, 3), earth);
+movie_studio_up1 = new upgrade("More Outtake Reels", "Movie Studio profit x3", Decimal(4690000000), multiply_profit(movie_studio, 3), earth);
 
-everything_up1 = new upgrade("Cleverer Strategies", "Everything profit x3", Decimal(100000000), multiply_world_profit(earth, 3), earth);
+everything_up1 = new upgrade("Cleverer Strategies", "Everything profit x3", Decimal(10000000000), multiply_world_profit(earth, 3), earth);
 
-everything_up2 = new upgrade("Highly Lucrative Proposition", "Everything profit x3", Decimal(500000000000), multiply_world_profit(earth, 3), earth);
+everything_up2 = new upgrade("Highly Lucrative Proposition", "Everything profit x3", Decimal(5000000000000), multiply_world_profit(earth, 3), earth);
+
+//everything_up? = new upgrade("Oil.", "Everything speed x999", Decimal('1e+????'), multiply_world_speed(earth, 999), earth);
 
 moon_shoes_up0 = new upgrade("Titanium-toed", "Moon Shoes profit x3", Decimal(8000), multiply_profit(moon_shoes, 3), moon);
 
@@ -1128,6 +1139,8 @@ newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery pro
 newspaper_delivery_tier2 = new tier("Breaking News", "Newspaper Delivery profit x2", 100, multiply_profit(newspaper_delivery, 2), newspaper_delivery);
 newspaper_delivery_tier3 = new tier("Lemonade Advertisements", "Lemonade Stand profit x3", 125, multiply_profit(lemonade_stand, 3), newspaper_delivery);
 newspaper_delivery_tier4 = new tier("Car Wash Advertisements", "Car Wash profit x3", 150, multiply_profit(car_wash, 3), newspaper_delivery);
+newspaper_delivery_tier5 = new tier("Pizza Advertisements", "Pizza Delivery profit x3", 175, multiply_profit(pizza_delivery, 3), newspaper_delivery);
+newspaper_delivery_tier6 = new tier("The Postal Service", "Newspaper Delivery speed x3", 200, multiply_speed(newspaper_delivery, 3), newspaper_delivery);
 
 car_wash_tier0 = new tier("Soap Novice", "Car Wash speed x2", 25, multiply_speed(car_wash, 2), car_wash);
 car_wash_tier1 = new tier("Cleanliness Agent", "Car Wash profit x2", 50, multiply_profit(car_wash, 2), car_wash);
@@ -1145,10 +1158,20 @@ donut_shop_tier0 = new tier("A Holey Investment", "Donut Shop speed x2", 25, mul
 donut_shop_tier1 = new tier("Icing on the top", "Donut Shop profit x3", 50, multiply_profit(donut_shop, 3), donut_shop);
 donut_shop_tier2 = new tier("Nothing beats it", "Donut Shop profit x3", 100, multiply_profit(donut_shop, 3), donut_shop);
 donut_shop_tier3 = new tier("It's spelled \"Doughnut\"", "Doughnut Shop profit x2", 150, multiply_profit(donut_shop, 2), donut_shop);
+donut_shop_tier4 = new tier("Can't believe I ate the Hole thing!", "Donut Shop profit x2", 200, multiply_profit(donut_shop, 2), donut_shop);
 
 shrimp_boat_tier0 = new tier("On the high seas", "Shrimp Boat profit x2", 25, multiply_profit(shrimp_boat, 2), shrimp_boat);
 shrimp_boat_tier1 = new tier("Making a Krilling", "Shrimp Boat profit x2", 50, multiply_profit(shrimp_boat, 2), shrimp_boat);
 shrimp_boat_tier2 = new tier("Crustaceous", "Shrimp Boat profit x3", 100, multiply_profit(shrimp_boat, 3), shrimp_boat);
+shrimp_boat_tier3 = new tier("It's that shrimple!", "Shrimp Boat speed x2", 150, multiply_speed(shrimp_boat, 2), shrimp_boat);
+
+hockey_team_tier0 = new tier("Welcome to Canada!", "Hockey Team speed x2", 25, multiply_speed(hockey_team, 2), hockey_team);
+hockey_team_tier1 = new tier("Figure Skater", "Hockey Team speed x2", 50, multiply_speed(hockey_team, 2), hockey_team);
+hockey_team_tier2 = new tier("A fine game of Sportsdisc", "Hockey Team speed x2", 100, multiply_speed(hockey_team, 2), hockey_team);
+
+movie_studio_tier0 = new tier("Starring: You", "Movie Studio speed x2", 25, multiply_speed(movie_studio, 2), movie_studio);
+movie_studio_tier1 = new tier("Filmography", "Movie Studio speed x2", 50, multiply_speed(movie_studio, 2), movie_studio);
+movie_studio_tier2 = new tier("What a Classic!", "Movie Studio profit x2", 100, multiply_profit(movie_studio, 2), movie_studio);
 
 moon_shoes_tier0 = new tier("One Small Step", "Moon Shoes speed x3", 25, multiply_speed(moon_shoes, 3), moon_shoes);
 moon_shoes_tier1 = new tier("And a Giant Leap", "Moon Shoes speed x2", 50, multiply_speed(moon_shoes, 2), moon_shoes);
@@ -1248,11 +1271,25 @@ let GUI_moon_unlocked = null;
 let GUI_show_cost_of_next_angel = null;
 let GUI_buildings_unlocked = []; // oh boy
 let GUI_building_amounts = []; // oh boy x2
+let GUI_buy_qty_buttons_unlocked = []; // oh boy x3
+let GUI_buy_qty_buttons_buyable = []; // oh boy x4
 for (let w = 0; w < worlds.length; w++) {
 	let array = new Array(worlds[w].buildings.length).fill(false);
 	GUI_buildings_unlocked.push([].concat(array));
 	let amounts = new Array(worlds[w].buildings.length).fill(-1);
 	GUI_building_amounts.push([].concat(amounts));
+	
+	let unlocked_buttons = new Array(worlds[w].buildings.length);
+	for (let i = 0; i < worlds[w].buildings.length; i++) {
+		unlocked_buttons[i] = new Array(worlds[w].buildings[i].buy_amounts.length).fill(null);
+	}
+	GUI_buy_qty_buttons_unlocked.push([...unlocked_buttons]);
+	// sorry for having two copies of the same code here but right now i can't figure out how to bypass javascript's insatiable hunger for not deep-copying lists.
+	let buyable_buttons = new Array(worlds[w].buildings.length);
+	for (let i = 0; i < worlds[w].buildings.length; i++) {
+		buyable_buttons[i] = new Array(worlds[w].buildings[i].buy_amounts.length).fill(null);
+	}
+	GUI_buy_qty_buttons_buyable.push([...buyable_buttons]);
 	// leaving space for any other building-specific metadata that needs to be kept track of
 }
 let GUI_number_formatting = -1; // used for letting the price labels know that they should get updated
@@ -1387,15 +1424,37 @@ function loop() {
 				}
 				
 				for (let qty = 0; qty < buildings[i].buy_amounts.length; qty++) {
-					let can_purchase = currency.get_amount().gte(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])));
-					if (gui_update_prices) {
-						get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])), currency.symbol) + ")";
+					let unlocked = currency.get_all_time().gte(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])).div(5000000)) || (GUI_buy_qty_buttons_unlocked[w][i][qty]?true:false); // the || is so that once it's unlocked, it stays so.
+					if (GUI_buy_qty_buttons_unlocked[w][i][qty] != unlocked) {
+						if (!unlocked) {
+							get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = "hidden";
+							get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).className = "hidden";
+							get_element(buildings[i].name+"_button_br_"+buildings[i].buy_amounts[qty]).className = "hidden";
+						}
+						if (unlocked) {
+							//get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = "";
+							//get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).className = "";
+							get_element(buildings[i].name+"_button_br_"+buildings[i].buy_amounts[qty]).className = "";
+						}
+						GUI_buy_qty_buttons_unlocked[w][i][qty] = unlocked;
 					}
-					get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "price-canafford" : "price-cantafford";
-					get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
-					get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).disabled = !can_purchase;
-					if (gui_formatting_changed || GUI_buildings_unlocked[w][i] != building_unlocked) {
-						get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).innerHTML = "buy " + beautify(buildings[i].buy_amounts[qty]) + (buildings[i].buy_amounts[qty]<money_display_threshold?"x":"");
+					if (unlocked) {
+						let can_purchase = currency.get_amount().gte(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])));
+						if (gui_update_prices || GUI_buy_qty_buttons_buyable[w][i][qty] != can_purchase) {
+							get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).innerHTML = " (" + money(buildings[i].get_price(Number(buildings[i].buy_amounts[qty])), currency.symbol) + ")";
+						}
+						
+						if (GUI_buy_qty_buttons_buyable[w][i][qty] != can_purchase) {
+							get_element(buildings[i].name+"_price_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "price-canafford" : "price-cantafford";
+							get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).className = can_purchase ? "button noselect button-enabled" : "button noselect button-disabled";
+							get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).disabled = !can_purchase;
+							GUI_buy_qty_buttons_buyable[w][i][qty] = can_purchase;
+							//console.log("updated!");
+						}
+						
+						if (gui_formatting_changed || GUI_buildings_unlocked[w][i] != building_unlocked) {
+							get_element(buildings[i].name+"_buy_"+buildings[i].buy_amounts[qty]).innerHTML = "buy " + beautify(buildings[i].buy_amounts[qty]) + (buildings[i].buy_amounts[qty]<money_display_threshold?"x":"");
+						}
 					}
 				}
 				
@@ -1523,6 +1582,7 @@ function loop() {
 }
 loop();
 //lemonade_stand.base_speed /= 8888888888888
+wawa = "1653517978231/0;159643848451.605,412796667916,412796667916;0,0,0;0.001,169,1^1.653,100,0^3.99,80,0^1.12,70,0^14.383,60,0^31.026,50,0;1111111111110;1|1;0,0,0;0,0,0;0,0,0;0;0|2;0,0,0;0,0,0;0,0,0;00;0|";
 </script>
 </body>
 </html>
