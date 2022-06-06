@@ -552,7 +552,12 @@ class world {
 		this.calculate_claimable_angels(); // no tomfoolery!
 		this.angel_investors.earn(this.claimable_angels);
 		for (let i = 0; i < this.upgrades.length; i++) this.upgrades[i].on_reset();
-		for (let i = 0; i < this.buildings.length; i++)this.buildings[i].on_reset();
+		for (let i = 0; i < this.buildings.length; i++) {
+			this.buildings[i].on_reset();
+			for (let ii = 0; ii < this.buildings[i].tiers.length; ii++) {
+				this.buildings[i].tiers[ii].on_reset();
+			}
+		}
 		this.currency.amount = zero();
 		this.currency.total = zero();
 		this.boost_per_angel = Decimal(0.01);
@@ -605,8 +610,8 @@ class world {
 	}
 }
 get_element("angel_restart_button").addEventListener("click", ()=>{
-	let world_name = get_element("angels_world_selector").value;
-	eval(world_name+".restart()");
+	let world_id = get_element("angels_world_selector").value;
+	worlds[world_id].restart();
 });
 let angel_symbol = "A";
 
@@ -1073,6 +1078,9 @@ class building {
 		this.time = zero();
 		this.freebies = this.starting_freebies;
 		this.flag_recalculate_prices = true;
+		this.profit_multiplier = Decimal(1);
+		this.speed_multiplier = Decimal(1);
+		this.flag_recalculate_profit = true;
 	}
 	on_unlock() {
 		this.gui_override_update_price = true;
@@ -1162,6 +1170,7 @@ class upgrade {
 	}
 	on_reset() {
 		this.purchased = false;
+		this.fired = false;
 	}
 	on_unlock() {
 		//this.purchased = false; // seriously though why is this a function
@@ -1188,6 +1197,9 @@ class tier {
 		this.building = building;
 		this.fired = false;
 		building.tiers.push(this);
+	}
+	on_reset() {
+		this.fired = false;
 	}
 	reached() {
 		return this.building.get_amount() >= this.amount;
@@ -1388,7 +1400,7 @@ gravity_booth_tier2 = new tier("Well, it's gravity", "Gravity Booth speed x2", 1
 
 potato_stand_tier0 = new tier("Hey There!", "Potato Stand profit x4", 25, multiply_profit(potato_stand, 4), potato_stand);
 
-let n_shown_upgrades = 8;
+let n_shown_upgrades = get_element("upgrades_amount_displayed").value;
 function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=false) {
 	if (Number(get_element("upgrades_world_selector").value) != world.id) return; // don't try to mess with stuff if it isn't actually being displayed/updated.
 	let i = 0;
@@ -1454,7 +1466,7 @@ function get_game_save_data() {
 
 function save_to_localStorage() {
 	window.localStorage.setItem("capitalsim_savedata", get_game_save_data()); //aaand save
-	announce("game saved","#666666",3500);
+	announce("game saved",/*"#666666"*/"#aaaaaa",5000);
 }
 function save_to_export() {
 	//announce("here's your save data, make sure to copy it and keep it somewhere safe: "+get_game_save_data(),"#00ff00");
@@ -1497,7 +1509,8 @@ function load_game_from_data(savedata) {
 		worlds[w].set_from_save_data(worlds_data[w]);
 		if (worlds[w].unlocked) worlds[w].unhide_option_in_selectors();
 	}
-	announce("game loaded!","#555555",2000);
+	refresh_upgrade_buttons(true, earth, true);
+	announce("game loaded!",/*"#555555"*/"#aaaaaa",5000);
 	// done!
 	return true;
 }
@@ -1682,6 +1695,7 @@ function loop() {
 		let world = worlds[world_id];
 		refresh_upgrade_buttons(true, world, true);
 		focus_currency(world_id);
+		//n_shown_upgrades = Number(get_element("upgrades_amount_displayed").value);
 		GUI_update_upgrades_display_world = false;
 	}
 	if (GUI_update_angels_display_world) {
