@@ -1,0 +1,28 @@
+html {
+	font-family: serif;
+	background: #001;
+	color: #eef;
+}
+wawa {
+	font-size: 2.5em;
+	font-weight: bold;
+	text-align: center;
+	width: 100%;
+	display: inline-block;
+}
+hr {
+	height: 1px;
+	border: double;
+	color: #eef;
+}
+ul {
+	padding-left: 20px;
+}
+a {
+	color: #0aa;
+}
+a:visited {
+	color: #076; /* #77a; */
+}
+
+/* hello? uh, hello hello? uh i just wanted to let you know, that you forgot to send over those hilarious phone guy music files. now i know that might sound bad, but don't worry! they should send over just fine. i mean, except for, one of them. alright, anyway remember to smile: you are the face of freddy fazbear's pizza. */

@@ -1,0 +1,137 @@
+:root {
+	--bg_x: 0px;
+	--bg_y: 0px;
+	--galaxy_colour: hsl(0, 100%, 50%);
+}
+::selection {
+	color: #fff;
+	background: #777;
+}
+html {
+	font-family: serif;
+	color: #eef;
+	background-color: #001; /* todo : starfield */
+	/* other acceptable colours:
+		#0aa;
+		#200;
+		#444;
+	*/
+	background-image: url("Stars1.gif"), url("Stars1.gif");
+	background-position: var(--bg_x) var(--bg_y), var(--bg_y) var(--bg_x);
+	background-blend-mode: screen;
+	width: 100%;
+	height: 100%;
+}
+p {
+	font-family: Helvetica, sans-serif; /* garamond(?) */
+	margin-top: 20px; /* 10px */
+	margin-bottom: 20px;
+	margin-left: 12%;
+	margin-right: 12%;
+}
+i {
+	font-family: Helvetica, sans-serif;
+}
+.first-letter { /* you broke, my grill? */
+	font-size: 2.5em;
+	display: inline-block;
+	width: fit-content;
+	font-style: oblique;
+	font-weight: bold;
+	height: 1em;
+}
+button.toggle-motion {
+	position: fixed; /* armenian */
+	right: 10px;
+	bottom: 10px;
+	font-size: 1.0em;
+	font-family: Garamond;
+	color: #0ff;
+	background: #0007;
+	cursor: pointer;
+	border: 1.6px white outset;
+}
+button.toggle-motion:active {
+	border: 1.6px white inset;
+}
+div.symbol-clusters {
+	position: fixed;
+	left: 10px;
+	bottom: 10px;
+	font-size: 1.0em;
+	color: #f000;
+	margin: 5px;
+	padding: 10px;
+	background: #0000;
+	cursor: default;
+	user-select: none;
+}
+div.symbol-clusters:hover {
+	color: #f00;
+	background: #000;
+	animation-name: fade-in;
+	animation-duration: 1s;
+	animation-delay: 1s;
+	animation-fill-mode: both;
+}
+@keyframes fade-in {
+	from {opacity:0;} to {opacity:1;}
+}
+.inline { /* PROBABLY DON'T USE OKAY THANKS -- if you want an inline block of text, please youze <span> */
+	display: inline;
+}
+.green { /* info */
+	color: #7f7;
+}
+.aqua { /* dimm */
+	color: #7ff;
+}
+.pink { /* seech <- pheno */
+	color: #f0a;
+}
+.death { /* axiomatic */
+	color: #fff;
+	background: #000;
+	font-family: serif;
+}
+.thoth { /* axiomatic */
+	font-family: MathJax_Math, MathJax_Main;
+}
+.leela { /* divine */
+	color: #0f0;
+	/*background: #000; // nice, but perhaps a bit too overly imposing. */
+	font-family: "Courier New", /*"8514sys.fon", */monospace;
+	font-size: 1em; /* !!!!IMPORTANT FOR ALL!!!! ==> avoid spaces in the spans whenever possible */
+}
+name { /* aqua -- important name */
+	color: #7ff;
+	text-decoration: underline;
+	/*font-style: oblique;*/
+}
+gax {
+	color: var(--galaxy_colour);
+	font-family: "Times New Roman", Times, serif;
+	font-style: italic;
+	font-weight: bold;
+	/* todo : capital letters maybe? */
+}
+.prev, .next {
+	font-size: 2em;
+	font-family: serif;
+	position: relative;
+	color: blueviolet !important; /* xd */
+	text-shadow: -8px 8px 15px blue; /* -12px 12px 15px antiquewhite; */
+	text-decoration: none;
+	display: block;
+	font-style: oblique;
+	font-weight: bold;
+	bottom: 0.5em;
+}
+.prev {
+	float: left;
+	left: 35%; /* 40%; */
+}
+.next {
+	float: right;
+	right: 35%; /* 40%; */
+}
