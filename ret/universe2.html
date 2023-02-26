@@ -1,0 +1,678 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: another universe</title>
+<style>
+html {
+	width:100%;
+	height:100%;
+}
+body {
+	background: #777;
+	margin:0;
+	overflow:hidden;
+}
+</style>
+</head>
+<body>
+
+<a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
+
+<canvas id="canvas" width="800" height="600" style="border:5px solid #000000;" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
+Your browser does not support the HTML canvas tag.</canvas>
+
+<div style="width:fit-content;height:600px;display:inline;position:absolute;margin:10px;">
+<label for="units">units: </label>
+<select id="units" name="units">
+	<option value="natural">natural units (hbar = c = 1)</option>
+	<option value="si">si units (hbar ~ 6.6e-18, c ~ 3.0e+8)</units>
+</select>
+</div>
+
+<script>
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+
+let particle_types = [];
+class particle_type {
+	constructor(name, symbol, macron_f, susy_f, superscript_f, subscript_f, symbol_spacing, tint, tint_2, grad_dist, text_color, charge, mass, spin, mean_life) {
+		this.id = particle_types.length;
+		// display parameters
+		this.name = name;
+		this.symbol = symbol;
+		this.macron_f = macron_f;
+		this.susy_f = susy_f;
+		this.superscript_f = superscript_f;
+		this.subscript_f = subscript_f;
+		this.symbol_spacing = symbol_spacing;
+		this.tint = tint;
+		this.tint_2 = (tint_2 == "") ? tint : tint_2;
+		this.grad_dist = grad_dist;
+		// tint_angle?
+		this.text_color = (text_color == "") ? "#000000" : text_color;
+		// physical parameters
+		this.charge = charge;
+		this.mass = mass;
+		this.spin = spin;
+		//this.mean_life = mean_life; this is redundant (ie, accounted for with interactions)
+		if (typeof(mean_life) == "string") {
+			if (mean_life.substr(mean_life.length-3) == "GeV") {
+				this.mean_life = Number(mean_life.substr(0,mean_life.length-3)) * 6.6 * (10**-25);
+			}
+		}
+		particle_types.push(this);
+	}
+}
+valid_interactions = [];
+class interaction {
+	constructor(vertex, coupling_strength) {
+		this.id = valid_interactions.length;
+		this.vertex = vertex;
+		this.coupling_strength = coupling_strength;
+		valid_interactions.push(this);
+	}
+}
+
+function macron_r() { // macron for regular antimatter
+	return function(antimatter) {
+		return antimatter ? charcode("175") : "";
+	}
+}
+function susy_r(susy) { // rule for regular susy
+	return function() {
+		return susy ? charcode("732") : "";
+	}
+}
+function sup_charge() { // superscript rule denoting charge for parity
+	return function(antimatter) {
+		return antimatter ? "+" : charcode("8722");
+	}
+}
+function constant_rule(constant) { // constant subscript/superscript/whatever rule
+	return function() {
+		return constant;
+	}
+}
+function empty() { // empty rule
+	return function() {
+		return "";
+	}
+}
+
+let up_quark = new particle_type("Up Quark", "u", macron_r(), susy_r(false), empty(), empty(), 0, "#00ff00", "", 1, "", 2/3, 2_300_000, 1/2, -1);
+let down_quark = new particle_type("Down Quark", "d", macron_r(), susy_r(false), empty(), empty(), 0, "#00ffff", "", 1, "", -1/3, 4_800_000, 1/2, -1);
+let charm_quark = new particle_type("Charm Quark", "c", macron_r(), susy_r(false), empty(), empty(), 0, "#ff00ff", "", 1, "", 2/3, 1_275_000_000, 1/2, -1);
+let strange_quark = new particle_type("Strange Quark", "s", macron_r(), susy_r(false), empty(), empty(), 0, "#7700ff", "", 1, "", -1/3, 95_000_000, 1/2, -1);
+let top_quark = new particle_type("Top Quark", "t", macron_r(), susy_r(false), empty(), empty(), 0, "#800020", "", 1, "", -1/3, 172_760_000_000, 1/2, -1);
+let bottom_quark = new particle_type("Bottom Quark", "b", macron_r(), susy_r(false), empty(), empty(), 0, "#6b392e", "", 1, "", -1/3, 4_180_000_000, 1/2, -1);
+let electron = new particle_type("Electron", "e", empty(), susy_r(false), sup_charge(), empty(), 0.25, "#ffff00", "", 1, "", -1, 511_000, 1/2, -1);
+let muon = new particle_type("Muon", charcode("956"), empty(), susy_r(false), sup_charge(), empty(), 0.25, "#ff7700", "", 1, "", -1, 105_658_000, 1/2, -1);
+let tau = new particle_type("Tau", charcode("964"), empty(), susy_r(false), sup_charge(), empty(), 0.25, "#ff0000", "", 1, "", -1, 1_776_800_000, 1/2, -1);
+let electron_neutrino = new particle_type("Electron Neutrino", charcode("957"), macron_r(), susy_r(false), empty(), constant_rule("e"), 0.2, "#0000ff", "#ffff00", 1, "", 0, 1, 1/2, -1);
+let muon_neutrino = new particle_type("Muon Neutrino", charcode("957"), macron_r(), susy_r(false), empty(), constant_rule(charcode("956")), 0.2, "#0077ff", "#ff7700", 1, "", 0, 170_000, 1/2, -1);
+let tau_neutrino = new particle_type("Tau Neutrino", charcode("957"), macron_r(), susy_r(false), empty(), constant_rule(charcode("964")), 0.2, "#00ffff", "#ff0000", 1, "", 0, 18_200_000, 1/2, -1);
+let photon = new particle_type("Photon", charcode("947"), empty(), susy_r(false), empty(), empty(), 0, "#ffffff", "", 1, "", 0, 0, 1, -1);
+let W_minus = new particle_type("W- Boson", "W", empty(), susy_r(false), constant_rule(charcode("8722")), empty(), 0.4, "#0000aa", "", 1, "", -1, 80_379_000_000, 1, "2.085 GeV");
+let W_plus = new particle_type("W+ Boson", "W", empty(), susy_r(false), constant_rule("+"), empty(), 0.4, "#990055", "", 1, "", 1, 80_379_000_000, 1, "2.085 GeV");
+let Z_boson = new particle_type("Z Boson", "Z", empty(), susy_r(false), constant_rule("0"), empty(), 0.27, "#9900aa", "", 1, "", 0, 91_187_600_000, 1, "2.4952 GeV");
+let gluon = new particle_type("Gluon", "g", empty(), susy_r(false), empty(), empty(), 0, "#aaaaaa", "#cccccc", 1, "", 0, 0, 1, -1);
+let higgs = new particle_type("Higgs Boson", "H", empty(), susy_r(false), empty(), empty(), 0, "#000000", "", 1, "#ffffff", 0, 125_250_000_000, 0, -1);
+
+let a_EM = 1/(137.04);
+let a_S = 0.2;
+let a_W = (1/30);
+
+// 0.0854 is sqrt(1/137.04)
+let g_EM = (4*Math.PI*a_EM)**0.5;//0.0854;//41.49; // 1/137.04 = (e^2)/4pi ==> Qe (Q is particle charge)
+let e_EM = a_EM**.5;
+let g_S = (4*Math.PI*a_S)**0.5;//1;
+let g_W = (4*Math.PI*a_W)**0.5;
+
+//let e_lepton = [electron, muon, tau];
+//let n_lepton = [electron_neutrino, muon_neutrino, tau_neutrino];
+//let quark = [up_quark, down_quark, charm_quark, strange_quark, top_quark, bottom_quark];
+
+function distance(x1,y1,x2,y2) {
+	return Math.sqrt((x1 - x2)**2 + (y1 - y2)**2);
+}
+
+function lerp(a,b,f) {
+	return (b-a)*f+a;
+}
+
+function EM_coupling() {
+	return function(real_vertex) {
+		let Q = 0;
+		for (let i = 0; i < real_vertex.length; i++) {
+			Q += real_vertex[i].get_em_charge();
+		}
+		return Math.abs((Q*g_EM)**2);
+	}
+}
+
+//new interaction([electron, electron, photon], coupling_strength=EM_coupling());
+//new interaction([muon, muon, photon], coupling_strength=EM_coupling());
+//new interaction([tau, tau, photon], coupling_strength=EM_coupling());
+//new interaction([up_quark, up_quark, photon], coupling_strength=EM_coupling());
+//new interaction([photon, W_minus, W_plus], coupling_strength=EM_coupling());
+
+//charcode(295) is hbar
+
+let particles = [];
+class particle {
+	constructor(pos, vel_angle, kinetic_energy, particle_type, antimatter) {
+		this.pos = pos; // (x,y)
+		this.vel_angle = vel_angle % (Math.PI*2); // theta
+		this.kinetic_energy = kinetic_energy; // T = E - m
+		this.particle_type = particle_type;
+		this.antimatter = antimatter;
+		
+		this.removed = false;
+		particles.push(this);
+	}
+	remove() {
+		this.removed = true;
+	}
+	get_total_energy() {
+		return this.particle_type.mass + this.kinetic_energy;
+	}
+	get_em_charge() {
+		if (this.antimatter) return -this.particle_type.charge;
+		return this.particle_type.charge;
+	}
+	get_mass() { // convenience, nomenclature parity
+		return this.particle_type.mass;
+	}
+	get_velocity() {
+		return Math.sqrt(1 - (this.get_mass()**2)/(this.get_total_energy()**2));
+	}
+	get_momentum() {
+		return Math.sqrt(this.get_total_energy()**2 - this.get_mass()**2); // wait, what?
+	}
+	get_momentum_vector() {
+		return [this.get_momentum() * Math.cos(this.vel_angle), this.get_momentum() * Math.sin(this.vel_angle)];
+	}
+}
+virtual_particles = [];
+class virtual_particle {
+	constructor(origin, parent, particle_type) {
+		this.origin = origin;
+		this.parent = parent;
+		this.particle_type = particle_type;
+		this.radius = 0;
+		this.antimatter = false;
+		this.particles_within = [];
+		
+		this.popped = false;
+		this.pop_lifetime = 10; // change if you want interaction waves to be displayed for longer
+		this.max_pop_lifetime = 10; // (actually change this one)
+		this.other = undefined;
+		
+		this.removed = false;
+		virtual_particles.push(this);
+	}
+	remove() {
+		this.removed = true;
+	}
+	pop() {
+		this.popped = true;
+	}
+}
+
+//new particle([-6,-4], 0, 1000, up_quark, false);
+//new particle([-6,-2], 0, 1000, down_quark, false);
+//new particle([-4,-4], 0, 1000, charm_quark, false);
+//new particle([-4,-2], 0, 1000, strange_quark, false);
+//new particle([-2,-4], 0, 1000, top_quark, false);
+//new particle([-2,-2], 0, 1000, bottom_quark, false);
+let e1 = new particle([-6,0], Math.PI/4, 79000, electron, false);
+let e2 = new particle([-3,3], Math.PI/4, 500, electron, false);
+//new particle([-4,0], 0, 30_000_000, muon, false);
+// new particle([-4,0], 0, 1, photon, false);
+//new particle([-2,0], 0, 1000, tau, false);
+//new particle([-6,2], 0, 1000, electron_neutrino, false);
+//new particle([-4,2], 0, 1000, muon_neutrino, false);
+//new particle([-2,2], 0, 1000, tau_neutrino, false);
+//new particle([0,-4], 0, 1000, photon, false);
+//new particle([0,-2], 0, 1000, W_minus, false);
+//new particle([0,0], 0, 1000, W_plus, false);
+//new particle([0,2], 0, 1000, Z_boson, false);
+//new particle([2,-4], 0, 1000, gluon, false);
+//new particle([2,-2], 0, 1000, higgs, false);
+
+//new virtual_particle([0,0], e1, photon);
+
+function charcode(x) {
+	return String.fromCharCode(x);
+}
+
+let hbar = 6.582119569e-16;//6.6e-25 // used to be in GeV but that might actually be wrong
+let c = 299792458;//3.0e+8; // gee great variable name
+
+let units = "";
+
+let si_prefixes = ["y", "z", "a", "f", "p", "n", charcode("956"), "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+function si_formatting(u,prec) {
+	/*if (eV < 1) {
+		return eV + " eV";
+	}
+	let prefixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"];*/
+	let significand = u;
+	let negative = significand < 0;
+	if (negative) u = 0 - u;
+	let i = Math.floor(Math.log10(u)/3);
+	significand /= 1000**(i > -9 ? i : -8);
+	let prefix = (i > -9) ? si_prefixes[i+8] : si_prefixes[0];
+	return (significand+'').substr(0,prec) + " " + prefix;
+}
+let energy_formatted =(eV)=> {return si_formatting(eV) + "eV";}
+let time_value =(t)=> {return t*hbar;}
+let time_formatted =(value,prec=24)=> {
+	switch (units) {
+		case "natural": return (value+'').substr(0,prec);
+		case "si": return si_formatting(time_value(value),prec) + "s";
+	}
+}
+let length_value =(l)=> {return l*hbar*c;}
+let length_formatted =(value,prec=24)=> {
+	switch (units) {
+		case "natural": return (value+'').substr(0,prec);
+		case "si": return si_formatting(length_value(value),prec) + "m";
+	}
+}
+let velocity_value =(v)=> {return v*c;}
+let velocity_formatted =(value,prec=24)=> {
+	/*switch (units) {
+		case "natural": */return (value+'').substr(0,prec) + "c";
+		/*case "si": return (velocity_value(value)+'').substr(0,prec) + " m/s";
+	}*/
+}
+
+let zoom = 50;
+function zoom_screen(event) {
+	let change = 1 - (event.deltaY/1000);
+	if (change < 0) return;
+	zoom *= change;
+	pan[0] *= change;
+	pan[1] *= change;
+}
+let active_keys = [];
+window.addEventListener('keydown', function (e) {
+	active_keys = (active_keys || []);
+	active_keys[e.keyCode] = (e.type == "keydown");
+});
+window.addEventListener('keyup', function (e) {
+	active_keys[e.keyCode] = (e.type == "keydown");            
+});
+let pan = [0,0];
+let mouse_pos = [0,0];
+function update_mouse_pos(event) {
+	//console.log(event.x+", "+event.y);
+	//console.log(event);
+	mouse_pos[0] = event.layerX - 5; // border of 5px
+	mouse_pos[1] = event.layerY - 5;
+}
+let step = 1e-6;//1e-4;
+let speed = 0; // steps per loop
+//speed++;
+let time = 0; // oh boy
+let total_energy_at_start = 0;
+let total_momentum_at_start = [0,0];
+for (let i = 0; i < particles.length; i++) {
+	total_energy_at_start += particles[i].get_total_energy();
+	let p = particles[i].get_momentum_vector();
+	total_momentum_at_start[0] += p[0];
+	total_momentum_at_start[1] += p[1];
+}
+let distant_interactions = 0;
+function draw() {
+	/* * * get settings * * */
+	units = document.getElementById("units").value;
+	
+	/* * * display * * */
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	let w = canvas.width/2;
+	let h = canvas.height/2;
+	let focused_particle = null;
+	let fp_onscreen_pos = [0,0]; // fp for focused_particle
+	for (let i = 0; i < particles.length; i++) {
+		let particle = particles[i];
+		let property = particles[i].particle_type;
+		let onscreen_x = pan[0] + w + particle.pos[0]*zoom;
+		let onscreen_y = pan[1] + h + particle.pos[1]*zoom;
+		if (onscreen_x > 800+zoom || onscreen_x < -zoom || onscreen_y < -zoom || onscreen_y > 600+zoom) {
+			
+		} else {
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			
+			ctx.beginPath();
+			//ctx.fillStyle = "#ffffff";
+			let gradient = ctx.createLinearGradient(onscreen_x - zoom, onscreen_y - zoom, onscreen_x + zoom, onscreen_y + zoom);
+			// TEMPORARY --[[
+			let tint = property.tint; let tint_2 = property.tint_2;
+			if (particle.antimatter) {
+				switch (property.name) {
+					case "Electron": tint = tint_2 = "#00ffff"; break;
+					case "Muon": tint = tint_2 = "#0077ff"; break;
+					case "Tau": tint = tint_2 = "#0000ff"; break;
+				}
+			}
+			// ]]--
+			gradient.addColorStop(0, /*property.*/tint);
+			gradient.addColorStop(1, /*property.*/tint_2);
+			ctx.fillStyle = gradient;
+			ctx.arc(onscreen_x, onscreen_y, zoom, 0, 2*Math.PI);
+			ctx.fill();
+			ctx.font = "italic "+Math.floor(zoom)+"px Times";
+			ctx.fillStyle = property.text_color;
+			ctx.fillText(property.symbol, onscreen_x - (property.symbol_spacing*zoom), onscreen_y);
+			ctx.font = Math.floor(zoom)+"px Times";
+			ctx.fillText(property.macron_f(particle.antimatter), onscreen_x - (property.symbol_spacing*zoom), onscreen_y); // macron function
+			ctx.fillText(property.susy_f(), onscreen_x - (property.symbol_spacing*zoom), onscreen_y); // susy function
+			ctx.font = "italic "+Math.floor(0.7*zoom)+"px Times";
+			ctx.fillText(property.superscript_f(particle.antimatter), onscreen_x + (property.symbol_spacing*zoom), onscreen_y - (0.3*zoom)); // superscript function
+			ctx.fillText(property.subscript_f(), onscreen_x + (property.symbol_spacing*zoom), onscreen_y + (0.3*zoom)); // subscript function
+			ctx.beginPath();
+			ctx.moveTo(onscreen_x, onscreen_y);
+			ctx.lineTo(onscreen_x + particle.get_momentum() * -Math.cos(particle.vel_angle+Math.PI) * zoom / 10000, onscreen_y + particle.get_momentum() * Math.sin(particle.vel_angle+Math.PI) * zoom / 10000);
+			ctx.strokeStyle = property.tint;
+			ctx.lineWidth = 0.3*25;//*zoom;
+			ctx.lineCap = "round";
+			ctx.stroke();
+			
+			if (distance(onscreen_x, onscreen_y, mouse_pos[0], mouse_pos[1]) < zoom) { // mouse is over particle; show some info
+				focused_particle = particle;
+				fp_onscreen_pos = [onscreen_x, onscreen_y];
+			}
+		}
+	}
+	for (let i = 0; i < virtual_particles.length; i++) {
+		let bubble = virtual_particles[i];
+		let property = virtual_particles[i].particle_type;
+		let onscreen_x = pan[0] + w + bubble.origin[0]*zoom;
+		let onscreen_y = pan[1] + h + bubble.origin[1]*zoom;
+		if (onscreen_x-(bubble.radius*zoom) > 800+zoom || onscreen_x+(bubble.radius*zoom) < -zoom || onscreen_y+(bubble.radius*zoom) < -zoom || onscreen_y-(bubble.radius*zoom) > 600+zoom) {
+			
+		} else {
+			if (!bubble.popped) {
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				
+				ctx.beginPath();
+				let gradient = ctx.createRadialGradient(onscreen_x, onscreen_y, 0, onscreen_x, onscreen_y, zoom*bubble.radius);
+				if (property.mass == 0) {
+					gradient.addColorStop(Math.max(0.5,1 - 10/(bubble.radius)), "rgba(0,0,0,0)");
+					gradient.addColorStop(1, property.tint);
+				} else {
+					gradient.addColorStop(1, "rgba(0,0,0,0)");
+					gradient.addColorStop(0, property.tint+"77");
+				}
+				ctx.fillStyle = gradient;
+				ctx.arc(onscreen_x, onscreen_y, zoom*bubble.radius, 0, 2*Math.PI);
+				ctx.fill();
+				
+				let symbol_x = (onscreen_x - (property.symbol_spacing*zoom*bubble.radius/4)) + Math.sin((time / step) / 100)*zoom*bubble.radius/1.15;
+				let symbol_y = onscreen_y                                    + Math.cos((time / step) / 100)*zoom*bubble.radius/1.15;
+				ctx.font = "italic "+Math.floor(zoom*bubble.radius/4)+"px Times";
+				ctx.fillStyle = property.text_color;
+				ctx.fillText(property.symbol, symbol_x, symbol_y);
+				ctx.font = Math.floor(zoom)+"px Times";
+				ctx.fillText(property.macron_f(bubble.antimatter), symbol_x, symbol_y); // macron function
+				ctx.fillText(property.susy_f(), symbol_x, symbol_y); // susy function
+				
+				symbol_x = (onscreen_x + (property.symbol_spacing*zoom*bubble.radius/4)) + Math.sin((time / step) / 100)*zoom*bubble.radius/1.15;
+				symbol_y = onscreen_y - (0.3*zoom*bubble.radius/4)                       + Math.cos((time / step) / 100)*zoom*bubble.radius/1.15;
+				ctx.font = "italic "+Math.floor(0.7*zoom*bubble.radius/4)+"px Times";
+				ctx.fillText(property.superscript_f(bubble.antimatter), symbol_x, symbol_y); // superscript function
+				symbol_y = onscreen_y + (0.3*zoom)                       + Math.cos((time / step) / 100)*zoom*bubble.radius/1.15;
+				ctx.fillText(property.subscript_f(), symbol_x, symbol_y); // subscript function
+			} else {
+				ctx.beginPath();
+				let onscreen_x_start = pan[0] + w + bubble.parent.pos[0]*zoom;
+				let onscreen_y_start = pan[1] + h + bubble.parent.pos[1]*zoom;
+				
+				let other_x = bubble.other.pos[0];
+				let other_y = bubble.other.pos[1];
+				if (bubble.parent == bubble.other) {
+					other_x = bubble.parent.pos[0]+Math.cos(Math.PI/4);
+					other_y = bubble.parent.pos[1]+Math.sin(Math.PI/4);
+				}
+				
+				let onscreen_x_end = pan[0] + w + other_x*zoom;
+				let onscreen_y_end = pan[1] + h + other_y*zoom;
+				
+				let angle = Math.atan2((other_y-bubble.parent.pos[1]), (other_x-bubble.parent.pos[0]));
+				let dist = distance(bubble.parent.pos[0], bubble.parent.pos[1], other_x, other_y)/25;
+				
+				ctx.moveTo(onscreen_x_start, onscreen_y_start);
+				let wave_steps = 10;
+				for (let s = 0; s < wave_steps; s++) {
+					let parity = s&1==1 ? 1 : -1;
+					let x_step_start = lerp(onscreen_x_start, onscreen_x_end, s/wave_steps);
+					let y_step_start = lerp(onscreen_y_start, onscreen_y_end, s/wave_steps);
+					let x_step_end = lerp(onscreen_x_start, onscreen_x_end, (s+1)/wave_steps); // waow
+					let y_step_end = lerp(onscreen_y_start, onscreen_y_end, (s+1)/wave_steps);
+					let x_curve = lerp(x_step_start, x_step_end, 0.5) + Math.cos(angle+Math.PI/2)*8/10*zoom*dist*parity - Math.sin(angle)*8/10*zoom*dist*parity;
+					let y_curve = lerp(y_step_start, y_step_end, 0.5) + Math.cos(angle)*8/10*zoom*dist*parity + Math.sin(angle+Math.PI/2)*8/10*zoom*dist*parity;
+					ctx.quadraticCurveTo(x_curve, y_curve, x_step_end, y_step_end);
+				}
+				let lifetime = Math.floor((bubble.pop_lifetime / bubble.max_pop_lifetime)*0xff);
+				lifetime = (lifetime.toString(16).length == 1 ? "0" : "") + lifetime.toString(16);
+				ctx.strokeStyle = property.tint + lifetime;
+				ctx.lineWidth = 0.3*25;//*zoom;
+				ctx.lineCap = "round";
+				ctx.stroke();
+				//ctx.beginPath();
+				//ctx.arc(curve_x,curve_y,5,0,Math.PI*2);
+				//ctx.fill();
+			}
+		}
+	}
+	
+	if (focused_particle != null) {
+		let window_zoom = 50;
+		ctx.textAlign = "left";
+		ctx.textBaseline = "top";
+		ctx.font = "italic "+Math.floor(0.5*window_zoom)+"px Times";
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(fp_onscreen_pos[0] + 0.9*window_zoom, fp_onscreen_pos[1] + 0.9*window_zoom, 7*window_zoom, 3*window_zoom);
+		ctx.fillStyle = "#000000";
+		ctx.fillText("E = "+energy_formatted(focused_particle.get_total_energy()), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + window_zoom);
+		ctx.fillText("T = "+energy_formatted(focused_particle.kinetic_energy), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 1.5*window_zoom);
+		ctx.fillText("m = "+energy_formatted(focused_particle.get_mass()), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 2*window_zoom);
+		ctx.fillText("v = "+velocity_formatted(focused_particle.get_velocity()), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 2.5*window_zoom);
+		ctx.fillText("p = "+energy_formatted(focused_particle.get_momentum()), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 3*window_zoom);
+		let relation = Math.sqrt((focused_particle.get_momentum()*1)**2 + (focused_particle.get_mass()*1)**2);
+		//ctx.fillText("E-p = "+energy_formatted(relation), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 3.5*window_zoom);
+		ctx.fillText("a = "+(focused_particle.vel_angle), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 3.5*window_zoom);
+	}
+	
+	/* * * tick * * */
+	for (let x = 0; x < speed; x++) {
+		for (let i = 0; i < particles.length; i++) {
+			let this_particle = particles[i];
+			let vel = Math.sqrt(1 - (this_particle.get_mass()**2)/(this_particle.get_total_energy()**2));
+			this_particle.pos[0] += step * Math.cos(this_particle.vel_angle) * vel;
+			this_particle.pos[1] += step * -Math.sin(this_particle.vel_angle) * vel;
+			
+			//console.log(Math.abs(this_particle.particle_type.charge * e_EM) + " < " + (step * Math.random()));
+			if (Math.abs(this_particle.particle_type.charge) * (1/g_EM) * Math.random() < step) {
+				new virtual_particle([this_particle.pos[0], this_particle.pos[1]], this_particle, photon);
+			}
+			
+			for (let j = 0; j < virtual_particles.length; j++) {
+				if (!virtual_particles[j].particles_within.includes(this_particle)) {
+					if (distance(virtual_particles[j].origin[0], virtual_particles[j].origin[1], this_particle.pos[0], this_particle.pos[1]) < virtual_particles[j].radius) { //distance check
+						virtual_particles[j].particles_within.push(this_particle);
+					}
+				}
+			}
+			
+			/*
+			for (let j = 0; j < valid_interactions.length; j++) {
+				if (valid_interactions[j].vertex.includes(this_particle.particle_type)) {
+					if (step * valid_interactions[j].coupling_strength([this_particle]) > Math.random()) {
+						for (let jj = 0; jj < valid_interactions[j].vertex.length; jj++) {
+							
+						}
+						//this_particle.remove();
+						new particle([...this_particle.pos], this_particle.vel_angle + 1, 1, photon, false);
+						//new particle([...this_particle.pos], this_particle.vel_angle - 1, this_particle.kinetic_energy-1, electron, false);
+						this_particle.kinetic_energy -= 1;
+						this_particle.vel_angle -= 1;
+						//console.log("interaction occurred");
+						break;
+					}
+				}
+			}*/
+		}
+		for (let i = 0; i < virtual_particles.length; i++) {
+			let bubble = virtual_particles[i];
+			if (bubble.popped) {
+				bubble.pop_lifetime -= step * 1;
+				if (bubble.pop_lifetime < 0) {
+					bubble.remove();
+				}
+			} else {
+				bubble.radius += step * 1;
+				
+				for (let j = 0; j < bubble.particles_within.length; j++) {
+					let vp = bubble.particles_within;
+					if (Math.abs(vp[j].particle_type.charge) * (1/g_EM) * Math.random() < step / bubble.radius) {
+						let particle_1 = bubble.parent;
+						let particle_2 = vp[j];
+						let momentum_angle = Math.atan2((particle_2.pos[1]-particle_1.pos[1]), (particle_1.pos[0]-particle_2.pos[0])); // <-- F1X TH1S! <-- ok
+						let energy_CM = 2*(particle_1.get_total_energy() * particle_2.get_total_energy() - particle_1.get_momentum() * particle_2.get_momentum() * Math.cos(momentum_angle));//particle_1.kinetic_energy * (Math.random()**2);
+						let kinetic_energy = Math.sqrt(energy_CM);
+						
+						let new_p1_x = particle_1.kinetic_energy * Math.cos(particle_1.vel_angle) + (kinetic_energy * Math.cos(momentum_angle));
+						let new_p1_y = particle_1.kinetic_energy * Math.sin(particle_1.vel_angle) + (kinetic_energy * Math.sin(momentum_angle));
+						let new_p1_R = Math.sqrt(new_p1_x**2 + new_p1_y**2);
+						let new_p1_theta = Math.atan2(new_p1_y, new_p1_x);
+						
+						let new_p2_x = particle_2.kinetic_energy * Math.cos(particle_2.vel_angle) - (kinetic_energy * Math.cos(momentum_angle));
+						let new_p2_y = particle_2.kinetic_energy * Math.sin(particle_2.vel_angle) - (kinetic_energy * Math.sin(momentum_angle));
+						let new_p2_R = Math.sqrt(new_p2_x**2 + new_p2_y**2);
+						let new_p2_theta = Math.atan2(new_p2_y, new_p2_x);
+						
+						if (particle_1 != particle_2) {
+							particle_1.kinetic_energy = new_p1_R;
+							particle_1.vel_angle = new_p1_theta;
+							particle_2.kinetic_energy = new_p2_R;
+							particle_2.vel_angle = new_p2_theta;
+							distant_interactions++;
+						} else {
+							// doing nothing is the same as the opposite momenta cancelling each other out.
+						}
+						
+						//particle_1.kinetic_energy -= kinetic_energy;
+						//particle_2.kinetic_energy += kinetic_energy;
+						bubble.other = particle_2;
+						bubble.pop();
+					}
+				}
+				
+				if (bubble.particle_type.mass == 0) {
+					if (bubble.particles_within.length == particles.length) {
+						if (bubble.radius > 10000) bubble.remove();
+					}
+				}
+			}
+		}
+		time += step; // keep in step!
+		for (let i = 0; i < particles.length; i++) { // clean up removed particles
+			if (particles[i].removed) {
+				particles.splice(i, 1);
+				i = 0;
+				//console.log("particle removed");
+			}
+		}
+		for (let i = 0; i < virtual_particles.length; i++) { // clean up removed virtual particles
+			if (virtual_particles[i].removed) {
+				virtual_particles.splice(i, 1);
+				i = 0;
+				//console.log("vp removed");
+			}
+		}
+	}
+	/*
+	ctx.beginPath();
+	let onscreen_x_start = pan[0] + w;
+	let onscreen_y_start = pan[1] + h;
+	let x_end = (mouse_pos[0]-w-pan[0])/zoom;
+	let y_end = (mouse_pos[1]-h-pan[1])/zoom;
+	let angle = Math.atan2((y_end-0), (x_end-0));
+	let dist = distance(0, 0, x_end, y_end)/25;
+	//console.log(angle+" | sin(angle) = "+Math.sin(angle)+" | cos(angle) = "+Math.cos(angle)+" | x_end = "+x_end+" | y_end = "+y_end);
+	let onscreen_x_end = pan[0] + w + x_end*zoom;
+	let onscreen_y_end = pan[1] + h + y_end*zoom;
+	ctx.moveTo(onscreen_x_start, onscreen_y_start);/*
+	let curve_x = lerp(onscreen_x_start, onscreen_x_end, 0.5/10) + Math.cos(angle+Math.PI/2)*8/10*zoom*dist - Math.sin(angle)*8/10*zoom*dist*1;
+	let curve_y = lerp(onscreen_y_start, onscreen_y_end, 0.5/10) + Math.cos(angle)*8/10*zoom*dist*1 + Math.sin(angle+Math.PI/2)*8/10*zoom*dist;
+	ctx.quadraticCurveTo(onscreen_x_start + Math.cos(angle)*x_end/2/10*zoom - Math.sin(angle)*8/10*zoom*1, onscreen_y_start + Math.cos(angle)*8/10*zoom*1 + Math.sin(angle)*x_end/2/10*zoom,curve_x, curve_y, lerp(onscreen_x_start, onscreen_x_end, 1/10), lerp(onscreen_y_start, onscreen_y_end, 1/10));*
+	let wave_steps = 10;
+	//let angle = Math.atan2((y_end-0), (x_end-0));
+	//console.log(angle);
+	for (let s = 0; s < wave_steps; s++) {
+		let parity = s&1==1 ? 1 : -1;
+		let x_step_start = lerp(onscreen_x_start, onscreen_x_end, s/wave_steps);
+		let y_step_start = lerp(onscreen_y_start, onscreen_y_end, s/wave_steps);
+		let x_step_end = lerp(onscreen_x_start, onscreen_x_end, (s+1)/wave_steps); // waow
+		let y_step_end = lerp(onscreen_y_start, onscreen_y_end, (s+1)/wave_steps);
+		let x_curve = lerp(x_step_start, x_step_end, 0.5) + Math.cos(angle+Math.PI/2)*8/10*zoom*dist*parity - Math.sin(angle)*8/10*zoom*dist*parity;
+		let y_curve = lerp(y_step_start, y_step_end, 0.5) + Math.cos(angle)*8/10*zoom*dist*parity + Math.sin(angle+Math.PI/2)*8/10*zoom*dist*parity;
+		ctx.quadraticCurveTo(x_curve, y_curve, x_step_end, y_step_end);
+	}
+	ctx.strokeStyle = "#ffffff";
+	ctx.lineWidth = 0.3*25;//*zoom;
+	ctx.lineCap = "round";
+	ctx.stroke();*/
+	//ctx.beginPath();
+	//ctx.arc(curve_x,curve_y,5,0,Math.PI*2);
+	//ctx.fill();
+	
+	if (active_keys && (active_keys[37] || active_keys[65])) {pan[0] += 10; }
+    if (active_keys && (active_keys[39] || active_keys[68])) {pan[0] -= 10; }
+    if (active_keys && (active_keys[38] || active_keys[87])) {pan[1] += 10; }
+    if (active_keys && (active_keys[40] || active_keys[83])) {pan[1] -= 10; }
+	if (active_keys && active_keys[70]) {step *= 1.1;}
+	if (active_keys && active_keys[82]) {step /= 1.1;}
+	if (active_keys && active_keys[71]) /*particles[0].kinetic_energy *= 1.01;*/{speed += Math.max(1,Math.floor(speed/50));}
+	if (active_keys && active_keys[84]) /*particles[0].kinetic_energy /= 1.01;*/{speed -= Math.max(1,Math.floor(speed/50));}
+	if (active_keys && active_keys[32]) {speed = 1; /*step = 1e-4;*/} // spacebar
+	
+	ctx.textAlign = "left";
+	ctx.textBaseline = "top";
+	ctx.font = "24px Times";
+	ctx.fillStyle = "#000000";
+	ctx.fillText("pan: "+/*((pan[0]/zoom)+'').substr(0,7)+", "+((pan[1]/zoom)+'').substr(0,7)+" | "+*/length_formatted(pan[0]/zoom,7)+", "+length_formatted(pan[1]/zoom,7), 10, 10);
+	ctx.fillText("zoom: "+/*(zoom+'')+" | "+*/length_formatted(1/zoom,7)+" ("+zoom.toFixed(5)+")", 10, 10+(24));
+	ctx.fillText("step: "+/*(step+'')+" | "+*/time_formatted(step,7), 10, 10+(24*2));
+	ctx.fillText("speed: "+(speed+'')+"*step = "+time_formatted(step*speed,7), 10, 10+(24*3));
+	ctx.fillText("particle count: "+(particles.length+''), 10, 10+(24*4));
+	ctx.fillText("virtual particles: "+(virtual_particles.length+''), 10, 10+(24*5));
+	ctx.fillText("elapsed time: "+time_formatted(time,10), 10, 10+(24*6));
+	
+	ctx.textAlign = "right";
+	let total_energy = 0;
+	let total_momentum = [0,0];
+	for (let i = 0; i < particles.length; i++) {
+		total_energy += particles[i].get_total_energy();
+		let p = particles[i].get_momentum_vector();
+		total_momentum[0] += p[0];
+		total_momentum[1] += p[1];
+	}
+	ctx.fillText("E0: "+energy_formatted(total_energy), canvas.width-10, 10+(24*0));
+	ctx.fillText("p0: "+energy_formatted(total_momentum[0])+", "+energy_formatted(total_momentum[1]), canvas.width-10, 10+(24*1));
+	ctx.fillText("E0@t0: "+energy_formatted(total_energy_at_start), canvas.width-10, 10+(24*2));
+	ctx.fillText("p0@t0: "+energy_formatted(total_momentum_at_start[0])+", "+energy_formatted(total_momentum_at_start[1]), canvas.width-10, 10+(24*3));
+	ctx.fillText("interactions: "+(distant_interactions+''), canvas.width-10, 10+(24*4));
+	
+	window.requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
