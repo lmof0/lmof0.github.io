@@ -1,0 +1,833 @@
+<!doctype html>
+<html>
+<head>
+<title>a website: and a universe (particle physics)</title>
+<!--
+todo, because this is a pretty wild project:
+
+legend:
+- not done
+d done
+/ put off or only just considering
+x considered against
+
+- fix the renderer; make the trails(s) use the webgl tutorial math. then fix the particle(s) somehow
+- make the particle shader work for many particles (please don't use a for loop??)
+/ if the particle shader becomes awful, just render it as a dot with the trails (ez math but kinda boring :( )
+- add mouseover info, and info in the details tag
+x first experiment to get working: electron-electron scattering. ignore self interactions, only focus on expanding influences and continuous probabilities, not "individual bubbles" (laggy!). you'll need to work out the maximum energy heisenberg allows for this simple experiment to be carried out.
+- first experiment to get working: e-e scattering. still ignore self interactions, but each interaction has to be discrete, otherwise particle paths are not straight lines. discrete bubbles are laggy, but non-time-ordered paths leave ambiguous spin. how about just, paths with arbitrary time-ordering? that'll probably work xd. Uncertainty principle: dEdt ~ hbar => range R ~ c * dt ~ hbar * c / dE => dE ~ hbar * c / R => Energy is proportional to the reduced planck constant times the speed of light, and inversely proportional to the distance between two particles interacting.
+- second (or later) experiment: muon decay. oh joy!
+- make squishifyable the psi "position" indicator
+- add virtual boson line visualization, and properly implement interactions to destroy and create particle states.
+- make an iterator function for particles/bubbles that automagically checks for existence.
+- get the time travel thing working before you forget how it's supposed to work. (i.e., bubbles are calc'd on the fly, and present momentum is adjusted based on pasts etc.)
+
+-->
+<style>
+canvas {
+	width: 800px;
+	height: 600px;
+}
+.noselect {user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-moz-user-select:none;-ms-user-select:none;}
+.particle-info {
+	border:1px solid black;
+	padding:5px;
+	margin-top:5px;
+}
+.inline {display:inline;}
+.hidden {display:none;}
+@font-face {font-family: MathJax_Main; src: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/woff/MathJax_Main-Regular.woff?V=2.7.1') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/otf/MathJax_Main-Regular.otf?V=2.7.1') format('opentype')}
+@font-face {font-family: MathJax_Main; src: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/woff/MathJax_Main-Bold.woff?V=2.7.1') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/otf/MathJax_Main-Bold.otf?V=2.7.1') format('opentype'); font-weight: bold}
+@font-face {font-family: MathJax_Main; src: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/woff/MathJax_Main-Italic.woff?V=2.7.1') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/otf/MathJax_Main-Italic.otf?V=2.7.1') format('opentype'); font-style: italic}
+@font-face {font-family: MathJax_Math; src: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/woff/MathJax_Math-Italic.woff?V=2.7.1') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/otf/MathJax_Math-Italic.otf?V=2.7.1') format('opentype'); font-style: italic}
+@font-face {font-family: MathJax_Caligraphic; src: url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/woff/MathJax_Caligraphic-Regular.woff?V=2.7.1') format('woff'), url('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/fonts/HTML-CSS/TeX/otf/MathJax_Caligraphic-Regular.otf?V=2.7.1') format('opentype')}
+m {
+	font-family: MathJax_Math, MathJax_Main;	
+}
+</style>
+</head>
+<body>
+<canvas id="canvas" width="800px" height="600px"></canvas>
+<div style="width:fit-content;height:600px;display:inline;position:absolute;margin:10px;">
+<label for="units_setting">units: </label>
+<select id="units_setting" name="units_setting">
+	<option value="natural">natural units (hbar = c = 1)</option>
+	<option value="si">si units (hbar ~ 6.6e-16eV, c ~ 3.0e+8m/s)</units>
+</select>
+<div>
+time elapsed: <div id="time-elapsed" class="inline"></div><br>
+time step: <div id="time-step" class="inline"></div><br>
+steps/frame: <div id="steps-per-frame" class="inline"></div><br>
+total momentum at <m>t = 0</m>: <div id="total-momentum-at-t0" class="inline"></div><br>
+total momentum at <m>t</m>: <div id="total-momentum" class="inline"></div><br>
+<m>E<sub>CM</sub></m> at <m>t = 0</m>: <br>
+<m>E<sub>CM</sub></m> at <m>t</m>: <br>
+number of particles: <div id="number-of-particles" class="inline"></div>
+</div>
+<details open><summary>all non-virtual particles:</summary>
+	<div id="particle-infos" style="border:1px solid black;padding:0px 5px 5px 5px;">
+		<div id="particle_n" class="particle-info noselect hidden">
+			<div id="particle_n_id" class="inline">particle n</div><br>
+			<div id="particle_n_type" class="inline">type</div>
+			<div id="particle_n_exists" class="inline">&emsp;&mdash;&emsp;exists</div><br>
+			<m>E = </m><div id="particle_n_total_energy" class="inline">total energy eV</div><br>
+			<m>T = </m><div id="particle_n_kinetic_energy" class="inline">kinetic energy eV</div><br>
+			<m>m<sub>0</sub> = </m><div id="particle_n_mass" class="inline">rest mass eV</div><br>
+			<m>||p|| = </m><div id="particle_n_magn_momentum" class="inline">magn momentum eV</div><br>
+			<m>p<sup>&rarr;</sup> = </m><div id="particle_n_momentum" class="inline">[x,y,z] momentum eV</div><br>
+			<m>v = </m><div id="particle_n_velocity" class="inline">velocity c</div><br>
+			<m>&psi; = </m><div id="particle_n_position" class="inline" style="font-family:monospace;">position psi</div><br>
+			<m>R = </m><div id="particle_n_range" class="inline" style="font-family:monospace;">range R</div>
+		</div>
+	</div>
+</details>
+</div>
+
+												<!-- * * * vertex shader * * *-->
+<script id="vertex-shader" type="notjs">
+attribute vec4 a_position;
+attribute vec4 a_color;
+
+varying vec4 v_color;
+
+void main() {
+	gl_Position = a_position;
+	v_color = a_color;
+}
+</script>
+												<!-- * * * fragment shader * * *-->
+<script id="fragment-shader" type="notjs">
+precision mediump float;
+
+uniform vec2 u_resolution;
+uniform vec4 u_position;
+uniform mat4 u_matrix;
+uniform vec4 u_color;
+
+varying vec4 v_color;
+
+void main() {
+	vec4 pos = u_matrix * u_position; // god help us all
+	float z_divide = 0.0 + pos.z * 1.; // fudgeFactor of 60
+	pos = vec4(u_resolution.x*pos.x / z_divide + u_resolution.x / 2., u_resolution.y*pos.y / z_divide + u_resolution.y / 2., pos.zw); // i'm so so sorry
+	pos = pos / pos.w;
+	float dist = (gl_FragCoord.x - pos.x)*(gl_FragCoord.x - pos.x) +
+				(gl_FragCoord.y - pos.y)*(gl_FragCoord.y - pos.y);
+	//dist = sqrt(dist);
+	/*float first = dist;
+	dist = dist - (dist*dist-first)/(2.*dist);
+	dist = dist - (dist*dist-first)/(2.*dist);
+	dist = dist - (dist*dist-first)/(2.*dist);
+	dist = dist - (dist*dist-first)/(2.*dist);
+	dist = dist - (dist*dist-first)/(2.*dist);*/
+	//dist = dist * pos.z;
+	float bright = 100. / (dist);
+	bright = bright / (pos.z);
+	//if (dist < 100.) {bright = 1.;}
+	//vec4 col = vec4(u_color.x + sin((pos.x+gl_FragCoord.x)/20.)*0.14, u_color.y + cos((pos.y+gl_FragCoord.y)/20.)*0.14, u_color.zw);
+	float over = max(bright-1.,0.);
+	gl_FragColor = vec4(v_color.xyz + bright * u_color.xyz/*col.xyz*/ * (1.+over), v_color.w);
+}
+</script>
+												<!-- * * * trail vertex shader * * *-->
+<script id="trail-vertex-shader" type="notjs">
+attribute vec4 a_position;
+attribute vec4 a_color;
+
+uniform mat4 u_matrix;
+
+void main() {
+	vec4 pos = u_matrix * a_position;
+	float z_divide = 0.0 + pos.z * .5;
+	gl_Position = vec4(pos.xy / z_divide, pos.zw);
+}
+</script>
+												<!-- * * * trail fragment shader * * *-->
+<script id="trail-fragment-shader" type="notjs">
+precision mediump float;
+
+uniform vec4 u_color;
+
+void main() {
+	gl_FragColor = u_color;
+}
+</script>
+												<!-- * * * javascript * * *-->
+<script>
+function get_element(L) {return document.getElementById(L);} // teahee
+function find_subelement_by_id(element, id) {
+	for (let i = 0; i < element.childNodes.length; i++) {
+		if (element.childNodes[i].id === id) return element.childNodes[i];
+	}
+	console.log("id \""+id+"\" not found for element:");
+	console.log(element); // wow this function is dangerous
+}
+const canvas = document.querySelector("#canvas");
+const gl = canvas.getContext("webgl");
+if (!gl) console.log("%coopsie daisy","color:#ff0;font-size:200%;font-style:oblique;");
+
+function createShader(gl, type, source) {
+	let shader = gl.createShader(type);
+	gl.shaderSource(shader, source);
+	gl.compileShader(shader);
+	let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
+	if (success) return shader;
+	
+	console.log(gl.getShaderInfoLog(shader));
+	gl.deleteShader(shader);
+}
+function createProgram(gl, vertexShader, fragmentShader) {
+	let program = gl.createProgram();
+	gl.attachShader(program, vertexShader);
+	gl.attachShader(program, fragmentShader);
+	gl.linkProgram(program);
+	let success = gl.getProgramParameter(program, gl.LINK_STATUS);
+	if (success) return program;
+	
+	console.log(gl.getProgramInfoLog(program));
+	gl.deleteProgram(program);
+}
+
+const vertexShaderSource = document.querySelector("#vertex-shader").text;
+const fragmentShaderSource = document.querySelector("#fragment-shader").text;
+const trailVertexShaderSource = document.querySelector("#trail-vertex-shader").text;
+const trailFragmentShaderSource = document.querySelector("#trail-fragment-shader").text;
+
+const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+const quadProgram = createProgram(gl, vertexShader, fragmentShader);
+
+const position_location = gl.getAttribLocation(quadProgram, "a_position");
+const particle_pos_location = gl.getUniformLocation(quadProgram, "u_position");
+const resolution_location = gl.getUniformLocation(quadProgram, "u_resolution");
+const color_location = gl.getUniformLocation(quadProgram, "v_color");
+const particle_color_location = gl.getUniformLocation(quadProgram, "u_color");
+const matrix_location = gl.getUniformLocation(quadProgram, "u_matrix");
+//console.log(position_location);
+//console.log(particle_pos_location);
+//console.log(resolution_location);
+//console.log(color_location);
+
+const positionBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+	-1, -1, // first triangle
+	 1, -1,
+	-1,  1,
+	-1,  1, // second triangle
+	 1, -1,
+	 1,  1,
+]), gl.STATIC_DRAW);
+
+const trailVertexShader = createShader(gl, gl.VERTEX_SHADER, trailVertexShaderSource);
+const trailFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, trailFragmentShaderSource);
+
+const trailProgram = createProgram(gl, trailVertexShader, trailFragmentShader);
+
+const trail_position = gl.getAttribLocation(trailProgram, "a_position");
+const trail_color = gl.getUniformLocation(trailProgram, "u_color");
+const trail_matrix = gl.getUniformLocation(trailProgram, "u_matrix");
+
+function putRectangle(gl, x, y, width, height) {
+	let x1 = x;
+	let x2 = x + width;
+	let y1 = y;
+	let y2 = y + height;
+	
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+		x1, y1,
+		x2, y1,
+		x1, y2,
+		x1, y2,
+		x2, y1,
+		x2, y2]), gl.STATIC_DRAW);
+}
+
+function charcode(x) {
+	return String.fromCharCode(x);
+}
+
+const hbar = 6.582119569e-25;//e-16;//6.6e-25 // used to be in GeV but that might actually be wrong
+const c = 299792458;//3.0e+8; // gee great variable name
+
+const a_EM = 1/(137.04);
+const a_S = 0.2;
+const a_W = (1/30);
+
+// 0.0854 is sqrt(1/137.04)
+const g_EM = (4*Math.PI*a_EM)**0.5;//0.0854;//41.49; // 1/137.04 = (e^2)/4pi ==> Qe (Q is particle charge)
+const e_EM = a_EM**.5;
+const g_S = (4*Math.PI*a_S)**0.5;//1;
+const g_W = (4*Math.PI*a_W)**0.5;
+
+let units_setting = "";
+
+let si_prefixes = ["y", "z", "a", "f", "p", "n", charcode("956"), "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+function si_formatting(u,prec) {
+	/*if (eV < 1) {
+		return eV + " eV";
+	}
+	let prefixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"];*/
+	let significand = u;
+	let negative = significand < 0;
+	if (negative) u = 0 - u;
+	let i = Math.floor(Math.log10(u)/3);
+	significand /= 1000**(i > -9 ? i : -8);
+	let prefix = (i > -9) ? si_prefixes[i+8] : si_prefixes[0];
+	return (significand+'').substr(0,prec) + " " + prefix;
+}
+let energy_formatted =(eV)=> {return si_formatting(eV) + "eV";}
+let time_value =(t)=> {return t*hbar;}
+let time_formatted =(value,prec=24)=> {
+	switch (units_setting) {
+		case "natural": return (value+'').substr(0,prec);
+		case "si": return si_formatting(time_value(value),prec) + "s";
+	}
+}
+let length_value =(l)=> {return l*hbar*c;}
+let length_formatted =(value,prec=24)=> {
+	switch (units_setting) {
+		case "natural": return (value+'').substr(0,prec);
+		case "si": return si_formatting(length_value(value),prec) + "m";
+	}
+}
+let velocity_value =(v)=> {return v*c;}
+let velocity_formatted =(value,prec=24)=> {
+	switch (units_setting) {
+		case "natural": return (value+'').substr(0,prec) + "c";
+		case "si": return (velocity_value(value)+'').substr(0,prec) + " m/s";
+	}
+}
+function distance(pos1,pos2) {
+	return Math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2 + (pos1[2] - pos2[2])**2);
+}
+
+function lerp(a,b,f) {
+	return (b-a)*f+a;
+}
+
+function vec_add(U,V) {return [U[0] + V[0], U[1] + V[1], U[2] + V[2]];}
+function vec_sub(U,V) {return [U[0] - V[0], U[1] - V[1], U[2] - V[2]];}
+function vec_div(U,s) {return [U[0] / s, U[1] / s, U[2] / s];}
+function vec_mul(U,s) {return [U[0] * s, U[1] * s, U[2] * s];}
+function vec_neg(U) {return [-U[0], -U[1], -U[2]];}
+function vec_lerp(V,U,f) { // VUF!!!! VUFFY!!!!
+	return [lerp(V[0],U[0],f), lerp(V[1],U[1],f), lerp(V[2],U[2],f)];
+}
+
+class Particle_type {
+	constructor(name, mass, q_charge, spin, strangeness, charm, beauty, topness) {
+		this.name = name;
+		this.mass = mass;
+		this.q_charge = q_charge;
+		this.spin = spin;
+		this.strangeness = strangeness;
+		this.charm = charm;
+		this.beauty = beauty;
+		this.topness = topness;
+	}
+}
+const up_quark = new Particle_type("u quark", 2300000, +2/3, 1/2, 0, 0, 0, 0);
+const down_quark = new Particle_type("d quark", 4800000, -1/3, 1/2, 0, 0, 0, 0);
+
+const electron = new Particle_type("electron", 511000, -1, 1/2, 0, 0, 0, 0);
+const muon = new Particle_type("muon", 105658000, -1, 1/2, 0, 0, 0, 0);
+
+const photon = new Particle_type("photon", 0, 0, 1, 0, 0, 0, 0);
+
+let particles = [];
+class Particle {
+	constructor(type, position, momentum, cpt_side) {
+		this.id = particles.length;
+		particles.push(this); // wawa
+		this.type = type;
+		this.position = position;
+		this.momentum = momentum;
+		this.cpt_side = cpt_side; // 1 for matter, -1 for antimatter
+		
+		this.exists = true; // teehee
+		
+		// trail/interaction data
+		this.start_pos = [...position];
+		this.end_pos = [...position];
+		this.start_time = 0;
+		this.end_time = 0;
+		//this.trail_type = trail_type;
+		
+		this.add_info();
+	}
+	nudge(step_size) {
+		let vel = this.get_velocity();
+		this.position[0] += vel[0]*step_size;
+		this.position[1] += vel[1]*step_size;
+		this.position[2] += vel[2]*step_size;
+	}
+	get_sqr_magn_momentum() { // |p|^2
+		return (this.momentum[0]**2 + this.momentum[1]**2 + this.momentum[2]**2);
+	}
+	get_magn_momentum() { // p
+		return this.get_sqr_magn_momentum()**0.5; // teehee
+	}
+	get_total_energy() { // E
+		return (this.type.mass**2 + this.get_sqr_magn_momentum())**0.5;
+	}
+	get_mass() { // m
+		return this.type.mass;
+	}
+	get_kinetic_energy() { // T
+		return this.get_total_energy() - this.type.mass;
+	}
+	get_velocity() { // v
+		let total_energy = this.get_total_energy();
+		return [this.momentum[0] / total_energy, this.momentum[1] / total_energy, this.momentum[2] / total_energy];
+	}
+	get_speed() { // c
+		let vel = this.get_velocity();
+		return (vel[0]**2 + vel[1]**2 + vel[2]**2)**.5; // can this be made more efficient? i'm not sure if this is completely reducible and unnecessary. please todo
+	}
+	get_sphere_of_influence() { // R // really this is maximum possible R, but that would be equivalent in a continuous system anyway
+		return this.end_time - this.start_time;
+	}
+	get_q_charge() { // q
+		return this.cpt_side * this.type.q_charge;
+	}
+	
+	add_info() {
+		const node = get_element("particle_n");
+		let clone = node.cloneNode(true);
+		clone.setAttribute("id", "particle_"+this.id);
+		clone.classList.remove("hidden");
+		find_subelement_by_id(clone, "particle_n_id").innerHTML = "particle "+this.id;
+		find_subelement_by_id(clone, "particle_n_type").innerHTML = this.type.name;
+		get_element("particle-infos").appendChild(clone);
+		this.update_info();
+	}
+	update_info() {
+		let info = get_element("particle_"+this.id);
+		find_subelement_by_id(info, "particle_n_exists").innerHTML = "&emsp;&mdash;&emsp;"+(this.exists ? "ACTIVE" : "DEAD");
+		find_subelement_by_id(info, "particle_n_total_energy").innerHTML = energy_formatted(this.get_total_energy());
+		find_subelement_by_id(info, "particle_n_kinetic_energy").innerHTML = energy_formatted(this.get_kinetic_energy());
+		find_subelement_by_id(info, "particle_n_mass").innerHTML = energy_formatted(this.get_mass());
+		find_subelement_by_id(info, "particle_n_magn_momentum").innerHTML = energy_formatted(this.get_magn_momentum());
+		find_subelement_by_id(info, "particle_n_momentum").innerHTML = "["+energy_formatted(this.momentum[0])+", "+energy_formatted(this.momentum[1])+", "+energy_formatted(this.momentum[2])+"]";
+		find_subelement_by_id(info, "particle_n_velocity").innerHTML = velocity_formatted(this.get_speed()); // haha make up your mind on vernacular you silly little cheeseball
+		find_subelement_by_id(info, "particle_n_position").innerHTML = "[<br>&emsp;&emsp;x: "+length_formatted(this.position[0])+"<br>&emsp;&emsp;y: "+length_formatted(this.position[1])+"<br>&emsp;&emsp;z: "+length_formatted(this.position[2])+"&emsp;]";
+		find_subelement_by_id(info, "particle_n_range").innerHTML = length_formatted(this.get_sphere_of_influence());
+	}
+}
+let bubbles = [];
+class Bubble {
+	constructor(type, position, start_time, parent, cpt_side) {
+		this.id = bubbles.length;
+		bubbles.push(this);
+		this.type = type;
+		this.position = position;
+		this.start_time = start_time;
+		this.parent = parent;
+		this.cpt_side = cpt_side;
+		
+		this.exists = true;
+	}
+	get_sphere_of_influence(t) { // R
+		return t - this.start_time;
+	}
+	get_total_energy(t) { // E
+		return 1 / this.get_sphere_of_influence(t); // THIS ONLY WORKS FOR MASSLESS PARTICLES!!!!!!!!!!!!!!!!!!!
+	}
+	get_mass(t,dist) {
+		let v = dist / t;
+		// gamma = 1/sqrt(1 - v^2)
+		// E = gamma * m
+		// m = E / gamma
+		// m = E * sqrt(1 - v^2)
+		let m = this.get_total_energy(t) * (1 - v**2)**.5;
+		return m;
+	}
+	get_magn_momentum(t,dist) {
+		return (this.get_total_energy(t)**2 - this.get_mass(t,dist)**2)**.5;
+	}
+}
+let part = new Particle(electron, [0,0,0], [10,0,0], 1);//[294922.02359267776, 0, 0], 1);
+let part2 = new Particle(electron, [0,0.1,0], [10,0,0], 1);//[294922.02359267776*Math.cos(0), 294922.02359267776*Math.sin(0), 0], 1);
+/*
+g = E/m
+1/sqrt(1-v^2) = E/m
+1/(1-v^2) = E^2/m^2
+1-v^2 = E^2/m^2
+
+v = p/E
+*/
+
+function draw() {
+	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+	//gl.clearColor(0, 0, 0, 0);
+	//gl.clear(gl.COLOR_BUFFER_BIT);
+
+	gl.useProgram(quadProgram);
+
+	gl.enableVertexAttribArray(position_location);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+
+	let size = 2;
+	let type = gl.FLOAT;
+	let normalize = false;
+	let stride = 0;
+	var offset = 0;
+	gl.vertexAttribPointer(position_location, size, type, normalize, stride, offset);
+	gl.uniform2f(resolution_location, gl.canvas.width, gl.canvas.height);
+	gl.uniform4f(color_location, 0, 0, 0, 1);
+	gl.uniform4f(particle_color_location, 1, 1, 1, 1); // 1, 0, 0.7, 1
+	let x = part.position[0];//(camera_pos[0]+pos[0]+1)/2 * gl.canvas.width;
+	let y = part.position[1];//(camera_pos[1]+pos[1]+1)/2 * gl.canvas.height;
+	let z = part.position[2];//(camera_pos[2]+pos[2]+1)/2 * 400;
+	//console.log(x+", "+y);
+	gl.uniform4f(particle_pos_location, x, y, z, 1);
+	//unit_camera_pos = [(camera_pos[0]+1)/2 * gl.canvas.clientWidth, (camera_pos[1]+1)/2 * gl.canvas.clientHeight, (camera_pos[2])/2];
+	unit_camera_pos = [(camera_pos[0])/2, (camera_pos[1])/2, (camera_pos[2])/2];
+	let matrix = [1,0,0,0,0,1,0,0,0,0,1,0,unit_camera_pos[0],unit_camera_pos[1],unit_camera_pos[2],1];//m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
+	//if (t%60==0) console.log(matrix);
+	//matrix = m4.translate(matrix, (camera_pos[0]+1)/2 * gl.canvas.clientWidth, (camera_pos[1]+1)/2 * gl.canvas.clientHeight, (camera_pos[2]+1)/2 * 400);
+	if (t==1) console.log(matrix);
+	matrix = m4.xRotate(matrix, camera_rot[0]);
+	matrix = m4.yRotate(matrix, camera_rot[1]);
+	matrix = m4.zRotate(matrix, camera_rot[2]);
+	gl.uniformMatrix4fv(matrix_location, false, matrix);
+	//putRectangle(gl, pos[0], pos[1], 50, 50);
+	var offset = 0;
+	let count = 6;
+	gl.drawArrays(gl.TRIANGLES, offset, count);
+	
+	// please work [ <-- it did! kindof! but now i have to fix it >:( ]
+	gl.useProgram(trailProgram);
+	
+	gl.enableVertexAttribArray(trail_position);
+	
+	let trailBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, trailBuffer);
+	let trails = [];
+	for (let i = 0; i < particles.length; i++) trails.push(
+		particles[i].start_pos[0], particles[i].start_pos[1], particles[i].start_pos[2],
+		particles[i].end_pos[0], particles[i].end_pos[1], particles[i].end_pos[2]);
+	if (t%120==0) console.log(trails);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(trails), gl.STATIC_DRAW);
+	
+	gl.vertexAttribPointer(trail_position, 3, gl.FLOAT, false, 0, 0);
+	gl.uniform4f(trail_color, 1, 1, 1, 1);
+	let trail_matrix_js = /*m4.perspective(60*3.141592/180, gl.canvas.clientWidth / gl.canvas.clientHeight, 1, 2000);trail_matrix_js=*/[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];//m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
+	trail_matrix_js = m4.translate(trail_matrix_js, unit_camera_pos[0], unit_camera_pos[1], unit_camera_pos[2]);
+	trail_matrix_js = m4.xRotate(trail_matrix_js, camera_rot[0]);
+	trail_matrix_js = m4.yRotate(trail_matrix_js, camera_rot[1]);
+	trail_matrix_js = m4.zRotate(trail_matrix_js, camera_rot[2]);
+	gl.uniformMatrix4fv(trail_matrix, false, trail_matrix_js);
+	gl.lineWidth(1);
+	gl.drawArrays(gl.LINES, 0, 2*particles.length);
+}
+let t = 0;
+let step = 0.00001;
+//let pos = [0,0,0];
+//let momentum = [0,0,0];
+let total_momentum_at_t0 = [0,0,0];
+let total_momentum = [0,0,0];
+let E_CM_at_t0 = 0; // total energy considering center-of-mass frame; probably hard to calculate ( todo )
+let E_CM = 0;
+let camera_pos = [0,0,1];
+let camera_rot = [0,0,0];
+let start_pos = [0,0,0];
+let end_pos = [0,0,0];
+
+let active_keys = [];
+window.addEventListener('keydown', function (e) {
+	active_keys = (active_keys || []);
+	active_keys[e.keyCode] = (e.type == "keydown");
+});
+window.addEventListener('keyup', function (e) {
+	active_keys[e.keyCode] = (e.type == "keydown");            
+});
+for (let i = 0; i < particles.length; i++) {
+	if (particles[i].exists) {
+		total_momentum_at_t0 = vec_add(total_momentum_at_t0, particles[i].momentum);
+	}
+}
+function loop() {
+	/*pos[0] = (pos[0] + momentum[0]*step);
+	pos[1] = (pos[1] + momentum[1]*step);
+	pos[2] = (pos[2] + momentum[2]*step);*/
+	//part.nudge(step);
+	//momentum = [1/150, Math.sin(t/6)/100, 0];//1/150];
+	//end_pos = part.position;
+	/* kinematics */
+	for (let i = 0; i < particles.length; i++) {
+		if (particles[i].exists) {
+			particles[i].nudge(step);
+			particles[i].end_pos = particles[i].position;
+			particles[i].end_time = t;
+		}
+	}
+	total_momentum = [0,0,0]; // comment out for a vector-based clicker game xd. that actually sounds like an interesting idea. gee. i wonder if i've secretly already done this, but in a much more sensible way and context.
+	for (let i = 0; i < particles.length; i++) {
+		if (particles[i].exists) {
+			total_momentum = vec_add(total_momentum, particles[i].momentum);
+		}
+	}
+	
+	/* interactions */
+	for (let i = 0; i < particles.length; i++) {			// CONTINUOUS NON-BUBBLE BUBBLES
+		for (let ii = 0; ii < particles.length; ii++) { // N^2 xd. sorry i'll use voronoi later
+			// [i] is shooting a boson at [ii]! but only if [i] != [ii]. (no self interactions please, those are terrible to deal with)
+			if (i != ii) {
+				let R_range = distance(particles[i].start_pos, particles[ii].position);
+				let vertex_from = e_EM * Math.abs(particles[i].get_q_charge());
+				let vertex_to = e_EM * Math.abs(particles[ii].get_q_charge());
+				let parity_sign = (particles[i].get_q_charge() * particles[ii].get_q_charge() > 0 ? 1 : -1);
+				if (vertex_from * vertex_to > Math.random()/step && R_range <= particles[i].get_sphere_of_influence() && i != ii) {
+					/*let dE = 1 / R_range;
+					let dp_1 = (dE**2 - particles[i].type.mass**2)**.5;
+					let dp_2 = (dE**2 - particles[ii].type.mass**2)**.5;*/
+					let force_vector = vec_div(vec_sub(vec_lerp(particles[i].start_pos, particles[i].position, 1), particles[ii].position), R_range); // extra division to normalize the vector
+					force_vector = vec_div(force_vector, parity_sign*R_range**2); // dE ~ hbar * c / R (which is just 1/R, because natural units are amazing)
+					particles[i].momentum = vec_add(particles[i].momentum, force_vector);
+					particles[ii].momentum = vec_sub(particles[ii].momentum, force_vector);
+					
+					console.log(particles[i].id + " to " + particles[ii].id + ". " + force_vector);
+				}
+			}
+		}
+	}
+	/*for (let i = 0; i < particles.length; i++) {			// DISCRETE BUBBLES
+		if (Math.abs(e_EM*particles[i].get_charge()) > Math.random()/step) {
+			let virtual_bubble = new Bubble(photon, [...particles[i].position], t, particles[i]);
+		}
+	}
+	let bubbles_length = bubbles.length; // the bit of code ahead deals with particle / bubble state creation / destruction, so let's make sure we remember the actual original lengths for this go-around.
+	let particles_length = particles.length;
+	for (let b = 0; b < bubbles_length; b++) {
+		if (bubbles[b].parent.exists == false) bubbles[b].exists = false; // i ideally shouldn't be doing this; see/think about degree-4 scattering diagrams where the two bosons form an X rather than II. the problem is time travel, as always. maybe come back to this? but probably not.
+		if (bubbles[b].exists) {
+			for (let i = 0; i < particles_length; i++) { // agggh
+				if (particles[i].exists) {
+					let R_range = distance(bubbles[b].position, particles[i].position);
+					if (R_range <= bubbles[b].get_sphere_of_influence(t)) {
+						if (particles[i] != bubbles[b].parent) {
+							if (Math.abs(e_EM*particles[i].get_charge()) > Math.random()/step) {
+								let force_magn = bubbles[b].get_magn_momentum(t, R_range);//vec_div(vec_sub(vec_lerp(particles[i].start_pos, particles[i].position, 1), particles[ii].position), R_range); // extra division to normalize the vector
+								//force_vector = vec_div(force_vector, R_range**2); // dE ~ hbar * c / R (which is just 1/R, because natural units are amazing)
+								let force_vector = vec_div(vec_sub(bubbles[b].position, particles[i].position), R_range); // get vector direction, and NORMALIZE. AAAAAAAAAAAAAAAAAAAAAAAAAA
+								force_vector = vec_mul(force_vector, -force_magn*(10**3)*step);
+								
+								let particle_from = bubbles[b].parent;
+								let particle_to = particles[i];
+								let new_particle_from = new Particle(particle_from.type, [...particle_from.position], [...particle_from.momentum], particle_from.cpt_side);
+								let new_particle_to = new Particle(particle_to.type, [...particle_to.position], [...particle_to.momentum], particle_to.cpt_side);
+								
+								new_particle_from.momentum = vec_add(new_particle_from.momentum, force_vector);
+								new_particle_to.momentum = vec_sub(new_particle_to.momentum, force_vector);
+								particle_from.exists = false;
+								particle_to.exists = false;
+								
+								let virtual_particle = new Particle(bubbles[b].type, [], [...force_vector], bubbles[b].cpt_side);
+								virtual_particle.start_pos = [...bubbles[b].position];
+								virtual_particle.end_pos = particle_to.position;
+								let virtual_mass = bubbles[b].get_mass(t, R_range);
+								virtual_particle.get_mass = ()=>{return virtual_mass;}
+								let virtual_energy = bubbles[b].get_total_energy(t);
+								virtual_particle.get_total_energy = ()=>{return virtual_energy;}
+								virtual_particle.exists = false; // hah! take that!
+								//delete bubbles[b]; // ids don't match up anymore, so either ditch the ids or ditch this removal method. your choice!
+								bubbles[b].exists = false; // i choose you
+								
+								//step = 1e-6;
+								console.log(bubbles[b].parent.id + " to " + particles[i].id + ". " + force_vector);
+								virtual_particle.update_info();
+								/*delete bubbles[b]; // teehee
+								bubbles_length--;*
+							} // e_EM
+						} // i != ii
+					} // R < SOI
+				} // particle exists
+			} // particles iterator
+		} // bubble exists
+	} // bubbles iterator*/
+	
+	/* drawy (dwawy) stuff */
+	draw(); // really should be webgl_draw() or something
+	for (let i = 0; i < particles.length; i++) {if (particles[i].exists){particles[i].update_info();}} // teehee i don't actually really need this. discrete interactions time (oh wait, i'll need it for the other one... and for updating measurement settings)
+	get_element("time-elapsed").innerHTML = time_formatted(t);
+	get_element("time-step").innerHTML = time_formatted(step); // todo : add a "don't update properties' visuals" tickbox so that a large simulation can power on without being bogged down in visualization (looking at you, E_CM)
+	
+	get_element("total-momentum-at-t0").innerHTML = "["+energy_formatted(total_momentum_at_t0[0])+", "+energy_formatted(total_momentum_at_t0[1])+", "+energy_formatted(total_momentum_at_t0[2])+"]";
+	get_element("total-momentum").innerHTML = "["+energy_formatted(total_momentum[0])+", "+energy_formatted(total_momentum[1])+", "+energy_formatted(total_momentum[2])+"]";
+	
+	get_element("number-of-particles").innerHTML = particles.length;
+	/* eod (end of dwaw) */
+	
+	t+=step;
+	if (active_keys && (active_keys[37] || active_keys[65])) {camera_pos[0] += 0.01; }
+    if (active_keys && (active_keys[39] || active_keys[68])) {camera_pos[0] -= 0.01; }
+	if (active_keys && (active_keys[38] || active_keys[87])) {camera_pos[1] += -0.01; }
+    if (active_keys && (active_keys[40] || active_keys[83])) {camera_pos[1] -= -0.01; }
+    if (active_keys && (active_keys[81])) {camera_pos[2] += 0.01; }
+    if (active_keys && (active_keys[69])) {camera_pos[2] -= 0.01; }
+	if (active_keys && active_keys[70]) {step *= 1.1;}
+	if (active_keys && active_keys[82]) {step /= 1.1;}
+	/* * * get settings * * */
+	units_setting = document.getElementById("units_setting").value;
+	
+	window.requestAnimationFrame(loop);
+}
+
+var m4 = {
+  translation: function(tx, ty, tz) {
+	return [
+	   1,  0,  0,  0,
+	   0,  1,  0,  0,
+	   0,  0,  1,  0,
+	   tx, ty, tz, 1,
+	];
+  },
+ 
+  xRotation: function(angleInRadians) {
+	var c = Math.cos(angleInRadians);
+	var s = Math.sin(angleInRadians);
+ 
+	return [
+	  1, 0, 0, 0,
+	  0, c, s, 0,
+	  0, -s, c, 0,
+	  0, 0, 0, 1,
+	];
+  },
+ 
+  yRotation: function(angleInRadians) {
+	var c = Math.cos(angleInRadians);
+	var s = Math.sin(angleInRadians);
+ 
+	return [
+	  c, 0, -s, 0,
+	  0, 1, 0, 0,
+	  s, 0, c, 0,
+	  0, 0, 0, 1,
+	];
+  },
+ 
+  zRotation: function(angleInRadians) {
+	var c = Math.cos(angleInRadians);
+	var s = Math.sin(angleInRadians);
+ 
+	return [
+	   c, s, 0, 0,
+	  -s, c, 0, 0,
+	   0, 0, 1, 0,
+	   0, 0, 0, 1,
+	];
+  },
+ 
+  scaling: function(sx, sy, sz) {
+	return [
+	  sx, 0,  0,  0,
+	  0, sy,  0,  0,
+	  0,  0, sz,  0,
+	  0,  0,  0,  1,
+	];
+  },
+  
+	translate: function(m, tx, ty, tz) {
+		return m4.multiply(m, m4.translation(tx, ty, tz));
+	},
+	 
+	xRotate: function(m, angleInRadians) {
+		return m4.multiply(m, m4.xRotation(angleInRadians));
+	},
+	 
+	yRotate: function(m, angleInRadians) {
+		return m4.multiply(m, m4.yRotation(angleInRadians));
+	},
+	 
+	zRotate: function(m, angleInRadians) {
+		return m4.multiply(m, m4.zRotation(angleInRadians));
+	},
+	 
+	scale: function(m, sx, sy, sz) {
+		return m4.multiply(m, m4.scaling(sx, sy, sz));
+	},
+	
+  projection: function(width, height, depth) {
+	// <not anymore lo>Note: This matrix flips the Y axis so 0 is at the top.</not anymore lo>
+	return [
+	   2 / width, 0, 0, 0, // normally dimension / 2 (and before, 2 / dimension)
+	   0, -2 / height, 0, 0, // normally -h
+	   0, 0, 2 / depth, 0,
+	   -1, 1, 0, 1,
+	];
+  },
+  perspective: function(fieldOfViewInRadians, aspect, near, far) {
+    var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
+    var rangeInv = 1.0 / (near - far);
+ 
+    return [
+      f / aspect, 0, 0, 0,
+      0, f, 0, 0,
+      0, 0, (near + far) * rangeInv, -1,
+      0, 0, near * far * rangeInv * 2, 0
+    ];
+  },
+	
+multiply: function(a, b) {
+	var b00 = b[0 * 4 + 0];
+	var b01 = b[0 * 4 + 1];
+	var b02 = b[0 * 4 + 2];
+	var b03 = b[0 * 4 + 3];
+	var b10 = b[1 * 4 + 0];
+	var b11 = b[1 * 4 + 1];
+	var b12 = b[1 * 4 + 2];
+	var b13 = b[1 * 4 + 3];
+	var b20 = b[2 * 4 + 0];
+	var b21 = b[2 * 4 + 1];
+	var b22 = b[2 * 4 + 2];
+	var b23 = b[2 * 4 + 3];
+	var b30 = b[3 * 4 + 0];
+	var b31 = b[3 * 4 + 1];
+	var b32 = b[3 * 4 + 2];
+	var b33 = b[3 * 4 + 3];
+	var a00 = a[0 * 4 + 0];
+	var a01 = a[0 * 4 + 1];
+	var a02 = a[0 * 4 + 2];
+	var a03 = a[0 * 4 + 3];
+	var a10 = a[1 * 4 + 0];
+	var a11 = a[1 * 4 + 1];
+	var a12 = a[1 * 4 + 2];
+	var a13 = a[1 * 4 + 3];
+	var a20 = a[2 * 4 + 0];
+	var a21 = a[2 * 4 + 1];
+	var a22 = a[2 * 4 + 2];
+	var a23 = a[2 * 4 + 3];
+	var a30 = a[3 * 4 + 0];
+	var a31 = a[3 * 4 + 1];
+	var a32 = a[3 * 4 + 2];
+	var a33 = a[3 * 4 + 3];
+ 
+	return [
+	  b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30,
+	  b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31,
+	  b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32,
+	  b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33,
+	  b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30,
+	  b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31,
+	  b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32,
+	  b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33,
+	  b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30,
+	  b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31,
+	  b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32,
+	  b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33,
+	  b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30,
+	  b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31,
+	  b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32,
+	  b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33,
+	];
+  },
+};loop();
+</script>
+</body>
+</html>
