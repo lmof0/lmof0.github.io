@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: superwaster</title>
+<link href="../default.css" rel="stylesheet" type="text/css">
+<style>
+body
+{
+	background-color: #9BB3E9;
+}
+#bignumber
+{
+	font-size: 1000%;
+}
+div
+{
+	display:inline;
+}
+</style>
+</head>
+<body>
+	<p>There have been <div id="bignumber">0</div> seconds here.</p>
+	<a href="../index.html" style="position:absolute;bottom:10px;left:10px;font-family:serif;">back</a>
+</body>
+<script>/*
+Main=function()
+{
+if (localStorage.hundredths) {localStorage.hundredths = Number(localStorage.hundredths) + 5;}
+else {localStorage.hundredths = 0;}
+if (localStorage.tenths) {if (localStorage.hundredths >= 10) {localStorage.tenths = Number(localStorage.tenths) + 1; localStorage.hundredths = 0;}}
+else {localStorage.tenths = 0;}
+if (localStorage.seconds) {if (localStorage.tenths >= 10) {localStorage.seconds = Number(localStorage.seconds) + 1;localStorage.tenths = 0;}}
+else {localStorage.seconds = 0;}
+document.getElementById("bignumber").innerHTML = localStorage.seconds+"<div style='font-size:20%'>."+localStorage.tenths+localStorage.hundredths+"</div><br>";
+setTimeout(Main,50);
+}
+Main();
+ResetTime=function(){
+	localStorage.seconds=0;
+	localStorage.tenths=0;
+	localStorage.hundredths=0;
+}*/
+// keeping this old code here because it looks so horrendously ugly
+let curr = localStorage.superwaster_curr?Number(localStorage.superwaster_curr):Date.now();
+let past = Date.now();
+let dt = 0;
+let t = localStorage.superwaster_t?Number(localStorage.superwaster_t):0;
+let loops = 0;
+function loop() {
+	past = curr;
+	curr = Date.now();
+	dt = curr - past;
+	t += dt;
+	let seconds = t/1000;
+	let milliseconds = Math.floor((seconds%1)*1000);
+	document.getElementById("bignumber").innerHTML = Math.floor(seconds)+"<div style='font-size:20%'>."+(milliseconds+'')+"</div><br>";
+	loops++;
+	if (loops%60==0) {
+		localStorage.superwaster_curr = curr;
+		localStorage.superwaster_t = t;
+	}
+	window.requestAnimationFrame(loop);
+}
+loop();
+</script>
+</html>
