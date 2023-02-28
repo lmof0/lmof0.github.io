@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+<head>
+<title>a website: powder</title>
+<style>
+html {
+	width: 100%;
+	height: 100%;
+}
+body {
+	height:100%;
+	background: #000000;
+	margin: 0;
+	/*overflow: hidden;*/
+}
+
+/* ortiel */
+#wrap
+{
+	display:table;
+	width:100%;
+	height:100%;
+	margin-bottom:-96px;
+	min-height:96px;
+}
+#text
+{
+	width:100%;
+	display:table-cell;
+	vertical-align:middle;
+	text-align:center;
+}
+</style>
+</head>
+<body>
+
+<a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
+
+<div id="wrap"><div id="text">
+<canvas id="toy" width="600" height="480" style="border:1px solid #222222;" onmousemove="update_mouse_pos(event)">
+Your browser does not support the HTML5 canvas tag.</canvas>
+</div></div>
+
+<script>
+function product(V,a) {
+	/*let arr = [...V];
+	for (i in arr) arr[i]*=a;
+	return arr;*/
+	return [V[0]*a, V[1]*a];
+}
+function add(V,U) {
+	/*let arr = [...V];
+	for (i in arr) arr[i]+=U[i];
+	return arr;*/
+	return [V[0]+U[0], V[1]+U[1]];
+}
+function magn(V) {
+	return Math.sqrt(V[0]**2 + V[1]**2);
+}
+function vfloor(V) {
+	return [Math.floor(V[0]), Math.floor(V[1])];
+}
+
+let mouse_pos = [0,0];
+function update_mouse_pos(event) {
+	//console.log(event.offsetX+", "+event.offsetY);
+	//console.log(event);
+	mouse_pos[0] = event.offsetX;
+	mouse_pos[1] = event.offsetY;
+}
+
+let canvas = document.getElementById("toy");
+let ctx = canvas.getContext("2d");
+let width = 600;
+let height = 480;
+canvas.setAttribute("width", width+2);
+canvas.setAttribute("height", height+2);
+let elements = [];
+class element {
+	constructor(name, color) {
+		this.id = elements.length;
+		this.name = name;
+		this.color = color;
+		elements.push(this);
+	}
+}
+let dust = new element("dust", "255,228,197");
+
+let stne = new element("stne", "128,128,128");
+let glas = new element("glas", "96,96,96");
+
+let particles = [];
+class particle {
+	constructor(pos, vel, type) {
+		this.id = particles.length;
+		this.pos = pos;
+		this.vel = vel;
+		this.type = type;
+		this.remove = false;
+		particles.push(this);
+	}
+	get_color() {
+		let array = elements[this.type].color.split(',');
+		array.forEach((v,i,a)=>{a[i]=Number(v);}); // HFEAKJHUFEHAIUTEQHTFQEJAKHQAKJFJ
+		return array;
+	}
+}
+new particle([width/2, 0], [0,1], 0);
+
+let gravity = [0,1];
+let t = 0;
+function loop() {
+	t++;
+	if (t%1==0) {let p = new particle(mouse_pos, [0,1], 0);}
+
+	let collide_field = new Array(width*height).fill(false);
+	for (p in particles) {
+		collide_field[(Math.floor(particles[p].pos[0])) + (Math.floor(particles[p].pos[1])*width)] = true;
+	}
+	
+	for (let p = 0; p < particles.length; p++) {
+		let part = particles[p];
+		//part.vel = add(part.vel, gravity);
+		/* end vel changes */
+		let vel_vec = [...part.vel];
+		for (let o = 0; o < 16; o++) {
+			let impeded = false;
+			if (part.pos[0] + vel_vec[0] < 0 || part.pos[0] + vel_vec[0] > width || part.pos[1] + vel_vec[1] < 0 || part.pos[1] + vel_vec[1] > height) {
+				//part.remove = true;
+				impeded = true;
+			}
+			let tip = vfloor(add(part.pos, vel_vec));
+			let index = (tip[0] + tip[1]*width) + width; // at pos plus one down (via +width)
+			
+			if (collide_field[index] && !(collide_field[index-1] || collide_field[index+1])) vel_vec = add(vel_vec, [1,0]);
+			else if (collide_field[index-1] && collide_field[index+1]) impeded = true;
+			else if (collide_field[index+1]) vel_vec = add(vel_vec, [-1,0]);
+			else if (collide_field[index-1]) vel_vec = add(vel_vec, [1,0]);
+			
+			if (impeded) {
+				vel_vec = product(vel_vec, 0.5);
+			} else break;
+			if (o == 15) vel_vec = [0, 0];
+		}
+		
+		part.pos = add(part.pos, vel_vec);
+	}
+	
+	for (r in particles) { // remove the removed
+		if (particles[r].remove) {
+			particles.splice(r, 1);
+			r = 0;
+		}
+	}
+	
+    let image = ctx.createImageData(width, height);
+	for (let p = 0; p < particles.length; p++) {
+		let part = particles[p];
+		color = part.get_color();
+		let i = (4*Math.floor(part.pos[0])) + (4*Math.floor(part.pos[1]-1)*width);
+		image.data[i] = color[0];
+		image.data[i+1] = color[1];
+		image.data[i+2] = color[2];
+		image.data[i+3] = 255;
+	}
+	
+	for (let i = 0; i < image.data.length; i += 4) {
+        //imgData.data[i+0] = (t*4)%255;
+		//imgData.data[i+1] = ((i/4)/h)*(255/w);
+		//imgData.data[i+2] = ((i/4)%w)*(255/w);
+		//imgData.data[i+3] = 255;
+		let x = Math.floor((i/4)%width);
+		let y = Math.floor((i/4)/width);
+		//image.data[i] = 0;
+		//image.data[i+1] = 0;
+		//image.data[i+2] = 0;
+		//image.data[i+3] = 255;
+	}
+	ctx.clearRect(0, 0, width, height);
+	ctx.putImageData(image, 1, 1);
+    window.requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>
