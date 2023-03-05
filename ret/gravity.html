@@ -1,0 +1,589 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: gravity</title>
+<style>
+html {
+	width: 100%;
+	height: 100%;
+}
+body {
+	background: #000;
+	margin:0;
+	overflow:hidden;
+	height: 100%;
+	color:#fff;
+	font-family:times;
+}
+canvas {
+	image-rendering: crisp-edges;
+}
+.inline {display:inline;}
+::selection {
+	color: #ffffff;
+	background: #333333;
+}
+
+/* ortiel */
+#wrap
+{
+	display:table;
+	width:100%;
+	height:100%;
+	margin-bottom:-96px;
+	min-height:96px;
+}
+#wrapped-wrap
+{
+	width:100%;
+	display:table-cell;
+	vertical-align:middle;
+	text-align:center;
+}
+#yz-rot-setting {
+	height:15px;
+	margin:0px;
+	vertical-align:middle;
+}
+</style>
+
+</head>
+<body>
+<a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
+
+<div id="wrap"><div id="wrapped-wrap">
+<canvas id="canvas" width="600" height="480" style="border:1px solid #fff;transform: scale(80%);" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
+Your browser does not support the HTML canvas tag.</canvas>
+
+<div style="top:-40px;position:relative;text-align:center;color:#aaa;text-shadow:0px 0px 2px #fff;display:table;width:100%;font-family:ms ui gothic;font-size:14px;">
+<div style="width:481.28px;display:inline-block;text-align:left;">
+simulation time: <div id="simulation-time-indicator" class="inline"></div>
+</div></div>
+
+</div></div>
+
+<div style="width:fit-content;height:600px;right:40px;top:40px;display:inline;position:absolute;margin:10px;">
+<div id="settings" style="border:4px solid #ffffff;color:#ffffff;width:320px;font-family:initial;padding:4px;background-color:#000000;text-align:left;">
+	<details open>
+	<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">settings</div></summary>
+	<br>
+	<label for="trails-setting">trails enabled: </label>
+	<input type="checkbox" id="trails-setting" name="trails-setting" value="trails-setting"><br>
+	<label for="labels-setting">labels enabled: </label>
+	<input type="checkbox" id="labels-setting" name="labels-setting" value="labels-setting"><br>
+	<label for="yz-rot-setting">y-z rotation: </label>
+	<input type="range" id="yz-rot-setting" name="yz-rot-setting"><div id="yz-rot-indicator" style="display:inline;">&emsp;0 rad</div></br>
+	</details>
+</div>
+</div>
+
+<div style="bottom:10px;position:absolute;text-align:center;color:#aaa;text-shadow:0px 0px 2px #aaa;display:table;width:100%;">
+<div style="width:481.28px;display:inline-block;text-align:left;">
+use wasd or arrows to pan the camera, and click on an object to center focus on it. [f] speeds up time and [r] slows it down.
+</div>
+</div>
+
+<script>
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+const G = 6.67430 * 10**-11; // m^3*kg^-1*s^-2 = N*m^2*kg^-2 ==> force times area per two masses (i'm sure that makes sense)
+function lerp(a,b,f) {
+	return (b-a)*f+a;
+}
+function vec_add(U,V) {return [U[0] + V[0], U[1] + V[1], U[2] + V[2]];}
+function vec_sub(U,V) {return [U[0] - V[0], U[1] - V[1], U[2] - V[2]];}
+function vec_div(U,s) {return [U[0] / s, U[1] / s, U[2] / s];}
+function vec_mul(U,s) {return [U[0] * s, U[1] * s, U[2] * s];}
+function vec_neg(U) {return [-U[0], -U[1], -U[2]];}
+function vec_lerp(V,U,f) { // VUF!!!! VUFFY!!!!
+	return [lerp(V[0],U[0],f), lerp(V[1],U[1],f), lerp(V[2],U[2],f)];
+}
+function deg(angle) {return angle/180*Math.PI;} // turns degrees into radians, for ecliptic trig use/usage
+
+let bodies = [];
+class Body {
+	constructor(name, color, mass, radius, pos, vel) {
+		this.id = bodies.length;
+		this.name = name;
+		this.color = color;
+		//this.info = info;
+		this.mass = mass; // kg
+		this.radius = radius;
+		this.pos = pos; // [x,y,z] m
+		this.vel = vel; // [x,y,z] m/s
+		
+		this.parent = neutral_reference;
+		
+		bodies.push(this);
+	}
+	/*kepler_te(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch) {
+		this.kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, Math.sqrt((G*parent.mass)/sma**3)*(time-epoch));
+	}*/
+	kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch) {
+		this.parent = parent; // makeshift
+		// all of this is makeshift i apologize
+		// mu = G * mass
+		let mu = G * parent.mass; // gravitational parameter
+		//let n = Math.sqrt(mu/sma**3);
+		let mean_anomaly_at_t = mean_anomaly;
+		if (time != epoch) {
+			let delta_t = (time - epoch);
+			//console.log(this.name+": "+delta_t);
+			mean_anomaly_at_t = mean_anomaly + delta_t*Math.sqrt(mu / (sma**3));
+			mean_anomaly_at_t %= Math.PI*2;
+			//console.log(mean_anomaly_at_t);
+			//console.log(mean_anomaly);
+		}
+		
+		// here we go again
+		// mostly using ComputeStateVectors() from http://orbitsimulator.com/gsim.html at line 9312
+		let m = this.mass + parent.mass;
+		let ecc_anomaly = mean_anomaly_at_t + ecc / 2;
+		let delta = 1;
+		let epsilon = 1e-9;
+		let e1 = 0;
+		let i = 0;
+		let max_iter = 30;
+		while (delta > epsilon && i < max_iter) {
+			e1 = ecc_anomaly - (ecc_anomaly - ecc * Math.sin(ecc_anomaly) - mean_anomaly_at_t) / (1 - ecc * Math.cos(ecc_anomaly));
+			delta = Math.abs(e1 - ecc_anomaly);
+			ecc_anomaly = e1;
+		}
+		
+		let cos_ecc_anomaly = Math.cos(ecc_anomaly);
+		let sin_ecc_anomaly = Math.sin(ecc_anomaly);
+		e1 = sma * Math.sqrt(Math.abs(1 - ecc**2));
+		let xw = sma * (cos_ecc_anomaly - ecc);
+		let yw = e1 * sin_ecc_anomaly;
+		
+		let edot = Math.sqrt((G * m) / sma) / (sma * (1 - ecc * cos_ecc_anomaly));
+		let xdw = -sma * edot * sin_ecc_anomaly;
+		let ydw = e1 * edot * cos_ecc_anomaly;
+		
+		let cosw = Math.cos(omega_arg_per);
+		let sinw = Math.sin(omega_arg_per);
+		let coso = Math.cos(omega_lon_asc);
+		let sino = Math.sin(omega_lon_asc);
+		let cosi = Math.cos(inc);
+		let sini = Math.sin(inc);
+		let swci = sinw * cosi;
+		let cwci = cosw * cosi;
+		let p_x = cosw * coso - sino * swci;
+		let p_y = cosw * sino + coso * swci;
+		let p_z = sinw * sini;
+		let q_x = -sinw * coso - sino * cwci;
+		let q_y = -sinw * sino + coso * cwci;
+		let q_z = cosw * sini;
+		
+		let X = xw * p_x + yw * q_x;
+		let Y = xw * p_y + yw * q_y;
+		let Z = xw * p_z + yw * q_z;
+		let V_X = xdw * p_x + ydw * q_x;
+		let V_Y = xdw * p_y + ydw * q_y;
+		let V_Z = xdw * p_z + ydw * q_z;
+		
+		/*let Mt = mean_anomaly;//n*(time - epoch); // mean anomaly (at time t?)
+		// MA = EA - ecc*sin(EA)
+		// -ecc*sin(EA) = MA - EA
+		// sin(EA) = -(MA - EA)/ecc
+		// sin(EA) = (EA - MA)/ecc
+		// EA = arcsin((EA - MA)/ecc)
+		// this next block of code, ending at the end of the while loop, supposedly solves for eccentric anomaly (EA)
+		// given the mean anomaly and the eccentricity. plug and pray
+		let EA = Mt;
+		let F = EA - ecc * Math.sin(EA) - Mt;
+		let i = 0;
+		let max_iter = 30;
+		while (Math.abs(F) > 1e-9 && i < max_iter) {
+			EA = EA - F / (1 - ecc*Math.cos(ecc));
+			F = EA - ecc*Math.sin(EA) - Mt;
+			i++;
+		}
+		
+		let nu = 2 * Math.atan(((1+ecc)/(1-ecc))**.5 * Math.tan(EA/2))
+		let r = sma*(1-ecc*Math.cos(nu));
+		let h = (mu*sma * (1 - ecc**2))**.5;
+		
+		let lan = omega_lon_asc; // longitude of ascending node, Capital Omega, Om
+		let arp = omega_arg_per; // argument of periapsis, lowercase omega, w
+		
+		let X = r*(Math.cos(lan)*Math.cos(arp+nu) - Math.sin(lan)*Math.sin(arp+nu)*Math.cos(inc));
+		let Y = r*(Math.cos(lan)*Math.cos(arp+nu) + Math.sin(lan)*Math.sin(arp+nu)*Math.cos(inc));
+		let Z = r*(Math.sin(inc)*Math.sin(arp+nu));
+		
+		let p = sma*(1-ecc**2);
+		let V_X = (X*h*ecc/(r*p))*Math.sin(nu) - (h/r)*(Math.cos(lan)*Math.sin(arp+nu) + Math.sin(lan)*Math.cos(arp+nu)*Math.cos(inc));
+		let V_Y = (X*h*ecc/(r*p))*Math.sin(nu) - (h/r)*(Math.sin(lan)*Math.sin(arp+nu) - Math.cos(lan)*Math.cos(arp+nu)*Math.cos(inc));
+		let V_Z = (Z*h*ecc/(r*p))*Math.sin(nu) + (h/r)*(Math.cos(arp+nu)*Math.sin(inc));*/
+		/*
+		let R = (this.pos[0]**2+this.pos[1]**2+this.pos[2]**2)**.5;
+		let V = (this.vel[0]**2+this.vel[1]**2+this.vel[2]**2)**.5;
+		
+		let specE = (V**2/2) - (mu/R);
+		let a = -mu / (2*specE);
+		a = -mu / (2*(V**2/2 - mu/R))
+		a = -mu / (V**2 - 2mu/R)
+		a(V**2 - 2mu/R) = -mu
+		aV**2 - 2amu/R = -mu
+		V**2 - 2mu/R = -mu/a
+		V**2 = 2mu/R - mu/a
+		
+		in other words:
+		||V|| = (mu/sma)**.5, for e = 0
+		||P|| = sma, for e = 0
+		*/
+		this.pos = vec_add([X,Y,Z],parent.pos);//this.pos = [sma,0,0];
+		this.vel = vec_add([V_X, V_Y, V_Z],parent.vel);//this.vel = [0,-((2*mu/sma - mu/sma)**.5),0];
+		// R (pos vec magn) = (a(1-e^2))/(1 + e(cos(nu)))
+		// where a is the semimajor axis, e is eccentricity, and nu is true anomaly.
+		
+		// e_vec = (1/mu)((V^2 - (mu/R))R_vec-(R_vec dot V_vec)V_vec)
+		// e_vec, the eccentricity vector
+		// mu, gravitational parameter
+		// V_vec, vel vector
+		// R_vec, pos vector
+		// V, magn of V_vec
+		// R, magn of R_vec
+	}
+	
+	// taken from stackoverflow: https://astronomy.stackexchange.com/questions/45456/how-to-translate-from-local-laplace-plane-to-ecliptic-j2000-or-icrf
+	// transform vectors from icrf to local body frame (all z-up)
+	icrf_to_ecliptic(ra, dec) {
+		let x = this.pos[0]-this.parent.pos[0]; let y = this.pos[1]-this.parent.pos[1]; let z = this.pos[2]-this.parent.pos[2];
+		let vx = this.vel[0]-this.parent.vel[0]; let vy = this.vel[1]-this.parent.vel[1]; let vz = this.vel[2]-this.parent.vel[2];
+		//console.log(x,y,z);
+		//console.log(vx,vy,vz);
+
+		// rotate on z axis, -ra
+		let x2 = x * Math.cos(-ra) - y * Math.sin(-ra);
+		let vx2 = vx * Math.cos(-ra) - vy * Math.sin(-ra);
+		let y2 = y * Math.cos(-ra) + x * Math.sin(-ra);
+		let vy2 = vy * Math.cos(-ra) + vx * Math.sin(-ra);
+
+		// rotate on y axis (dec - Math.PI / 2) must swap signs
+		let angle = -dec + Math.PI / 2;
+		let x3 = x2 * Math.cos(angle) - z * Math.sin(angle);
+		let vx3 = vx2 * Math.cos(angle) - vz * Math.sin(angle);
+		let z2 = z * Math.cos(angle) + x2 * Math.sin(angle);
+		let vz2 = vz * Math.cos(angle) + vx2 * Math.sin(angle);
+
+		x = x3;
+		vx = vx3;
+		y = y2;
+		vy = vy2;
+		z = z2;
+		vz = vz2;
+
+		//return {x, y, z, vx, vy, vz};
+		this.pos = vec_add(this.parent.pos, [x,y,z]);
+		this.vel = vec_add(this.parent.vel, [vx,vy,vz]);
+		
+		//console.log(x,y,z);
+		//console.log(vx,vy,vz);
+	}
+}
+let neutral_reference = new Object; // is this a neutral reference ?????????????????
+neutral_reference.pos = [0,0,0];
+neutral_reference.vel = [0,0,0];
+let JD_epoch =(year, month, day, hour, minute=0, second=0, ms=0)=> {return new Date(year, month, day, hour, minute, second, ms);}
+let J2000 = JD_epoch(2000, 0, 01, 12); // 2000, 0th month (January), 01st day, 12th hour, 00th minute 00th second, 0th millisecond.
+// J2000.0 = 2451545 Julian Days
+let J2000_epoch = J2000.getTime()/1000; // in seconds, instead of ms
+let ceres_epoch = J2000.getTime()/1000 + (4856*24*60*60);
+let NOW = Date.now()/1000; // check your clock, now :)
+let au = 149597870691; // 149597870691 meters = 1 AU
+
+let sun = new Body("Sun", "#ff0", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
+/*let sun2 = new Body("Sun 2", "#f00", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
+sun2.kepler(sun, 10000000222, 0, 0, 0, 0, 0);
+let sun3 = new Body("Sun 3", "#0ff", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
+sun3.kepler(sun2, 10000000222, 0, 0, 0, 0, 0);
+let sun4 = new Body("Sun 4", "#fff", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
+sun4.kepler(sun3, 10000000222, 0, 0, 0, 0, 0);*/
+let earth = new Body("Earth", "#00f", 5.972168*10**24, 6371000, [152097597000,0,0], [0,-29782.7,0]);
+earth.kepler(sun, 149598023000, 0.0167086, 0.00005/180*Math.PI, 114.20783/180*Math.PI, -11.26064/180*Math.PI, 358.617/180*Math.PI, NOW, J2000_epoch);//358.617/180*Math.PI);
+/*		Period		   1.0          // years
+		SemiMajorAxis  1.0000010178 // a.u.
+		Eccentricity   0.0167086342
+		Inclination    0.0          // degrees
+		AscendingNode  348.739      // degrees
+		LongOfPericen  102.93734808 // degrees
+		MeanLongitude  100.46645683 // degrees*/
+let moon = new Body("Moon", "#777", 7.342*10**22, 1737400, [152097597000+405400000,0,0], [0,-29782.7-1022,0]);
+moon.kepler(earth, 384399000, 0.0549, 5.145/180*Math.PI, 318.15/180*Math.PI, 125.08/180*Math.PI, 135.27/180*Math.PI, NOW, J2000_epoch);//135.27/180*Math.PI);
+/*		Period          0.07480422854
+		SemiMajorAxis   0.002537908496755768
+		Eccentricity    0.0549
+		Inclination     5.15
+		MeanAnomaly     135.27
+		AscendingNode   125.08
+		ArgOfPericen    318.15*/
+let venus = new Body("Venus", "#fa0", earth.mass*.815, 6052000, [0,0,0], [0,0,0]);
+venus.kepler(sun, 0.7233*149597870691, 0.0068, 3.3947/180*Math.PI, (131.533-76.681)/180*Math.PI, 76.681/180*Math.PI, (181.979-131.533)/180*Math.PI, NOW, J2000_epoch);
+/*		Period          0.6152
+		SemiMajorAxis   0.7233
+		Eccentricity    0.0068
+		Inclination     3.3947
+		AscendingNode   76.681
+		LongOfPericen   131.533
+		MeanLongitude   181.979*/
+let mercury = new Body("Mercury", "#777", earth.mass*.05528, 2440000, [0,0,0], [0,0,0]);
+mercury.kepler(sun, 0.3871*149597870691, 0.2056, 7.0049/180*Math.PI, (77.456-48.33167)/180*Math.PI, 48.33167/180*Math.PI, (252.251-77.456)/180*Math.PI, NOW, J2000_epoch);
+/*		Period          0.2408
+		SemiMajorAxis   0.3871
+		Eccentricity    0.2056
+		Inclination     7.0049
+		AscendingNode   48.33167
+		LongOfPericen   77.456
+		MeanLongitude   252.251
+		ArgOfPeriPreces 227000 // period of precession in years*/
+/*moon.mass = earth.mass;
+earth.vel[1] = -29782.7+700;
+moon.vel[1] = -29782.7-700;*/
+let mars = new Body("Mars","#f00", 6.4171*10**23, 3389500, [0,0,0], [0,0,0]);
+mars.kepler(sun, 227939366000, 0.0934, 1.850/180*Math.PI, 286.5/180*Math.PI, 49.57854/180*Math.PI, 19.412/180*Math.PI, NOW, J2000_epoch);
+
+let phobos = new Body("Phobos","#a00", 1.0659*10**16, 11266.7, [0,0,0], [0,0,0]);
+phobos.kepler(mars, 9376000, 0.0151, 26.710/180*Math.PI, 92.19863/180*Math.PI, 82.8611/180*Math.PI, 0.00/180*Math.PI, NOW, JD_epoch(2023, 3,11, 07,03,53,630));
+
+//phobos.kepler(mars, 9376000, 0.0151, 1.093/180*Math.PI, deg(216.3), deg(169.2), deg(189.6), NOW, J2000_epoch);
+phobos.kepler(mars, 9376000, 0.0151, deg(1.093), 213.804/180*Math.PI, 128.694/180*Math.PI, 191.771/180*Math.PI, NOW, J2000_epoch);
+//phobos.icrf_to_ecliptic(deg(317.7), deg(52.9));
+
+let deimos = new Body("Deimos","#700", 1.4762*10**15, 6200, [0,0,0], [0,0,0]);
+deimos.kepler(mars, 23463200, 0.00033, 25.8315/180*Math.PI, 92.1321/180*Math.PI, 82.7756/180*Math.PI, 0.00/180*Math.PI, NOW, JD_epoch(2023, 3,10, 01,44,53,560).getTime()/1000);
+
+//deimos.kepler(mars, 23463200, 0.00033, deg(1.8), deg(0.0), deg(54.4), deg(205.0), NOW, J2000_epoch)
+deimos.kepler(mars, 23463200, 0.00033, deg(1.793), 27.13/180*Math.PI, 271.725/180*Math.PI, 47.661/180*Math.PI, 21.087/180*Math.PI, NOW, JD_epoch(2023, 2, 3, 00));
+//deimos.icrf_to_ecliptic(deg(316.7), deg(53.5))
+
+// w is first, then OMEGA
+let ceres = new Body("Ceres", "#aaa", earth.mass*.0001579, 470000, [0,0,0], [0,0,0]);
+ceres.kepler(sun, 2.76799*au, 0.0761669, 10.5942/180*Math.PI, 72.1671/180*Math.PI, 80.3301/180*Math.PI, 327.854/180*Math.PI, NOW, ceres_epoch);
+
+let jupiter = new Body("Jupiter", "#faf", 1.8982*10**27, 69911000, [0,0,0], [0,0,0]);
+jupiter.kepler(sun, 778.479*10**9, 0.0489, 1.303/180*Math.PI, 273.867/180*Math.PI, 100.464/180*Math.PI, 20.020/180*Math.PI, NOW, J2000_epoch);
+let io = new Body("Io", "#fa0", earth.mass*.01495, 1821600, [0,0,0], [0,0,0]);
+io.kepler(jupiter, 421800000, 0.004, deg(0.0), deg(49.1), deg(0.0), deg(330.9), NOW, J2000_epoch);
+io.icrf_to_ecliptic(deg(268.1), deg(64.5));
+
+let saturn = new Body("Saturn", "#ffa", earth.mass*95.162, 60268000, [0,0,0], [0,0,0]);
+saturn.kepler(sun, 9.5371*au, 0.0542, 2.4845/180*Math.PI, (92.432-113.715+360)/180*Math.PI, 113.715/180*Math.PI, (49.944-92.432+360)/180*Math.PI, NOW, J2000_epoch)
+
+//let comet = new Body("Comet", "#fff", 10**6, 1000, [1000000000000,0,0], [0,-2500,0]);
+//comet.parent = sun;
+
+let zoom = 1e-9;
+function zoom_screen(event) {
+	let change = 1 - (event.deltaY/1000);
+	if (change < 0) return;
+	zoom *= change;
+	pan[0] *= change;
+	pan[1] *= change;
+	camera_clear_for_trails();
+}
+let active_keys = [];
+window.addEventListener('keydown', function (e) {
+	active_keys = (active_keys || []);
+	active_keys[e.keyCode] = (e.type == "keydown");
+});
+window.addEventListener('keyup', function (e) {
+	active_keys[e.keyCode] = (e.type == "keydown");            
+});
+canvas.addEventListener('mousedown', function (e) {
+	if (focused_body == neutral_reference && hovered_body == neutral_reference) return; // prevents going from unfocused to unfocused, which is rather disorienting
+	//if (focused_body != hovered_body) 
+	if (hovered_body != neutral_reference) {
+		pan = [0,0]; // if we're not looking at nothing (i.e., looking at a planet) then focus the camera at the center of the object of interest
+	} else {
+		pan = vec_mul(focused_body.pos, -zoom); // if we suddenly ARE looking at nothing, then rearrange the camera to at least be where we were when we were where we where. this will not change the effective panning, but the trails should still be cleared; the focused body (or reference frame, whatevevr) has changed.
+	}
+	camera_clear_for_trails(); // if you're changing perspectives without changing the pan through the wasd or arrows, the camera needs to be cleared.
+	focused_body = hovered_body; // focus on the darn thing you're hovering over
+	hovered_body = neutral_reference; // forget i asked!
+});
+let pan = [0,0];
+let mouse_pos = [0,0];
+let yz_rot = 0;
+document.getElementById("yz-rot-setting").value = 0;
+function update_mouse_pos(event) {
+	//console.log(event.x+", "+event.y);
+	//console.log(event);
+	mouse_pos[0] = event.layerX - 1; // border of 1px
+	mouse_pos[1] = event.layerY - 1;
+}
+let step = 1/60/100;//1e-4;
+let speed = 100; // steps per loop
+let time = 0; // in-simulation
+let tick = 0; // no. of calls to loop
+let trails = false;
+let labels = true;
+//trails=true;labels=false;step=3000;
+let focused_body = neutral_reference;
+let hovered_body = neutral_reference;
+focused_body = mars; zoom *= 5000;// step = 10;
+function draw_body(body, be_modular=false) {
+	let onscreen_x = pan[0] + canvas.width/2 + (body.pos[0]-focused_body.pos[0])*zoom;
+	let onscreen_y = pan[1] + canvas.height/2 + (body.pos[1]-focused_body.pos[1])*zoom*Math.cos(yz_rot) + (body.pos[2]-focused_body.pos[2])*zoom*Math.sin(yz_rot);
+	let distance_to_parent = ((body.pos[0]-body.parent.pos[0])**2 + (body.pos[1]-body.parent.pos[1])**2 + (body.pos[2]-body.parent.pos[2])**2)**.5;
+	if (((mouse_pos[0]-onscreen_x)**2 + (mouse_pos[1]-onscreen_y)**2)**.5 < zoom*body.radius + 7 &&
+		(body.parent == neutral_reference || distance_to_parent*zoom > 16)) {
+		hovered_body = body;
+	} else {
+		if (hovered_body == body) {hovered_body = neutral_reference;}
+	}
+	let scale = Math.max(zoom * body.radius, 2);
+	ctx.fillStyle = body.color;
+	ctx.beginPath();
+	ctx.arc(onscreen_x, onscreen_y, scale, 0, 2*Math.PI);
+	ctx.fill();
+	if (trails && body.id != focused_body.id) {
+		ctx.beginPath();
+		ctx.fillStyle = "#000";
+		ctx.arc(onscreen_x, onscreen_y, scale-1, 0, 2*Math.PI);
+		ctx.fill();
+	}
+	if (be_modular) {return [onscreen_x, onscreen_y, scale, distance_to_parent];}
+}
+function draw_body_with_label(body) {
+	let info = draw_body(body, be_modular=true); // >>:(
+	let onscreen_x = info[0];
+	let onscreen_y = info[1];
+	let scale = info[2];
+	let distance_to_parent = info[3]
+	if (labels) {
+		if (body.parent == neutral_reference || distance_to_parent*zoom > 16) {
+			if (trails) {
+				ctx.font = "12px \"MS UI Gothic\"";
+				let width = ctx.measureText(" "+body.name).width;
+				ctx.fillStyle = "#000";
+				ctx.fillRect(onscreen_x + scale, onscreen_y + scale/2, width, 13);
+			}
+			ctx.font = /*""+Math.floor(zoom)+*/"12px \"MS UI Gothic\""; // is PMingLiU-ExtB 12px the Elemental font?
+			ctx.textAlign = "left";
+			ctx.textBaseline = "top";
+			ctx.fillStyle = body.color;
+			ctx.fillText(" "+body.name, onscreen_x + scale, onscreen_y + scale/2);
+		}
+	}
+}
+function draw() {
+	/* * * display * * */
+	let current_moment = new Date(Date.now());
+	let simulation_moment = new Date(1000*(NOW+time));
+	document.getElementById("simulation-time-indicator").innerHTML = simulation_moment;//.toUTCString();
+	
+	if (!trails) ctx.clearRect(0, 0, canvas.width, canvas.height);
+	for (let i = 0; i < bodies.length; i++) {
+		let body = bodies[i];
+		draw_body_with_label(body);
+		/*let onscreen_x = pan[0] + canvas.width/2 + (body.pos[0]-focused_body.pos[0])*zoom;
+		let onscreen_y = pan[1] + canvas.height/2 + (body.pos[1]-focused_body.pos[1])*zoom;
+		let scale = Math.max(zoom * body.radius, 2);
+		ctx.fillStyle = body.color;
+		ctx.beginPath();
+		ctx.arc(onscreen_x, onscreen_y, scale, 0, 2*Math.PI);
+		ctx.fill();
+		if (trails) {
+			ctx.beginPath();
+			ctx.fillStyle = "#000";
+			ctx.arc(onscreen_x, onscreen_y, scale-1, 0, 2*Math.PI);
+			ctx.fill();
+			if (labels) {
+				ctx.font = "12px \"MS UI Gothic\"";
+				let width = ctx.measureText(" "+body.name).width;
+				ctx.fillRect(onscreen_x + scale, onscreen_y + scale/2, width, 12);
+			}
+		}
+		if (labels) {
+			ctx.font = "12px \"MS UI Gothic\"";
+			ctx.textAlign = "left";
+			ctx.textBaseline = "top";
+			ctx.fillStyle = body.color;
+			ctx.fillText(" "+body.name, onscreen_x + scale, onscreen_y + scale/2);
+		}*/
+	}
+	//window.requestAnimationFrame(draw);
+}
+//draw();
+function camera_clear_for_trails() { // if the view/panning/zoom of the scene is changed, trails should be erased
+	if (trails) {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+}
+function loop() {
+	/* * * not display (camera panning) * * */
+	if (active_keys && (active_keys[37] || active_keys[65])) {pan[0] += 10; camera_clear_for_trails()}
+    if (active_keys && (active_keys[39] || active_keys[68])) {pan[0] -= 10; camera_clear_for_trails()}
+    if (active_keys && (active_keys[38] || active_keys[87])) {pan[1] += 10; camera_clear_for_trails()}
+    if (active_keys && (active_keys[40] || active_keys[83])) {pan[1] -= 10; camera_clear_for_trails()}
+	if (active_keys && active_keys[70]) {step *= 1.1;}
+	if (active_keys && active_keys[82]) {step /= 1.1;}
+	
+	/* * * settings * * */
+	trails = document.getElementById("trails-setting").checked;
+	let labels_setting_changed = document.getElementById("labels-setting").checked != labels;
+	labels = document.getElementById("labels-setting").checked;
+	
+	let yz_rot_setting_value = document.getElementById("yz-rot-setting").value/100*Math.PI*2;
+	if (yz_rot_setting_value != yz_rot) {
+		yz_rot = yz_rot_setting_value;
+		document.getElementById("yz-rot-indicator").innerHTML = "&emsp;"+(yz_rot+'').substr(0,4)+" rad";
+		camera_clear_for_trails();
+	}
+	
+	/* * * extra thing for trails+labels * * */
+	if (labels && trails || labels_setting_changed) {
+		for (let i = 0; i < bodies.length; i++) {
+			let body = bodies[i];
+			let onscreen_x = pan[0] + canvas.width/2 + (body.pos[0]-focused_body.pos[0])*zoom;
+			let onscreen_y = pan[1] + canvas.height/2 + (body.pos[1]-focused_body.pos[1])*zoom*Math.cos(yz_rot) + (body.pos[2]-focused_body.pos[2])*zoom*Math.sin(yz_rot);
+			let scale = Math.max(zoom * body.radius, 2);
+			ctx.fillStyle = "#000";
+			ctx.beginPath();
+			ctx.font = "12px \"MS UI Gothic\"";
+			let width = ctx.measureText(" "+body.name).width;
+			ctx.fillRect(onscreen_x + scale, onscreen_y + scale/2, width, 13);
+		}
+	}
+	
+	/* * * STEP * * */
+	for (let S = 0; S < speed; S++) {
+	
+		for (let i = 0; i < bodies.length; i++) {
+			let body = bodies[i];
+			for (let j = 0; j < bodies.length; j++) {
+				if (bodies[j] == body) {/* do nothing for this loop please thank you */
+				} else {
+					let other = bodies[j];
+					let vec = vec_sub(other.pos, body.pos);
+					let r = (vec[0]**2 + vec[1]**2 + vec[2]**2)**.5;
+					vec = vec_div(vec, r); // normalize?
+					let F = G * (body.mass * other.mass) / r**2; // G*(m1m2/r^2)
+					vec = vec_mul(vec, F*step/body.mass);
+					body.vel = vec_add(body.vel, vec);
+				}
+			}
+		}
+		
+		for (let i = 0; i < bodies.length; i++) {
+			let body = bodies[i];
+			body.pos = vec_add(body.pos, vec_mul(body.vel, step));
+		}
+		
+		for (let i = 0; i < bodies.length; i++) { // bluh
+			if (trails && S % 5 == 0) draw_body(bodies[i]);
+		}
+		
+	}
+	
+	time += step * speed; // keep in step!
+	tick++;
+	draw();
+	window.requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
