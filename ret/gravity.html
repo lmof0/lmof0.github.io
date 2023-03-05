@@ -51,6 +51,7 @@ canvas {
 </head>
 <body>
 <a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
+	<div style="position:absolute;left:10px;top:10px;font-size:2em;color:#f00;">ps this is like hugley wip please check back frequently for updates</div>
 
 <div id="wrap"><div id="wrapped-wrap">
 <canvas id="canvas" width="600" height="480" style="border:1px solid #fff;transform: scale(80%);" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
@@ -422,7 +423,7 @@ let labels = true;
 //trails=true;labels=false;step=3000;
 let focused_body = neutral_reference;
 let hovered_body = neutral_reference;
-focused_body = mars; zoom *= 5000;// step = 10;
+//focused_body = mars; zoom *= 5000;// step = 10;
 function draw_body(body, be_modular=false) {
 	let onscreen_x = pan[0] + canvas.width/2 + (body.pos[0]-focused_body.pos[0])*zoom;
 	let onscreen_y = pan[1] + canvas.height/2 + (body.pos[1]-focused_body.pos[1])*zoom*Math.cos(yz_rot) + (body.pos[2]-focused_body.pos[2])*zoom*Math.sin(yz_rot);
