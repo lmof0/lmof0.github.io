@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>a website: gravity</title>
+<link href="../math.css" rel="stylesheet" type="text/css">
 <style>
 html {
 	width: 100%;
@@ -20,6 +21,7 @@ canvas {
 	image-rendering: crisp-edges;
 }
 .inline {display:inline;}
+.hidden {display:none;}
 ::selection {
 	color: #ffffff;
 	background: #333333;
@@ -46,12 +48,28 @@ canvas {
 	margin:0px;
 	vertical-align:middle;
 }
+.info-box {
+	border:4px solid #fff;
+	color:#fff;
+	width:320px;
+	font-family:initial;
+	padding:4px;
+	background-color:#000;
+	text-align:left;
+	border-radius:2px;
+	margin-bottom:5px;
+}
+.orbital-variable {
+	user-select: none;
+	color: #fff;
+	font-family:ms ui gothic, monospace;
+}
 </style>
 
 </head>
 <body>
 <a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
-	<div style="position:absolute;left:10px;top:10px;font-size:2em;color:#f00;">ps this is like hugley wip please check back frequently for updates</div>
+	<!--<div style="position:absolute;left:10px;top:10px;font-size:2em;color:#f00;">ps this is like hugley wip please check back frequently for updates</div>-->
 
 <div id="wrap"><div id="wrapped-wrap">
 <canvas id="canvas" width="600" height="480" style="border:1px solid #fff;transform: scale(80%);" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
@@ -66,7 +84,7 @@ simulation time: <div id="simulation-time-indicator" class="inline"></div>
 </div></div>
 
 <div style="width:fit-content;height:600px;right:40px;top:40px;display:inline;position:absolute;margin:10px;">
-	<div id="settings" style="border:4px solid #ffffff;color:#ffffff;width:320px;font-family:initial;padding:4px;background-color:#000000;text-align:left;border-radius:2px;margin-bottom:5px;">
+	<div id="settings" class="info-box">
 		<details open>
 		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">settings</div></summary>
 		<br>
@@ -79,7 +97,30 @@ simulation time: <div id="simulation-time-indicator" class="inline"></div>
 		</details>
 	</div>
 	
-	<div id="create_body" style="border:4px solid #00f;color:#ffffff;width:320px;font-family:initial;padding:4px;background-color:#000000;text-align:left;border-radius:2px;">
+	<div id="body_info" class="info-box" style="border:4px solid #777;color:#ccc;">
+		<details open>
+		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;color:#fff;">body info</div></summary>
+		<br>
+		<div id="info-floating" class="">click on a planet/moon/star/whatever to get info about it! if you're lucky it will also have a human-written description to go along! if it doesn't, you can write one yourself.</div>
+		<div id="info-body" class="hidden">
+			name: <div id="info-body-name" class="inline"></div><br>
+			orbital parent: <div id="info-body-parent" class="inline"></div><br>
+			epoch: <div id="info-body-epoch" class="inline"></div><br>
+			<abbr title="Semi-major axis">SMA:</abbr> <div id="info-body-sma" class="inline"></div><br>
+			<abbr title="Eccentricity">ecc:</abbr> <div id="info-body-ecc" class="inline"></div><br>
+			<abbr title="Inclination">inc:</abbr> <div id="info-body-inc" class="inline"></div><br>
+			<abbr title="Argument of Pericenter"><m>&omega;</m>:</abbr> <div id="info-body-arg-per" class="inline"></div><br>
+			<abbr title="Longitude of the Ascending Node"><m>&Omega;</m>:</abbr> <div id="info-body-lon-asc" class="inline"></div><br>
+			<abbr title="Mean Anomaly">M:</abbr> <div id="info-body-mean-anomaly" class="inline"></div><br>
+			<abbr title="True Anomaly"><m>&nu;</m>:</abbr> <div id="info-body-true-anomaly" class="inline"></div><br>
+			<abbr title="Orbital Period"><m>T</m>:</abbr> <div id="info-body-orbital-period" class="inline"></div><br>
+			
+			<textarea id="info-body-desc" style="width:90%;height:8em;font-size:14px;border:1px solid #555555;color:#aaffaa;font-family:ms gothic, monospace;padding:4px;margin:2px;overflow-y:auto;resize:none;background-color: #000000;cursor:auto;"></textarea><br>
+		</div>
+		</details>
+	</div>
+	
+	<div id="create_body" class="info-box" style="border:4px solid #00f;">
 		<details>
 		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">create body</div></summary>
 		<br>
@@ -90,7 +131,7 @@ simulation time: <div id="simulation-time-indicator" class="inline"></div>
 
 <div style="bottom:10px;position:absolute;text-align:center;color:#aaa;text-shadow:0px 0px 2px #aaa;display:table;width:100%;">
 <div style="width:481.28px;display:inline-block;text-align:left;">
-use wasd or arrows to pan the camera, and click on an object to center focus on it. [f] speeds up time and [r] slows it down.
+use wasd or arrows to pan the camera. click on an object to follow it. [f] speeds up time and [r] slows it down.
 </div>
 </div>
 
@@ -113,7 +154,7 @@ function deg(angle) {return angle/180*Math.PI;} // turns degrees into radians, f
 
 let bodies = [];
 class Body {
-	constructor(name, color, mass, radius, pos, vel, is_tiny=false) {
+	constructor(name, color, mass, radius, pos=[0,0,0], vel=[0,0,0], is_tiny=false) {
 		this.id = bodies.length;
 		this.name = name;
 		this.color = color;
@@ -123,6 +164,15 @@ class Body {
 		this.pos = pos; // [x,y,z] m
 		this.vel = vel; // [x,y,z] m/s
 		this.is_tiny = is_tiny;
+		this.desc = "there's no description for this object!";
+		/*
+		wawawasdwasdAJwrna
+		sfg gjeia jI Tjdwa
+
+		d
+		a
+		s
+		*/
 		
 		this.parent = neutral_reference;
 		
@@ -258,6 +308,69 @@ class Body {
 		// R, magn of R_vec
 	}
 	
+	get_osculating_elements() { // i'm just gonna assume that that's what the instantaneous keplerian elements are called
+		let mu = this.parent.mass * G;
+		
+		let Ri = this.pos[0]-this.parent.pos[0];
+		let Rj = this.pos[1]-this.parent.pos[1];
+		let Rk = this.pos[2]-this.parent.pos[2];
+		let Vi = this.vel[0]-this.parent.vel[0];
+		let Vj = this.vel[1]-this.parent.vel[1];
+		let Vk = this.vel[2]-this.parent.vel[2];
+		
+		if (Ri == 0) Ri = 1e-12;
+		if (Rj == 0) Rj = 1e-12;
+		if (Rk == 0) Rk = 1e-12;
+		if (Vi == 0) Vi = 1e-12;
+		if (Vj == 0) Vj = 1e-12;
+		if (Vk == 0) Vk = 1e-12;
+		
+		let R = Math.sqrt(Ri**2 + Rj**2 + Rk**2);
+		let V = Math.sqrt(Vi**2 + Vj**2 + Vk**2);
+		
+		let specE = (V**2 / 2) - (mu / R);
+		
+		let sma = -mu / (2*specE);
+		
+		let RdotV = (Ri * Vi) + (Rj * Vj) + (Rk * Vk);
+		let Ei = (1 / mu) * (((V*V) - (mu / R)) * Ri - (RdotV * Vi));
+		let Ej = (1 / mu) * (((V*V) - (mu / R)) * Rj - (RdotV * Vj));
+		let Ek = (1 / mu) * (((V*V) - (mu / R)) * Rk - (RdotV * Vk));
+		
+		let ecc = Math.sqrt(Ei**2 + Ej**2 + Ek**2);
+		
+		let Hi = (Rj * Vk) - (Vj * Rk);
+		let Hj = -(Ri * Vk) - (Vi * Rk);
+		let Hk = (Ri * Vj) - (Vi * Rj);
+		
+		let h = Math.sqrt(Hi**2 + Hj**2 + Hk**2);
+		let inc = Math.acos(Hk / h)*180/Math.PI;
+		if (inc > 180) inc = 360 - inc;
+		
+		let Ni = -Hj;
+		let Nj = Hi;
+		let Nk = 0;
+		
+		let n = Math.sqrt(Ni**2 + Nj**2); // Nk is always 0, so don't bother with it here
+		
+		let omega_lon_asc = Math.acos(Ni / n)*180/Math.PI;
+		if (Nj < 0) omega_lon_asc = 360 - omega_lon_asc;
+		
+		let NdotE = (Ni * Ei) + (Nj * Ej) + (Nk * Ek);
+		let omega_arg_per = Math.acos(NdotE / (n * ecc))*180/Math.PI;
+		if (Ek < 0) omega_arg_per = 360 - omega_arg_per;
+		
+		let EdotR = (Ei * Ri) + (Ej * Rj) + (Ek * Rk);
+		let true_anomaly = Math.acos(EdotR / (ecc * R));
+		if (RdotV < 0) true_anomaly = 2*Math.PI - true_anomaly;
+		
+		let mean_anomaly = Math.atan2(-Math.sqrt(1-ecc*ecc)*Math.sin(true_anomaly), -ecc - Math.cos(true_anomaly)) + Math.PI - ecc*(Math.sqrt(1-ecc*ecc)*Math.sin(true_anomaly)/(1+ecc*Math.cos(true_anomaly))); // stolen from wikipedieres
+		
+		let orbital_period = 2*Math.PI*Math.sqrt(sma**3/(G*(this.mass + this.parent.mass)));
+		
+		return [sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly*180/Math.PI, true_anomaly*180/Math.PI, orbital_period];
+	}
+	
 	// taken from stackoverflow: https://astronomy.stackexchange.com/questions/45456/how-to-translate-from-local-laplace-plane-to-ecliptic-j2000-or-icrf
 	// transform vectors from icrf to local body frame (all z-up)
 	icrf_to_ecliptic(ra, dec) {
@@ -332,6 +445,7 @@ let NOW = Date.now()/1000; // check your clock, now :)
 let au = 149597870691; // 149597870691 meters = 1 AU
 
 let sun = new Body("Sun", "#ff0", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
+sun.desc = "please ignore the funny math breaking above this textbox";
 /*let sun2 = new Body("Sun 2", "#f00", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
 sun2.kepler(sun, 10000000222, 0, 0, 0, 0, 0);
 let sun3 = new Body("Sun 3", "#0ff", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
@@ -340,6 +454,7 @@ let sun4 = new Body("Sun 4", "#fff", 1.9885*10**30, 695700000, [0,0,0], [0,0,0])
 sun4.kepler(sun3, 10000000222, 0, 0, 0, 0, 0);*/
 let earth = new Body("Earth", "#00f", 5.972168*10**24, 6371000, [152097597000,0,0], [0,-29782.7,0]);
 earth.kepler(sun, 149598023000, 0.0167086, 0.00005/180*Math.PI, 114.20783/180*Math.PI, -11.26064/180*Math.PI, 358.617/180*Math.PI, NOW, J2000_epoch);//358.617/180*Math.PI);
+earth.desc = "mostly harmless. please see back for details";
 /*		Period		   1.0          // years
 		SemiMajorAxis  1.0000010178 // a.u.
 		Eccentricity   0.0167086342
@@ -349,6 +464,7 @@ earth.kepler(sun, 149598023000, 0.0167086, 0.00005/180*Math.PI, 114.20783/180*Ma
 		MeanLongitude  100.46645683 // degrees*/
 let moon = new Body("Moon", "#aaa", 7.342*10**22, 1737400, [152097597000+405400000,0,0], [0,-29782.7-1022,0]);
 moon.kepler(earth, 384399000, 0.0549, 5.145/180*Math.PI, 318.15/180*Math.PI, 125.08/180*Math.PI, 135.27/180*Math.PI, NOW, J2000_epoch);//135.27/180*Math.PI);
+moon.desc = "the moon, also called selene, cynthia, e la lune, is made of cheese. it holds the record for being the biggest in comparison to its parent planet, at around 1/9th the radius of the earth.\n\nno es la locura,\nen realidad es el amor...";
 //moon.convert_to_ecliptic(deg(23.4363051));
 /*		Period          0.07480422854
 		SemiMajorAxis   0.002537908496755768
@@ -359,6 +475,7 @@ moon.kepler(earth, 384399000, 0.0549, 5.145/180*Math.PI, 318.15/180*Math.PI, 125
 		ArgOfPericen    318.15*/
 let venus = new Body("Venus", "#fa0", earth.mass*.815, 6052000, [0,0,0], [0,0,0]);
 venus.kepler(sun, 0.7233*149597870691, 0.0068, 3.3947/180*Math.PI, (131.533-76.681)/180*Math.PI, 76.681/180*Math.PI, (181.979-131.533)/180*Math.PI, NOW, J2000_epoch);
+venus.desc = "don't go here";
 /*		Period          0.6152
 		SemiMajorAxis   0.7233
 		Eccentricity    0.0068
@@ -368,6 +485,7 @@ venus.kepler(sun, 0.7233*149597870691, 0.0068, 3.3947/180*Math.PI, (131.533-76.6
 		MeanLongitude   181.979*/
 let mercury = new Body("Mercury", "#777", earth.mass*.05528, 2440000, [0,0,0], [0,0,0]);
 mercury.kepler(sun, 0.3871*149597870691, 0.2056, 7.0049/180*Math.PI, (77.456-48.33167)/180*Math.PI, 48.33167/180*Math.PI, (252.251-77.456)/180*Math.PI, NOW, J2000_epoch);
+mercury.desc = "this is the closest planet to the sun! it may also have the shortest orbital period around the sun of any object in the entire solar system.";
 /*		Period          0.2408
 		SemiMajorAxis   0.3871
 		Eccentricity    0.2056
@@ -381,6 +499,7 @@ earth.vel[1] = -29782.7+700;
 moon.vel[1] = -29782.7-700;*/
 let mars = new Body("Mars","#f00", 6.4171*10**23, 3389500, [0,0,0], [0,0,0]);
 mars.kepler(sun, 227939366000, 0.0934, 1.850/180*Math.PI, 286.5/180*Math.PI, 49.57854/180*Math.PI, 19.412/180*Math.PI, NOW, J2000_epoch);
+mars.desc = "so-named for its bountiful mounds of cheap, easy-to-manufacture chocolate\n\nmountiful bounds";
 
 let phobos = new Body("Phobos","#a00", 1.0659*10**16, 11266.7, [0,0,0], [0,0,0]);
 phobos.kepler(mars, 9376000, 0.0151, 26.710/180*Math.PI, 92.19863/180*Math.PI, 82.8611/180*Math.PI, 0.00/180*Math.PI, /*NOW,*/ JD_epoch(2023, 3,11, 07,03,53,630).getTime()/1000, J2000_epoch);
@@ -391,6 +510,7 @@ phobos.kepler(mars, 9376000, 0.0151, 26.710/180*Math.PI, 92.19863/180*Math.PI, 8
 
 let deimos = new Body("Deimos","#700", 1.4762*10**15, 6200, [0,0,0], [0,0,0]);
 deimos.kepler(mars, 23463200, 0.00033, 25.8315/180*Math.PI, 92.1321/180*Math.PI, 82.7756/180*Math.PI, 0.00/180*Math.PI, /*NOW,*/ JD_epoch(2023, 3,10, 01,44,53,560).getTime()/1000, J2000_epoch);
+deimos.desc = "wawawasdwasdAJwrna\nsfg gjeia jI Tjdwa\n\nd\na\ns";
 
 //deimos.kepler(mars, 23463200, 0.00033, deg(1.8), deg(0.0), deg(54.4), deg(205.0), NOW, J2000_epoch)
 //deimos.kepler(mars, 23463200, 0.00033, deg(1.793), 27.13/180*Math.PI, 271.725/180*Math.PI, 47.661/180*Math.PI, 21.087/180*Math.PI, NOW, JD_epoch(2023, 2, 3, 00));
@@ -399,6 +519,7 @@ deimos.kepler(mars, 23463200, 0.00033, 25.8315/180*Math.PI, 92.1321/180*Math.PI,
 // w is first, then OMEGA
 let ceres = new Body("Ceres", "#aaa", earth.mass*.0001579, 470000, [0,0,0], [0,0,0]);
 ceres.kepler(sun, 2.76799*au, 0.0761669, 10.5942/180*Math.PI, 72.1671/180*Math.PI, 80.3301/180*Math.PI, 327.854/180*Math.PI, NOW, ceres_epoch);
+ceres.desc = "the largest of the celestial bodies in the asteroid belt. ceres is classified as a dwarf planet, actually!";
 let pallas = new Body("Pallas", "#fff", earth.mass*.0000345, 263000, [0,0,0], [0,0,0]);
 pallas.kepler(sun, 2.77202*au, 0.2315, 34.8368/180*Math.PI, deg(309.954), deg(173.12), deg(310.045), NOW, ceres_epoch); // pallas & ceres epoch are the same for some reason
 let juno = new Body("Juno", "#aaf", earth.mass*4.722*10**-6, 130000, [0,0,0], [0,0,0]);
@@ -411,6 +532,7 @@ vesta.kepler(sun, 2.36179*au, 0.08874, deg(7.14043), deg(151.19853), deg(103.851
 
 let jupiter = new Body("Jupiter", "#faf", 1.8982*10**27, 69911000, [0,0,0], [0,0,0]);
 jupiter.kepler(sun, 778.479*10**9, 0.0489, 1.303/180*Math.PI, 273.867/180*Math.PI, 100.464/180*Math.PI, 20.020/180*Math.PI, NOW, J2000_epoch);
+jupiter.desc = "how jovial! and excessively huge!";
 let io = new Body("Io", "#fa0", earth.mass*.01495, 1821600, [0,0,0], [0,0,0]);
 io.kepler(jupiter, 421800000, 0.004, deg(0.0), deg(49.1), deg(0.0), deg(330.9), NOW, J2000_epoch);
 let europa = new Body("Europa", "#fff", earth.mass*.008035, 1560800, [0,0,0], [0,0,0]);
@@ -425,7 +547,28 @@ amalthea.kepler(jupiter, 181400000, 0.003, deg(0.384285), deg(301.622765), deg(2
 //io.icrf_to_ecliptic(deg(268.1), deg(64.5));
 
 let saturn = new Body("Saturn", "#ffa", earth.mass*95.162, 60268000, [0,0,0], [0,0,0]);
-saturn.kepler(sun, 9.5371*au, 0.0542, 2.4845/180*Math.PI, (92.432-113.715+360)/180*Math.PI, 113.715/180*Math.PI, (49.944-92.432+360)/180*Math.PI, NOW, J2000_epoch)
+saturn.kepler(sun, 9.5371*au, 0.0542, 2.4845/180*Math.PI, (92.432-113.715+360)/180*Math.PI, 113.715/180*Math.PI, (49.944-92.432+360)/180*Math.PI, NOW, J2000_epoch);
+saturn.desc = "wawa";
+
+// the georgium sidus, or just 'sidis'
+let uranus = new Body("Uranus", "#0fa", earth.mass*14.536, 25362000);
+uranus.kepler(sun, 19.19126*au, 0.04717, deg(0.773), deg(96.998857), deg(74.006), deg(142.238600), NOW, J2000_epoch);
+uranus.desc = "uranus, also known as The Georgium Sidus and/or Urinus, is a big ball way out in space.";
+
+let neptune = new Body("Neptune", "#0af", earth.mass*17.147, 24622000);
+neptune.kepler(sun, 30.07*au, 0.008678, deg(1.770), deg(273.187), deg(131.783), deg(259.883), NOW, J2000_epoch);
+neptune.desc = "the least moons of the giants, and the least-powerful winds.";
+
+let pluto = new Body("Pluto", "#f7a", 1.303*10**22, 1188300);
+pluto.kepler(sun, 39.482*au, 0.2488, deg(17.16), deg(113.834), deg(110.299), deg(14.53), NOW, J2000_epoch);
+pluto.desc = "even though it doesn't make categorical sense, the iau should've left pluto as an honorary/anachronistic planet";
+
+let eris = new Body("Eris", "#577", 1.6*10**22, 1163000);
+eris.kepler(sun, 67.864*au, 0.43607, deg(44.040), deg(151.639), deg(35.951), deg(205.989), NOW, JD_epoch(2020, 4, 31, 00).getTime()/1000);
+
+let sedna = new Body("Sedna", "#f07", 10**22, 1000000);
+sedna.kepler(sun, 506*au, 0.8496, deg(11.9307), deg(311.352), deg(144.248), deg(358.117), NOW, JD_epoch(2020, 4, 31, 00).getTime()/1000);
+sedna.desc = "not much is known about sedna's physical characteristics!\nif new info comes out about its mass/radius, it will definitely be updated posthaste.\n(todo: display mass/radius in body info)";
 
 //let comet = new Body("Comet", "#fff", 10**6, 1000, [1000000000000,0,0], [0,-2500,0]);
 //comet.parent = sun;
@@ -453,11 +596,22 @@ canvas.addEventListener('mousedown', function (e) {
 	if (hovered_body != neutral_reference) {
 		pan = [0,0]; // if we're not looking at nothing (i.e., looking at a planet) then focus the camera at the center of the object of interest
 	} else {
+		let old_pan = [...pan];
 		pan = vec_mul(focused_body.pos, -zoom); // if we suddenly ARE looking at nothing, then rearrange the camera to at least be where we were when we were where we where. this will not change the effective panning, but the trails should still be cleared; the focused body (or reference frame, whatevevr) has changed.
+		pan = vec_add(old_pan, pan); // add the offset so that the camera is *never* jerked around without prior approval.
 	}
 	camera_clear_for_trails(); // if you're changing perspectives without changing the pan through the wasd or arrows, the camera needs to be cleared.
 	focused_body = hovered_body; // focus on the darn thing you're hovering over
 	hovered_body = neutral_reference; // forget i asked!
+});
+document.getElementById("info-body-desc").addEventListener('input', function (event) {
+	focused_body.desc = document.getElementById("info-body-desc").value; // save and apply
+});
+document.getElementById("info-body-desc").addEventListener('focus', function (event) {
+	GUI_desc_focused = true; // waow2
+});
+document.getElementById("info-body-desc").addEventListener('blur', function (event) {
+	GUI_desc_focused = false; // waow
 });
 let pan = [0,0];
 let mouse_pos = [0,0];
@@ -478,13 +632,16 @@ let labels = true;
 //trails=true;labels=false;step=3000;
 let focused_body = neutral_reference;
 let hovered_body = neutral_reference;
+
+let GUI_last_focused_body = null;
+let GUI_desc_focused = false;
 //focused_body = mars; zoom *= 5000;// step = 10;
 function draw_body(body, be_modular=false) {
 	let onscreen_x = pan[0] + canvas.width/2 + (body.pos[0]-focused_body.pos[0])*zoom;
 	let onscreen_y = pan[1] + canvas.height/2 + (body.pos[1]-focused_body.pos[1])*zoom*Math.cos(yz_rot) + (body.pos[2]-focused_body.pos[2])*zoom*Math.sin(yz_rot);
-	let distance_to_parent = ((body.pos[0]-body.parent.pos[0])**2 + (body.pos[1]-body.parent.pos[1])**2 + (body.pos[2]-body.parent.pos[2])**2)**.5;
-	if (((mouse_pos[0]-onscreen_x)**2 + (mouse_pos[1]-onscreen_y)**2)**.5 < zoom*body.radius + 7 &&
-		(body.parent == neutral_reference || distance_to_parent*zoom > 16)) {
+	let distance_to_parent = ((body.pos[0]-body.parent.pos[0])**2 + (body.pos[1]-body.parent.pos[1])**2 + (body.pos[2]-body.parent.pos[2])**2);
+	if (((mouse_pos[0]-onscreen_x)**2 + (mouse_pos[1]-onscreen_y)**2) < (zoom*body.radius + 7)**2 &&
+		(body.parent == neutral_reference || distance_to_parent*zoom*zoom > 256)) { // see the similar condition in draw_body_with_label
 		hovered_body = body;
 	} else {
 		if (hovered_body == body) {hovered_body = neutral_reference;}
@@ -509,7 +666,7 @@ function draw_body_with_label(body) {
 	let scale = info[2];
 	let distance_to_parent = info[3]
 	if (labels) {
-		if (body.parent == neutral_reference || distance_to_parent*zoom > 16) {
+		if (body.parent == neutral_reference || distance_to_parent*zoom*zoom > 256) { // if the distance times the zoom is greater than 16, then the square distance times the zoom squared must be greater than 16**2, which is 256. if the parent is neutral, then no distance can be ascribed, so the object must always be labelled.
 			if (trails) {
 				ctx.font = "12px \"MS UI Gothic\"";
 				let width = ctx.measureText(" "+body.name).width;
@@ -526,9 +683,6 @@ function draw_body_with_label(body) {
 }
 function draw() {
 	/* * * display * * */
-	let current_moment = new Date(Date.now());
-	let simulation_moment = new Date(1000*(NOW+time));
-	document.getElementById("simulation-time-indicator").innerHTML = simulation_moment;//.toUTCString();
 	
 	if (!trails) ctx.clearRect(0, 0, canvas.width, canvas.height);
 	for (let i = 0; i < bodies.length; i++) {
@@ -570,12 +724,14 @@ function camera_clear_for_trails() { // if the view/panning/zoom of the scene is
 }
 function loop() {
 	/* * * not display (camera panning) * * */
-	if (active_keys && (active_keys[37] || active_keys[65])) {pan[0] += 10; camera_clear_for_trails()}
-    if (active_keys && (active_keys[39] || active_keys[68])) {pan[0] -= 10; camera_clear_for_trails()}
-    if (active_keys && (active_keys[38] || active_keys[87])) {pan[1] += 10; camera_clear_for_trails()}
-    if (active_keys && (active_keys[40] || active_keys[83])) {pan[1] -= 10; camera_clear_for_trails()}
-	if (active_keys && active_keys[70]) {step *= 1.1;}
-	if (active_keys && active_keys[82]) {step /= 1.1;}
+	if (!GUI_desc_focused/*not focusing textarea*/) {
+		if (active_keys && (active_keys[37] || active_keys[65])) {pan[0] += 10; camera_clear_for_trails()}
+		if (active_keys && (active_keys[39] || active_keys[68])) {pan[0] -= 10; camera_clear_for_trails()}
+		if (active_keys && (active_keys[38] || active_keys[87])) {pan[1] += 10; camera_clear_for_trails()}
+		if (active_keys && (active_keys[40] || active_keys[83])) {pan[1] -= 10; camera_clear_for_trails()}
+		if (active_keys && active_keys[70]) {step *= 1.1;}
+		if (active_keys && active_keys[82]) {step /= 1.1;}
+	}
 	
 	/* * * settings * * */
 	trails = document.getElementById("trails-setting").checked;
@@ -629,19 +785,73 @@ function loop() {
 		for (let i = 0; i < bodies.length; i++) {
 			let body = bodies[i];
 			body.pos = vec_add(body.pos, vec_mul(body.vel, step));
+			if (trails && S % 15 == 0) draw_body(bodies[i]);
 		}
 		
-		for (let i = 0; i < bodies.length; i++) { // bluh
+		/*for (let i = 0; i < bodies.length; i++) { // bluh (this is irreducible because if you merged it with the pos-updating loop, objects would be drawn where they technically never were in relation to each other. same goes for pos to vel-updating; essentially these all have to be buffers of each other, which is terrible.)
 			if (trails && S % 5 == 0) draw_body(bodies[i]);
-		}
+		}*/
 		
 	}
 	
 	time += step * speed; // keep in step!
 	tick++;
-	draw();
+	draw(); // listen i know this distinction is silly but i want the other stuff to work even if nothing is being drawn to the canvas xdd
+	let current_moment = new Date(Date.now());
+	let simulation_moment = new Date(1000*(NOW+time));
+	let current_epoch = 2451545 + (simulation_moment.getTime()/1000 - J2000_epoch)/86400;
+	document.getElementById("simulation-time-indicator").innerHTML = simulation_moment;//.toUTCString();
+	if (GUI_last_focused_body != focused_body) { // aka, on hovered_body change do:
+		GUI_last_focused_body = focused_body;
+		if (focused_body == neutral_reference) {
+			document.getElementById("info-floating").classList.remove("hidden");
+			document.getElementById("info-body").classList.add("hidden");
+		}
+		else {
+			document.getElementById("info-floating").classList.add("hidden");
+			document.getElementById("info-body").classList.remove("hidden");
+			
+			document.getElementById("info-body-desc").value = focused_body.desc; // update the description box :3
+		}
+	}
+	if (focused_body != neutral_reference) {
+		let body_info = focused_body.get_osculating_elements();
+		for (let i = 0; i < body_info.length; i++) {body_info[i]*=10**8; body_info[i] = Math.round(body_info[i]); body_info[i]/=10**8;}
+		let sma = body_info[0];
+		if (sma > au*.1) {sma /= au; sma = (Math.round(sma*10**8)/10**8) + 'au';}
+		else {sma /= 1000; sma = Math.round(sma) + 'km';}
+		let orbital_period = body_info[7];
+		let minutes = orbital_period/60;
+		let hours = minutes/60;
+		let days = hours/24; // JD, Julian Days
+		let years = days/365.25; // JY, Julian Years(?)
+		years = Math.floor(years);
+		days = Math.floor(days)%365; // this should be 365.25 but i'll fix it later. wawa!
+		hours = Math.floor(hours)%24;
+		minutes = Math.floor(minutes)%60;
+		let seconds = (Math.round((orbital_period%60)*1000)/1000); // sorry for roundy decimal-pointy wackery
+		let orbital_period_string = "";
+		if (years > 0) orbital_period_string += years + "y ";
+		if (days > 0 || years > 0) orbital_period_string += days + "d ";
+		if (hours > 0 || days > 0 || years > 0) orbital_period_string += hours + "h ";
+		orbital_period_string += minutes + "m " + seconds + "s";
+		
+		document.getElementById("info-body-name").innerHTML = focused_body.name;
+		document.getElementById("info-body-parent").innerHTML = focused_body.parent.name;
+		document.getElementById("info-body-epoch").innerHTML = "JD" + current_epoch;
+		document.getElementById("info-body-sma").innerHTML = sma;
+		document.getElementById("info-body-ecc").innerHTML = body_info[1] + "";
+		document.getElementById("info-body-inc").innerHTML = body_info[2] + "&deg;";
+		document.getElementById("info-body-arg-per").innerHTML = body_info[3] + "&deg;";
+		document.getElementById("info-body-lon-asc").innerHTML = body_info[4] + "&deg;";
+		document.getElementById("info-body-mean-anomaly").innerHTML = body_info[5] + "&deg;";
+		document.getElementById("info-body-true-anomaly").innerHTML = body_info[6] + "&deg;";
+		document.getElementById("info-body-orbital-period").innerHTML = orbital_period_string;
+	}
+	
 	window.requestAnimationFrame(loop);
 }
+document.getElementById("labels-setting").checked = true;
 loop();
 </script>
 </body>
