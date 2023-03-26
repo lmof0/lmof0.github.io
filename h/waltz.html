@@ -1,0 +1,53 @@
+<!doctype html>
+<html style="--w: #ffffff; --b: #000000;">
+<head>
+<title id="face"></title>
+<style>
+:root {
+	--w: #ffffff;
+	--b: #000000;
+}
+body {
+	background:var(--w);
+	overflow:hidden;
+}
+</style>
+</head>
+<body>
+<div id="libration" style="color:var(--w);background:var(--b);padding:0px;margin:99px;height:7px;width:fit-content;cursor:help;font-family:monospace;transform:skewY(1deg);user-select:none;" onclick="transfer();">59%</div>
+<script>
+let t = 9;
+let m = document.getElementById("libration");
+let root = document.querySelector(":root");
+let mod =(x,n)=> {return Math.abs(x)%n}
+orbit =()=> {
+	m.innerHTML = m.innerHTML.substr(1,999) + m.innerHTML[0];
+	t--;
+	if(t%60 == 0) {m.innerHTML += "lunacy";}
+	if(t%3600 == 0) {m.innerHTML = "-harvest" + m.innerHTML;}
+	document.getElementById("face").innerHTML = "the moon: "+m.innerHTML; // in case you're wondering
+	let u = (mod((Number("0x"+root.style.getPropertyValue("--w").substr(1)) - 1),0xffffff)).toString(16);
+	root.style.setProperty("--w","#"+("0".repeat(6-u.length))+u);
+	let uu = (mod((Number("0x"+root.style.getPropertyValue("--b").substr(1)) - 1),0xffffff)).toString(16);
+	root.style.setProperty("--b","#"+("0".repeat(6-uu.length))+uu);
+	window.requestAnimationFrame(orbit);
+}
+transfer =()=> {
+	if (root.style.getPropertyValue("--b") == "#000000") {
+		root.style.setProperty("--b","#ffffff");
+		root.style.setProperty("--w","#000000");
+	} else {
+		root.style.setProperty("--b","#000000");
+		root.style.setProperty("--w","#ffffff");
+	}
+	setTimeout(transfer, 12000);
+}
+m.title = "h fodder needs less\n\nnickel-alumnide";
+orbit();
+</script>
+</body>
+</html>
+<!--least favorite actually i think
+so todo make better ajekhkjadhgjkad
+
+real todo : make this page actually into either a realtime simulation of the solar system or a mockup gravity simulation of our solar system (preferably mockup tbh frfr)-->
