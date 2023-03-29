@@ -1,0 +1,66 @@
+<!doctype html>
+<html><!-- todo : GET BACK TO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
+<head>
+<meta charset="utf-8">
+<title>a website: elements</title>
+<!--<link href="../default.css" rel="stylesheet" type="text/css">-->
+<style>
+body {
+	background-color: #DDDDDD;
+	color:#333333;
+	font-family: Helvetica;
+}
+div {
+	display:inline;
+}
+a {
+	color: #3388ee;
+}
+a:visited {
+	color: #bb88ee;
+}
+</style>
+</head>
+<body>
+	<div id="elements" style="font-size:125%;"></div>
+	<br><br><br><br><br>
+	<a href="../index.html">back</a>
+</body>
+<script>
+function random(x) {
+	return Math.floor(Math.random() * x);
+}
+function varInList(s, L) {
+	for (tmp = 0; tmp < L.length; tmp++) {
+		if (s == L[tmp]) { return true; }
+	}
+	return false;
+}
+function choose(l,w=1) { // finally my own version of this function
+	let i = Math.floor(Math.pow(Math.random(), w) * l.length);
+	return l[i];
+}
+class Element {
+	constructor(id, name, color) {
+		this.id = id;
+		this.name = name;
+		this.color = color;
+	}
+	getHTML() {
+		return "<div style=\"color:#"+this.color+"\" onClick=\"elements["+(this.id-1)+"].getInfo();\">#"+this.id+" "+this.name+"</div>"; // sorry
+	}
+	getInfo() {
+		return "todo";
+	}
+}
+let elements = [];
+elements.push(new Element(1,"Air","AAAAFF"));
+elements.push(new Element(2,"Water","003BFF"));
+elements.push(new Element(3,"Fire","FF3B00"));
+elements.push(new Element(4,"Earth","9B3B00"));
+let elements_as_html = "";
+for (let i = 0; i < elements.length; i++) {elements_as_html += elements[i].getHTML() + "<br>".repeat(i != elements.length - 1);}
+
+document.getElementById("elements").innerHTML = elements_as_html;
+</script>
+</html>
