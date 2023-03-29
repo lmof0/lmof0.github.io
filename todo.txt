@@ -1,0 +1,16 @@
+moon waltz midi (player?)
+playlister
+gravity simulation (waltz)
+quantum mechanics with webgl (hahahahahahahahahahahahahahahaha no)
+
+finish (&or/ make presentable in alpha/beta-like fashion) all of these currently unfinished things:
+ gamingplease/accumulate
+ gamingplease/materialtech (hint : simple!)
+ gamingplease/powder (hint : do a simple GoL one! that shouldn't be too hard!)
+ ret/elements
+ m/arrays
+ h/waltz
+ sol/wry
+index needs all its todos and things and eastereggs sorted through, streamlined, and fnished.xd.
+
+also ta. please

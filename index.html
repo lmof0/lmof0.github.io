@@ -1,0 +1,784 @@
+<!doctype html> <!-- the homepage -->
+<html style="
+	--blank: #ffffff; /* #f7f7f7 */
+	--fill: #000000;
+	
+	--hred_col: #ff0000;
+	--hgreen_col: #00ff00;
+	--hblue_col: #0000ff;
+	
+	--full_text_transform: inherit;
+	
+	--light_section: #cccccc;
+	--dark_section: #aaaaaa;
+">
+<head>
+<meta charset="utf-8">
+<title>a website</title>
+<link href="default.css" rel="stylesheet" type="text/css">
+<!--<style>
+#gaming {
+	position: relative;
+	top: 0;
+	animation: mymove 2s infinite;
+}
+@keyframes mymove {
+	50% {top:-15px;}
+}
+</style>
+
+
+
+
+haiiii x3
+
+
+
+
+
+outhouse
+, inhouse
+
+
+
+
+, copynothing 2023 ZERO rights reserved or confirmed
+
+
+
+
+wea
+
+-->
+<style>
+#funny {
+	position: absolute;
+	top: -100%;
+	left: 75%;
+	animation: the 12s 1;
+	animation-delay: 137s;
+	-webkit-user-select:none;-ms-user-select:none;user-select:none;
+	color: #ffff00;
+	font-size: 200%;
+	-ms-transform: rotate(20deg); /* IE 9 */
+	transform: rotate(20deg) scaleX(2) scaleY(2);
+	font-family: serif;
+}
+:root {
+	--blank: #ffffff; /* #f7f7f7 */
+	--fill: #000000;
+	
+	--hred_col: #ff0000;
+	--hgreen_col: #00ff00;
+	--hblue_col: #0000ff;
+	
+	--full_text_transform: inherit;
+}
+@keyframes the {
+	50% {top: 80%;}
+}
+body {
+	background: var(--blank);
+	color: var(--fill);
+	overflow: hidden;
+	overflow-y: auto;
+	text-transform: var(--full_text_transform);
+}
+.hred { /* h for 'huge' xd ('hea(r())der?'?)? */
+	font-size: 2.5em;
+	color: var(--hred_col);
+}
+.hgreen {
+	font-size: 2.5em;
+	color: var(--hgreen_col);
+}
+.hblue {
+	font-size: 2.5em;
+	color: var(--hblue_col);
+}
+.section_wrapper {text-align:center;width:100%;}
+.section_of_linques {
+	background: var(--light_section);
+	text-align: left;
+	width:30%;
+	display:inline-block;
+	padding:10px;
+	right:30%;
+	border:solid 5px var(--dark_section);
+}
+/*
+perhaps :a, :a:visited could work? (for the green links (in the bwurtz easteregg))
+*/
+</style>
+</head>
+<body id="body">
+	<div style="background-color:var(--fill);color:var(--blank);padding:20px;text-align:left;/*border-radius:20px;*/">
+		<header id="header">my website</header>
+		<subtitle id="welcome"></subtitle>
+	</div>
+	<div id="funny"><a href="h/index.html" style="text-decoration:inherit;color:inherit;">ooooo secrets</a></div>
+	<script>
+	// wow nice project you sell????/
+		function maybe(s) {
+			return s.repeat(Math.floor(Math.random()*2));
+		}
+		function maye(s) {
+			return s.repeat(Math.floor(Math.random()*3));
+		}
+		function choose(l,w=1) { // finally my own version of this function
+			let i = Math.floor(Math.pow(Math.random(), w) * l.length);
+			return l[i];
+		}
+		function backwardsify(s) {
+			let n = "";
+			for (let i = s.length-1; i >= 0; i--) {
+				n += s[i];
+			}
+			return n;
+		}
+		let hexify = Math.random() > 0.75;
+		function codeify(s) {
+			let n = "";
+			for (let i = 0; i < s.length; i++) {
+				n += s.charCodeAt(i).toString(hexify ? 16 : 10);
+				if (i < s.length - 1) n += " ";
+			}
+			return n;
+		}
+		function random_color() {
+			let r = (Math.floor(Math.random()*0xffffff)).toString(16);
+			r = "0".repeat(6-r.length)+r; //padding
+			return "#" + r; // oh no
+		}
+		function number_as_silly(n) {return "[]-![]"+("+!![]".repeat(n));}
+		function caesarify(input, cipher="n") {
+			let alphabet = "abcdefghijklmnopqrstuvwxyz";
+			//let cipher = normal.substr(13)+normal.substr(0,13);
+			let ciphered = "";
+			for (let i = 0; i < input.length; i++) {
+				let n = alphabet.indexOf(input[i]);
+				if (n != -1) {
+					ciphered += alphabet[(n+alphabet.indexOf(cipher[i%cipher.length]))%alphabet.length];
+				} else {
+					ciphered += input[i];
+				}
+			}
+			return ciphered;
+		}
+		rot13 =(input)=> {return caesarify(input)}
+		let root = document.querySelector(":root"); // yes i do
+		let ultimate_custom_night = false; // ooooooooool
+		let randomly_styled = Math.random() > 0.9905; // 0.95%
+		if (randomly_styled) {
+			root.style.setProperty("--blank", random_color());
+			root.style.setProperty("--fill", random_color());
+			let big_epic_title = "";
+			let big_epic_length = Math.floor(Math.random()*14);
+			let big_epic_letters = "abcdefgpoivcluq  ";
+			let contains_letters = false;
+			for (let i = 0; i < big_epic_length; i++) {
+				big_epic_title += big_epic_letters[Math.floor(Math.random()*big_epic_letters.length)];
+				if (big_epic_title[big_epic_title.length-1] != " ") contains_letters = true;
+			}
+			if (!contains_letters) big_epic_title = big_epic_letters[Math.floor(Math.random()*8)];
+			document.getElementById("header").innerHTML = big_epic_title;
+			document.getElementById("funny").innerHTML = "<a href=\"h/waltz.html\" style=\"text-decoration:inherit;color:inherit;\">"+big_epic_letters[Math.floor(Math.random()*8)]+backwardsify(big_epic_title)+"</a>"; // todo : IMPROVE THE WALTZ ERRGHGHRGRHHR
+			document.getElementById("funny").style = "position: absolute;top: -100%;left: 70%;animation: the 12s infinite;animation-delay: 1s;-webkit-user-select:none;-ms-user-select:none;user-select:none;color: var(--fill);-ms-transform: rotate(-20deg);transform: rotate(-20deg) scaleX(4) scaleY(2);font-family: serif;";
+			
+			if (root.style.getPropertyValue("--blank") == "#01d433" && root.style.getPropertyValue("--fill") == "#295633") {
+				document.getElementById("header").innerHTML = "uoqpvdb uogu";
+				document.getElementById("funny").innerHTML = "<a href=\"h/index.html\" style=\"text-decoration:inherit;color:inherit;\">gugou bdvpqou</a>";
+				console.log("%creign you, congratulations!"+maybe(" this might just be the rarest thing possible on this site!"),"color:#f7f");
+			}
+			ultimate_custom_night = true;
+		}
+		let j=()=>j.toString(); // hehe
+		let j2=(()=>j)();
+		eval("j="+j()); // invariant
+		let color = "var(--blank)";//(0xffffff).toString(16);
+		if (Math.random() > 0.95) {
+			/*color = (Math.floor(Math.random()*0xffffff)).toString(16);
+			color = "0".repeat(6-color.length)+color; //padding
+			color = "#" + color; // oh no*/
+			color = random_color();
+		}
+		function illion() {
+			if (Math.random()>0.99) return choose(["amongent","morb","sk","vr","your mom "],1.5)+"illion";
+			let p = ["","un","duo","tre","quattuor","quin","sex","septen","octo","novem"];
+			let s = ["dec","vigint","trigint","quadragint","quinquagint","sexagint","septuagint","octogint","nonagint","cent"];
+			return choose(p)+choose(s)+"illion";
+		}
+		// and i will steal from w3 and it will be good
+		function allowDrop(ev) {
+			ev.preventDefault();
+		}
+		function drag(ev) {
+			ev.dataTransfer.setData("text", ev.target.innerHTML);
+		}
+		function drop(ev) {
+			ev.preventDefault();
+			let data = ev.dataTransfer.getData("text");
+			//ev.target.appendChild(document.getElementById(data));
+			//console.log(ev);
+			let dragged_thing = data;//document.getElementById("welcome");
+			//console.log(dragged_thing);
+			/*while (typeof(dragged_thing) != "string") { // get rid of fancy div stuff and just give me the raw text
+				if (dragged_thing.firstChild != null) {
+					dragged_thing = dragged_thing.firstChild;
+				} else {
+					dragged_thing = dragged_thing.data;
+				}
+			} oh well or i guess you can just get the drag data directly like some kind of clever person*/
+			/*ev.target.innerHTML =*/
+			return (dragged_thing=="Drag me!")?"Dragged me!":dragged_thing.substr(0,99);
+		}
+		
+		function password_change() {
+			let input = document.getElementById("password").value;
+			localStorage.setItem("secretpassword", input);
+			switch (input) {
+				case "porcupine":
+					document.getElementById("header").innerHTML = "my procupine"; // just a little dress up
+					break;
+				case "william":
+					document.getElementById("password").value = "willia";
+					break;
+				case "wawa":
+					document.getElementById("header").innerHTML = ">:D";
+					if (Math.random() > 0.9) document.getElementById("header").innerHTML = choose(["sina wawa ala wawa? pona!","lipu mi"]);
+					break;
+				case "nermran": // "normal" "in" "icelandic"
+					document.getElementById("header").innerHTML = "my website";
+					break;
+				case "i dont know":
+					document.getElementById("password").value = choose(["reality","so many wurtz-inspired eggs lying around today lately. but santa claus is still max character limi","yes you do, sorry","sorry, yes you do","william"]);
+					break;
+			}
+		}
+		let actual_password = ""; // scuse me
+		if (localStorage.getItem("secretpassword") != null) actual_password = localStorage.getItem("secretpassword"); // hey hey welcome to this crowd hope you don't miind
+		if (actual_password == "william") actual_password = "willia";
+		let actual_option = "";
+		if (localStorage.getItem("dropdown") != null) actual_option = localStorage.getItem("dropdown");
+		
+		// nermran
+		let grapes = (color == "#873bf3" || color == "#762bdc");
+		let irongem= (color == "#f69bb5" || color == "#f0a0b0");
+		let lunacy = (color == "#16a26d" || color == "#1cb643" || color == "#679a78") || color == "#2bda67";
+		let firegol= (color == "#ffd965");
+		let quinac = (color == "#8d3f50");//ridrone magenta
+		let warning= (color == "#edfe77" || color == "#ffff77");
+		let slated = (color == "#7ea897");
+		let aradium= (color == "#d85206" || color == "#ce1919" || color == "#c30d3d");
+		let bame = Math.random()>.5; // hi bame
+		things = ["you're here early!","lovely, isn't it?","oh hi","hello there","y"+("o".repeat(Math.floor(Math.random() * 10)))+"!!!!!!!!!!!!!!!","did you know? d/dx e^x = e^x! (not factorial) it's true!",maybe("haven't you heard? the ")+"egg"+maybe(" is the word."),"uafehalimchuaichjzbchfjakfeyga","it's all mine!!!!","my website","welcome","yes","no","maybe","","all big numbers are greater than small numbers","?etisbew ym","4,923 days without incident","[DATA EXPUNGED]","document.getElementById(\"welcome\").innerHTML = this;",choose(["poop ","<a href=\"h/poop.html\" style=\"color:"+color+";text-decoration:none;\">poop</a> "],4)+("ha".repeat(Math.floor(Math.random() * 50))),"j","l",":) ",":( ","(: ","): ","q".repeat(100),"i am not sitting on the floor.","do you think about breathing?","Catastrophic System Failure","<br><br>haha yes i am larger now<br><br>","gerber burger ".repeat(10),"i got myself some liver remover","<div style=\"font-size:500%\">i am also large.</div>","nothingness does not exist","somethingness is a ubiquitous property","j.",choose(["&emsp;<div style=\"position:fixed;right:0px;display:inline;\">","&emsp;".repeat(100)],3)+maybe("t")+"he","you!!!!!!!!!!!!!!!!!!!!!!!!!","the website","thank you for checking out my web site!","enter return","oopsy","<a href=\"ret/me.html\" style=\"color:"+color+";text-decoration:none;\">me</a>","thank you for contacting the","burger king","stop","continue","you're aren't"+maybe(" *epic backflip*"),"i poured grapejuice on my monopoly "+choose(["money","credits"])+" :(","i poured monopoly "+choose(["money","credits"])+" on my grapejuice :)","them","alright i'll buy it","how would you feel ?","um <a href=\"index.html\" style=\"color:inherit;text-decoration:none;\">ok</a>","retroactive radioactivity","pls","i have a truly marvelous proof, which this margin is too narrow to contain. demonstrationem mirabilem, hanc marginis exiguitas non caperet.","you can't have your cake and eat it too.","Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. ".repeat(3),"dass aber ein jeder numerus par eine summa duorum primorum sey, halte ich für ein ganz gewisses theorema, ungeachtet ich dasselbe nicht demonstriren kann.","welcome to the gateway!","we'll be waiting.","ambabofbeaofbeaio","bubble party","are you <a href=\"ret/gaming.html\" style=\"color:"+color+";text-decoration:none;\">gaming?</a> unlikely.."+".".repeat(Math.floor(Math.random()*3)),"you can't eat","maybe it's a bit extra","i poured grape money on my monopoly juice (:","i poured monopoly juice on my grape money ):"," ","<a href=\"https://www.youtube.com/watch?v=AuA2EAgAegE\" style=\"color:inherit;text-decoration:none;\">e"+maybe("!")+"</a>","hi"+maybe(" hello"+maybe(" hi"))+" are you round","do you work for round corporations"+maybe("?"),"div element","the end.","quite possibly one of the foremost in researching","y'all thou hast","sudo shutdown -h 0","[2 1]","quine wine","web page","find <a href=\"ret/me.html\" style=\"color:inherit;text-decoration:none;\">me</a>","'unique' and 'distinct' are two words which are"+maybe(" uniquely")+" distinct from each other"+maybe(". that is, they are distinct from each other in a unique way"),"what are you doing"+maybe(" here"+maybe("in"+maybe(" this"+maybe(" establishment")))),"hello branchless strings"+maybe("!"),"good awesome",maybe("!eurt st'i ")+"!desrever eb lliw ereh txet eht taht ecnahc tnecrep owt a s'ereht ?wonk uoy did","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">there's also a "+choose(["1","5"])+"% chance for the color of this text to be random :)</div>","PV is not nP"+maybe(" but is nRT"),"cat /dev/urandom ","hello windows user !","who could you be?","fate decided","decimal is not a great number system","base 17 is the least great number system","true"+maybe(" love"+maybe(" will")),"Click Me!","hello i am things[100] nice to meet you","there are no real chairs","believe me, darling","45"+maybe(" * 8 = "+maybe("360"+maybe("±0"))),"6 * 9 = 42","math is"+maybe("n't very")+" important"+maybe(" at all"),"the types of "+choose(["poop","<a href=\"h/poop.html\" style=\"color:"+color+";text-decoration:none;\">poop</a>"],3)+maybe(" which exist")+" are truly numerous","palindrome backwards is palindrome","8281828459045","pentahexahectametric rime in thyme"+maybe(" and//or rhyme in time"+maybe("'s old age"+maybe(" long lost forgotten"))),"it's an obsession"+maybe(" i can begin at any time"),"dywabpidag","the thing before me is true","the thing after this thing is false","ii","$ tree","qine w(h)uine","be loud"+maybe(". continue talking for several weeks."),"Euclid's \"The Elements\"","s"+"h".repeat(Math.floor(Math.random()*50)),"i'm looking at you,"+maybe(" web-page refreshers"+maybe(" >:(")),"97... (or was it 0+98?) find you in the end","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">we hold our hands against the indeterminable stretch, between which idea goes ahead of us</div>","toothing","\"backwards\" backwards is palindrome","<a href=\"https://www.youtube.com/watch?v=Gcgawrr2xao\" style=\"color:"+color+";text-decoration:none;\">desert island"+maybe("s")+" rain"+maybe(", you know")+"</a>","so many nooks and crannies","x=y for all (x,y)","you are inordinate!","headache-induced","ginats"+maybe("!"),"some peptic salve and adrenaline","not your cheese"+maybe("!"),"phosphorus oxygen lanthanum neodymium","T","there's somethingness everywhere! "+choose(["why","run","poo","hi","hello","aaa","crazy"],1.1)+"!!!!!!!!!!!!!!",choose(["&emsp;","<a href=\"h/secret.html\" style=\"color:"+color+";text-decoration:none;\">&emsp;</a>"],3),"wintertime is upon 25% of us","too many things not enough time","i'm a liver excavator; i excavate for the livers","liver extraction","livermorium (more liver)","break it down "+maybe(" down left right left right"),"<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">gravity bound by our stars</div>","<abbr title=\"abberates us all\" style=\"text-decoration:none;\">abberation</abbr>","&uarr; i agree","STOP STOPPING<br>continue continuing for a short little while.","pretty trash","stop reading","the center","the centre","is there too much going on?","dyhtfjjjwaomgiggohoihawtsasttatrtbdyhtcswyrtenynimbnciycbwyttptuyrafayoamsgiuas","&larr;","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">fulfilled childlike dreams</div>","congratulations you win ! !",choose(["all same no game"+(bame ? " let's bame on lame down pame up tame guide ways for through line name" : ""),"same old madness","~","one of us","i found a cloning machine the other day,"+maybe(" but i only need 1 :)"),"now with 7 of these things"]),"i'm different!","this is so insane i think i'll go <abbr title=\"w-resize w\ wait waiting was watch watch way wbr we web web-page\" style=\"text-decoration:none;\">wild</abbr>","conformed confuzzle confounded confused conjoined conflated connected condensed conalptic conelliptic conarchy conflection"+maybe(" constringent"),"free wants to be information","[sic]","you're a linux user, aren't you","do i need it","can i beat it","yum yum","all hail","do you wanna cosine alone?","do you wanna co-sign a loan?","anodizing, circuitrizing",console.toString(),"Co-56","m"+maybe("a"+maybe("y"+maybe("b"+maybe("e")))),"every single "+choose(["splash","thing"],2)+" is so rare "+maybe("it's almost like ")+"it's approaching a continuum! you don't know what you'll get, but you can be certain that your guess will be wrong.","haha just kidding","&".repeat(14),"no added additives"+maybe(", no subtracted subtractitives"),"i hol(e)d a mastery over the past(e)ry","this place is the sussest of the bunch","transformates: phosphorus hydrogen osmium phosphorus holmium ruthenium sulfur","perhaps a bit too perfect","toki! mi sitelen.","cool guitar riffs","tritanium as a tritium-titanium alloy is pretty silly","return to obscure"+maybe(maybe(" yes")+" i shall"),"for every spring","sina mi ala, la mi sina ala!","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">everything moves, so push over or get moved under in great succession</div>","what???"+maybe("?".repeat(50)),"?".repeat(50),"canine mass of 180.1 woofs for 6.02 of any given dog","everything moves at c, but most things tend to move using that speed through time, as opposed to space","yes-op instruction!"+maybe(" o kama seme!"),"it isn't a collinder","118<sub>294</sub>","the sinter","be quiet in waiting",maybe("regain"+maybe(", obtain"+maybe(", arrange"+maybe(", aim"+maybe(", shoot"+maybe(", destroy")))))),"o lukin ala"+maybe(" e ni"+maybe(". ni li sitelen ike"))+". oops!","all over town","blah blah blah blah blah blah bla-blah blah"+maybe(", all alon"+maybe("g")+"e"),"you're a linux user ".repeat(8)+"("+choose(['b','p','g','h','w','q','waw'],1.5)+"ah)","ba"+choose(["p","f","pf"])+"anada octis"+maybe("? bah."+maybe(" eh?")),"descend","<a href=\"https://orteil.dashnet.org/cookieclicker/\" style=\"color:"+color+";text-decoration:none;\">it's a secret to everyone</a>","overstayed and/or understayed",choose(["f","$ s"])+"sh!"+maybe(" 192.168...")+maybe(" -h 59"),"it looks like it could be something important but then there's the plot twist of that just outright not being the case","wawa","cook a fish to fish, it man to man",maybe("t")+"here are too many lights","<a href=\"https://www.youtube.com/watch?v=arGedsVCUU0\" style=\"color:"+color+";text-decoration:none;\">a mandelbrot set rotated through 3D space"+maybe(" (it's always in my ears)")+"</a>","most ingratiating","but most collinder, w!","a!","You need to "+choose(["stop","continue","proliferate","expound","reduce","erradicate","reintegrate","abscond","elucidate"])+".","next one please","thing is things","it's really true! math truly is a silli"+maybe("a")+"er version of math.","look at all these things ye mighty and despair","glucosmiridium conflustructs","i'll give you you're you you've your you're you","well it doesn't come with guarantees"+maybe(" (why is it spelled that way? silly silly english)"),"can't doesn't mean \"can not\", you can't just say that. however (and in opposition), you can not just say it.",illion(),"irreducible apple","happy group","first you dot the eyes"+maybe(", then you dot the eyes".repeat(Math.floor(Math.random() * 13))),"bakelite bagels"+maybe(", harder than bessimer steel"),maybe("flippantly ")+"flagrant fluorocarbon flippititude","mind"+choose([" a ","-a-"," a"])+choose(["light","live","life","hive"])+choose(["!","?","",".",","],2),"reticulating splines...","then you get the combustible lemons","the jungle"+maybe(" of information"),"it's a site alright","a site to behold","but not a candle to the stars","a".repeat(Math.floor(Math.random()*8))+"!","well yes cap","treuse",choose(["the end! no more random texts ever again!","congrats! you've found all the "+choose(["splashes","things"],2)+"! goodbye!","well that was fun. farewell! no more bits of wits and reference!","buh-bye! goodfare! catch me if you dare!","no more things! all out! cya!","fiat finis. it is done."+maybe(" nary the twain..."),"mon dieu"+maybe(",")+", things are gone! au revoir!","auf wiedersehn!"]),"Navigated to {...}","spare a half-pence?","now with "+choose(["48","33","36","25","52","5 "+illion(),"-1","8024"])+" amazing new easter eggs! it's not even egg season anymore!","everything here is built on some crazy ugly "+choose(["js","javascript","jscript","java","haxe","python","c++","ALGOL-60","turing machines"], 3),"i am invincible!","wheehw","change is indeterminably interchangeable","fantastic website by the me",maybe("ladies and gentlemen, ")+"we are"+choose([" in space"+maybe(" and made of stars")," under siege by planet jupiter","n't chasing rabbits"+maybe(", but we know we're going to fall")]),"a tip of the hat to you sir, i should spout","riveting <a href=\"m/p.html\" style=\"color:"+color+";text-decoration:none;\">thesis</a> i shan't live without","now if you'll kindly excuse me i'll pull up my slacks"+maybe(" and imagine no chasm betwixt names and jacks"),"treuse",maybe("s")+"tr"+maybe("y")+"ing "+maybe("s")+maybe("t")+"h"+choose(["eo","oe"])+maybe("ry"),maybe("i")+"i'll see myself in "+choose(["hawaii","fiji"]),"me? who's me?","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+";\">synaesthetic molten in lieu of us</div>","do i need to break it down?","this morning i woke from a nightmare and fell out of bed","I just repeat for free","stromboli puppetry","what are these things about, any"+maybe("a")+"way"+maybe("!")+"?","lo with misbegotten woe to burn","URGH!","the scripting language is turing complete : )","weakened weekend","anyone can see what it means to me","<div id=\"draggablething\" draggable=\"true\" ondragstart=\"drag(event)\" style=\"color:"+color+"\">Drag me!</div>","<a href=\"https://www.youtube.com/watch?v=uMQ4r9pH70s\" target=\"_blank\" style=\"color:"+color+";text-decoration:none;\">if you're looking for the background music, it's right here</a>","webbed linktures","you're a star"+maybe(" (yes you are)"),"and lo!","i think this is terrible!","<div style=\"transform:rotate(180deg);width:fit-content;color:"+color+";text-decoration:none;\">umop apisdn</div>","is completely closed-source.","runs","sits","walks","plays",maybe("the ")+"adventures",maybe(", it ")+"wanders","is <abbr title=\"us\" style=\"color:"+color+";text-decoration:none;\">among"+maybe("st")+"</abbr> your internet service provider","wherefore dost thou obtain s'uch crazy refrance thou Crazy Frontpage?","is absolutely off limits to most "+maybe("non-permitted ")+"passersby."+maybe(" (god willing)"),"hp 35s scientific calculator","i have been trying t"+choose(["he",'o'],99)+" snow on mt. fuji for you","waso waso li waso waso e waso waso","i assume and so it follows","tonight i'm arriving","Oops! Javascript is not enabled on your browser!"+maybe("rqrrhuirqhuirqbhrnnbabfmbnafamejhadgkjdga"),"whose else would it be?","808017424794512875886459904961710757005754368000000000","<div id=\"prosediv\" style=\"text-decoration:underline;cursor:pointer;user-select:none;\" onclick=\"try{clearInterval(proseid);}catch{};let prose = document.getElementById('prosediv');let proseloop =()=> {prose.innerHTML = prose.innerHTML.substr(1,prose.innerHTML.length-1) + prose.innerHTML[0];};proseid=setInterval(proseloop,50);prose.style.textDecoration = 'none';prose.style.cursor = 'default';\">and so i opened the "+maybe("infinite ")+maybe("limitless ")+"book of prose and it read"+maybe(", or so dictated,")+" thus: </div>","testament resonance","i'm not sure if i am who waits for you to tie","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">amidst the waves and then dispel"+maybe("le")+"</div>","and then i remembered "+choose(["how to drive it","what drove it","how to drive it &"+maybe(" ")+"/or what drove it"])+maybe("."+maybe(" ")+"vroom!"),"my me ".repeat(9-4+2+1-2-1+7-4+2+2),"<a href=\"https://www.youtube.com/watch?v=zk9WYCJokwI\" target=\"_blank\" style=\"color:"+color+";text-decoration:none;\">"+("25".repeat(25))+"</a>","two is no more and now i am the 300th thingy :) [2] <del>{{},{{}}}</del>","spa"+maybe("s")+maybe("z")+maybe("c")+"tic "+maybe("s")+maybe("z")+maybe("p")+maybe("b")+"ams"+maybe(" (make it stand out more in a probabilistic sense)"),"suess",("the last thing you want in your burger kin"+choose(["g","d",""], 2)+" burger is ").repeat(Math.floor(Math.random()*8))+"the last thing.","see how "+choose(["they","i","we","my","sina","mi","weka","seli"],2)+" run",maybe(choose(["&#127756;","&#127769;","&#127921;","&#127922;"]))+choose(["&#127926;","&#127929;","&#127925;","&#127932;"]),choose(["&#127756;","<div style=\"font-size:500%;\">&#127756;</div>"]),"the numbers so rich they tell a story","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+";\">A wise woman said I'm alive; Nobody's ever told her she's wrong; A paella of space-talking jive; I'm as alive as her beard is long.</div>","point backwards; point forwards and don't ever stop until you are paella","is s"+maybe("l")+"e"+maybe("l")+"r"+maybe("i")+"f",choose(["i should","should i"])+" buy a boat","so many crowded people here!","fa"+maybe("c")+"ts and o"+maybe("pi")+"nions about numbers one one-hundredth above pi"+maybe("es"),"how do you expect to refresh this webpage...","...when it has already been refreshed?","i'm telling you",maybe("in")+"correct "+maybe("*")+choose(["you're","your","you'r","yro'ue"],3)+choose(["!","..."])+" :"+choose(["D","/"]),"some call it "+choose(["3.95","4.99","1,000,000,000","1/1"]),"<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">object fixation"+maybe(" into property re"+choose(["p","g"])+"ression")+"</div>","this is just some info arranged \"webpage-wise\"","<a href=\"billwurtz.com\" style=\"color:"+color+";text-decoration:none;\">it sounds like you need to make a website</a>","but what is a website, and how much does it w"+choose(["eigh","ay","ayough","eighghoupteitch"/*<-- todo: add potato chips, like actually*/],3)+maybe("?"),"don't click this text!","michael"+maybe(" "+choose(['j','h','st','#','$%--',']]]'],9)+choose(["ackson","ordan","evens","elly","ail","ape","alapeno"],2)),"will stop existing in ","my grains","our website","asdwadssawa",rot13("enderdragon"),"bop!","allow me to entertain the possibility of an extended warranty","there's always stuff","<label for=\"password\">enter password: </label><input type=\"text\" id=\"password\" name=\"password\" style=\"color:"+color+";background:#323232;border:dashed;\" oninput=\"password_change();\">","the password is "+choose(['"'+actual_password+'"','"porcupine"','"reindeer"','"flotilla"','"12345"','"i dont know"','"william"'],2),"far above the moon","needs to make far less references","loves to clean mineral samples","is 99% froth flavo"+maybe('u')+"red"+maybe("."),"a bleuprint would be a cheese indent"+maybe("at")+"ion","pants","a website called "+choose(["Asbestos","Arsenic","Polonium","Selenium","Bromine","Thallium","Barium","Deadly Neurotoxin","Nerve Gas","Ionizing Radiation","Radithor","Radium","Nevada","Cadmium","Thorium","Borax","Dichlorodifluoromethane"],1.5),"an allusion illusion, what are you implying?","there's no such thing as formless aluminium; anything you make out of aluminium has to have a form.","how many quadrants are there?","lipu mi"+choose([".","!"],2)+maybe(" ni li lipu sina ala"),"qazerty","if you look closely, you can see",number_as_silly(25),"reusable socks? hah! not in our lifetimes!","<div style=\"font-size:150px;line-height:115px;margin-bottom:0px;margin-top:0px;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;\">Release"+maybe("<br/>the<br/>Hypno<br/>Drones")+"</div>"+choose(["","<div style=\"font-size:80%;\">i think when i have more time i'll animate this like in <a href=\"https://www.decisionproblem.com/paperclips\">universal paperclips</a></div>"],10)/*+"<br/>weed wizzard"*/,"boo! aah!","is your world "+choose(["wide?","tall?"]),"always utilize as few words as you possibly can, never going on in needless detail for longer than is absolutely necessary.","never again shall the twain meet","<a href=\"https://www.youtube.com/user/standupmaths\" style=\"color:"+color+";text-decoration:none;\">today we're going to talk about e!</a>","12233 golomb","proud supporter of the "+maybe('"the"'),"i can't wait for more self-referential things","i've recently added some <a href=\"https://en.wikipedia.org/wiki/Eustachy_Sanguszko\" title=\"sorry, i can't stop\" target=\"_blank\" style=\"color:"+(color == "var(--blank)" ? "#ccc" : color)+";text-decoration:underline;\">obscure multilayered references</a>","actually, it's yours!"+maybe(maybe(" ")+"today!"),"secure obscure","forgiving and forgetting balance each other out like giving and getting, right?","<div style=\"background:"+color+";width:"+choose(["256px;height:8","32px;height:32"])+"px;color:"+(color == "var(--blank)" ? "var(--fill)" : color)+";overflow:auto;\">"+choose(["","help! i'm being squished!","you'll never see all of me at once! i'm so sneaky!","<div style=\"display:inline;color:"+color+"\">if you're reading this, you just sleuthed me out</div>","<div style=\"width:inherit;height:inherit;text-align:center;vertical-align:middle;display:table-cell;\">"+choose(["^","&uarr;"])+"</div>","<a href=\"./h/index.html\" style=\"width:inherit;height:inherit;display:block;\"></a>"],1.5)+"</div>","well, <a href=\"https://gregtech.mechaenetia.com\" style=\"color:"+(color == "var(--blank)" ? "#00f" : color)+";text-decoration:underline;\">greg</a>nically speaking,"+maybe(" a"+"wa".repeat(70)),"glue is the glue of glue","177 = 222"+maybe(" - 181"),"214 = 152"+maybe(" - 127"),"<span id=\"this one\">how many shrimp-meters is that</span><script id='scampy'>let hex = ['00','14','28','3c','50','64','78','8c','a0','b4','c8','dc','f0']; ra = 1; ga = 1; ba = 1; let sa = 1; let changetext=()=>{document.getElementById('this one').style.color = '#'+hex[ra]+hex[ga]+hex[ba];}; change=()=>{if(sa==6){ba--;if(ba==0)sa=1}if(sa==5){ra++;if(ra==12)sa=6}if(sa==4){ga--;if(ga==0)sa=5}if(sa==3){ba++;if(ba==12)sa=4}if(sa==2){ra--;if(ra==0)sa=3}if(sa==1){ga++;if(ga==12)sa=2}changetext();};setInterval('change()',15)<\/script>","<label for='dropdown'>you can only pick one : </label><select name='dropdown' id='dropdown' style='border:6px outset;color:"+color+";background:var(--fill);border-color:#000;cursor:pointer;'><option value='none' style='display:none;'>-- Choose wisely --</option><optgroup label='Fruit'><option value='snakefruit'>"+choose(["Snakefruit","Fakefruit","Funnyfruit","Fakesuit","lawglass","ashen k spider","mlabantap","ghbd",","],12)+"</option><option value='terbiumsulfide'>Terbium Sulfide</option><option value='fish'>Fish</option><option value='glass'>Glass</option></optgroup><optgroup label='Frivolity'><option value='asterisk'>*</option><option value='vam'>vam</option><option value='banana1'>Banana</option><option value='banana2'>Banana</option><option value='option'>&lt;option&gt;</option><option value='dyingwords'>Dying Words</option></optgroup><optgroup label='Flags' style='display:none;' id='flagoptions'><option value='bosnia'>Bosnia</option></optgroup></select>","<abbr style=\"text-decoration:none;\" title=\""+maybe("teehee!\n\noh, i laughed\noops")+"\">"+("initialism, acronym, ".repeat(8))+"</abbr>",maybe("i ")+"can't figure out how tweezers work","you should've picked \""+choose([actual_option,"Fish"])+"\"","vam","might be an anachronism","hop on the sevititcartbus","Hi!"+maybe(" Name!")+" Bye!"+maybe(" Sigh!"+maybe(" Hawaii!")),"four spheres? force fears?","Web 2.0 is amazing! You have undefined unread messages!","long live the monarch","oh i'm rambling again","\"makes sense\" does not make"+maybe(" ("+maybe("n")+"or manufacture)")+" sense. more like, \"naturally follows from a set of simple axioms\""+maybe("... or does it?"),choose(["dope","noun"],2)+" isn't "+choose(["dope","good"],2)+" you "+choose(["dope","dumb"],2),"WHAM"+maybe("M")+maybe("N")+"!","<details><summary>confirmative</summary> (wow this one needs to be finnished. web dev laziness happens when you become the screaming amalgam of garbage that is this single line of \"code\" here. SUMMARY!)</details>","<span class=\"hred\">r</span><span class=\"hgreen\">g</span><span class=\"hblue\">b</span>","got an invitation to play among us at the local county fair","Lezoyify","it's <a href=\"https://en.wikipedia.org/wiki/Monster_group\">24</a> calories","11 + 2 = 1 + 12","the source code of this place is an implementation nightmare","happy halloween"+maybe("e xd"),"hoopy","far back in the mists of ancient time life was wild, rich, and largely this-website free.","Let's Krame on Bame.","ma'amn","webs.temy","\"character\" is of course wildly different from \"The Character\" and they absolutely cannot be confused with each other"+maybe(" unless you want to be confused too, or something."+maybe(" Hollow Knight: Silksong will be releasing in June 2016 along with long-anticipated space-travel sandbox game 'No Mans Sky'."+maybe(" (by Team Games and Hello Cherry respectively.)"+maybe(" Innersloth's next release will feature social"+choose(["-","&mdash;"],1.5)+"deduction, in outer space!")))),maybe("a ")+"paroxysm of cuddles",maybe("welcome to ")+"crapchute corner","dreaming at the top of my lungs","vector nectar"+maybe(" 400"),"mi sona pona e mi lon: mi meli","do i recall"+maybe(" asking?"),"not one b"+choose(["y","i"],1.5)+"te smaller or lesser than yours",'"pleasant dreams but please don\'t sleep too long"',"extension lottery","excu"+maybe("s")+"e my klatchian","Yellow",'"well, it\'ll just have to go"',"<div style=\"color:#f00;font-style:oblique;font-weight:bold;font-size:5em;\">"+choose(["BOOM","WAR","NOW","ISOTHERM"],3)+"</div>","but i'd rather make myself believe"+maybe(" that this is your website and not, as the title says, totally and completely mine"),"brbrmebambv!!bfbambvm hjafkH! ZvjdCaio03q 490;!14!LKp khlkLdlkjh wahehehehajlkkjkjaaaaaaaaaaaaaaaaaaaa..","it's what it's","only plastic flowers never die!","tordenium","nintendo what sony","and my leapfrog account","donkey kong title #2 in d flat"+maybe("major"),"teehee"+maybe("! oh i laughed"+maybe(", oops")),"mad props to whomever figured out that wheel thing"+maybe(". been using it ever since"),"my deepest fear is someone telling me that they know my deepest fear"+maybe(". haunting!")+maybe(" (happy halloween!!)"),"why, HiLo there!","multiplion","osture rueso soer","ahaha 227777778888889","christmas time&mdash;is here","happy hogswatchnight","time for the harvest"+maybe(". chrono timere"+maybe(". (lol)")),"oh that's not how "+choose(["thing","quantum mechanics","epicycles","washing machines","rodent population schemes","fire","grammar","object","the surruptitious omega baryon","Wales","whales","printed paper packetry","Jacob"+maybe("'s "+choose(["magical beanstalk","electric ladder"])),"cankery","moving upward in a series of linear motions","haha","'p'","'you'","this website","your "+maybe("definitely non-fictional ")+"website"])+" works you silly little cheeseball"+maybe("* (*silly little cheeseball is not of my own invention and was stolen from... somewhere? i should figure out where from"+maybe(" (todo; from under a th video maybe)")+")"),"<div style=\"font-variant:small-caps;font-family:serif;\">Ho. ho. ho."+maybe(" Happy Christmas.")+"</div>","the crowned crown to crowns of teeth, crowning teeth","hoot","ceenck"+maybe("."),"irony Onion cake.","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">my heart will stop in tears</div>","catching splinters","Why Is It That When The Topic Of {...} Is Broached Your Sparing Intellects Instantly Assume The Most Ingratiating Posture Of Surrender Imaginable","is a website is a website is a website","i can make a wormhole in my basement, with a pair of scissors and a bottle of glue","&mdash;".repeat(Math.floor(Math.random()*8+1)),"education superman","verbose? technical? wow! \"pedantic\" is being semantically supplanted!","happy new year 2013!","Heralding The 20s, in 3"+maybe("/3rd")+"-Major","diagonal-queen-laser-beam","hi jann","burmanhower","if you like bag jokes then we implore you to ch"+choose(["e","a"],3)+"ck out the among us re"+maybe("d")+"ferendum","chessmate","i'm a photophropher, i take pictures of photographs","Series 1."+maybe(" This website is the First of its own."+maybe(" oh wait that's redundant because everything is the first of itself ahaha oopsie")),"Wring wring! Cucumber phone!","unrelated fact : you cannot escape a black hole using a wormhole. really think about the nature of the event horizon and you'll realize that it cannot be done, from either direction.","the second object in a list is always named 'february', for convenience"+maybe(" sakes"+maybe(", and it can be realized that any other imagining cannot be done, from either direction"))+".","check out some literature!"+maybe(" (go read a book, nerd!"+maybe(" (oog ook eat book ! eat book. .!)")+")"),"<div style=\"font-variant:small-caps;font-family:serif;\">Do you know why the prisoner in the tower watches the flight of birds?</div>","manualogical isn't","1. e4 e5 2. Qe4#","today is may 14th","<div style=\"color:"+(color == "var(--blank)" ? "var(--fill)" : color)+"\">the show must go on</div>","feeling sappy and upset? don't you mean, being.. CRINGE???????","you silly obtuse contrusion, lacking convenience in the most utterly commendable of shapes"+maybe(", i dost implore thee"+maybe(", rangle back my brendlewruncheon, or gavest thee thine whittled pocky!!")),"looks pretty fake"+maybe(". but yarr, it need only look good from afar!"),"; a seance.","springly","<div title=\""+choose(["","(everyone scream!)"],99)+"\">june</div>","trern evoyer","Snat"+choose(["","ch defeat from the jaws of victory"],3)+"!",choose(["some observations on writing, will, we hope, redound to credit.","That He, may never be forgotten, who has raked the Reposit"+choose(["a","o"])+"ries of Antiquity, and has been indefatigable in fetching Learning from Places where many would not have sought after it; a few Memorials of his Life, and some observations on his Writing, will, we hope, redound to his Credit."],2),maybe("'")+"local schizo provides ASTOUNDING EVIDENCE that he's clinically insane"+maybe("'")/*mwahahaurmoumre*/,"it's "+choose(["","f&mdash;g "],29)+"arbor day"+maybe("!".repeat(Math.floor(Math.random()*8))),"sordid, sordone? candid?? candone???? terse????? terser????????"+maybe(" voca"+choose(["bu","ub"],4)+"lary vernacular")+maybe(" verdent"),"I would like to thank you for a very enjoyable game."+maybe(" Qxe6#"),"nn-ad9b42354671","oh no, i think of the possible lines of text which can appear here, a majority are look-alikes to nonsense"+maybe(". oh welw"),"IC 444"+maybe(" is a glittering packet of dust and stars and, as such, is not my website"),"the universe is made of graph nodes as much as it's made of vegetable oil"+maybe("&#128293;"),"wisdom dentures","wow that's worth 5 Pieces of Solid Financial Advice"+maybe(" (a rare material, and very costly if the pieces are truly solid, instead of just the normal electroplated variety)"),"Beware the Squeed Warden","An infinite spout(, so bothersome"+maybe(". you could say I found it bothersome"+maybe(". i miss you Vermont"))+")","the cly's skoudy"+maybe(" come and fly away with me"),"partybox, storybox","I am Grandmaster Harts Farban","boltolrumber???","material mood","oh yes i can undersell just about anything, "+maybe("except this statement! oops!"),"mired in multilayers","strap you in your moonshoes"+maybe(" (woop!)"),"spanbucket","happy birthday"+maybe("!")+maybe(" again!"),"symmetric metric","oh a trying treacle","a trundle more terrifying","tables are my favorite things, narrowly being edged out by graphs.","hello, it's jov"+choose(["i","a"])+"day","do"+maybe("es your website, made by ")+" you support the Unicorn Standard?","those totems","labri eoni"+maybe(maybe(",")+" guk"+maybe(", standard deviation above")),"Please you now","skollerninnilooks","clarctical garbo"+choose(["k","c"],4),"plaprotri","a genre-defying dualist?","ortle eans","binglebongle","a dight in the lark","my nothing-addled mind can't handle this right now","now available for the amongentillion, just in "+choose(["time for christmas","crime."],1.12345),"ah crap i truncated when i should've rounded now the world's gonna end",maybe("let me be Clear, and Frank: ")+maybe("Hello, ")+"My name is Rumple Stiltskein. *vanishes*","look at this! the nonconformal plane!"+maybe(" a la laplace!"),"those seconds will never be regained.","chess gravityfork!","no more time. ".repeat(561),"all toasters toast toast","bless the torrid rention","\"nah you only get put on a list if you think santa claus is real\"","<a href=\"https://www.youtube.com/watch?v=ToD4YMHaYCA\" title=\"WHAT IS THE SIXTEENTH LETTER OF THE ALPHABET?\" target=\"_blank\" style=\"color:"+(color == "var(--blank)" ? "#00F" : color)+";text-decoration:underline;>NAH WE GETTIN OUT OF THE BACKGROUND MUSIC WITH THIS ONE</a>","this is just dogged","<div style=\"text-transform:full-width;\">the anthology of "+choose(["funnies","numbers","words","hieroglyphs","ideographs","deltarunes",maybe(choose(["red","orange","yellow","green","blue","cyan","purple","magenta"])+" ")+"buttons",choose(["an","es"])+"thologies","crumpled cans","crumbled plans","open doors","forced scores","dory roars","la".repeat(9)])+"</div>","dip dup dank","life is about the things you make up",maybe("utter ")+"insanity","all kinds of new stuff and things are present and availlabe"+maybe("l")];
+		console.log("%ca!%c\nhello :)%c\n(i just learned about log formatting and i am joyous) <-- that was a while ago !!", "font-family:Arial;font-size:64px;font-weight:bold;", "color:#7f7;", "color:#777");
+		//things.push(things);
+		// todo: figure out some way to enumerate every combination of thing and effect on the fly. (and append it to the list (for funsies)) <-- this has got to be totally impossible unless i added a counting measure each time 'maybe' and 'choose' got called <-- well it would have to be recursive, and without object orientation to help you, stacks would have to be involved and managed. <-- yes but actually i do have object orientation, you silly obtuse contrusion <-- this is rude <-- that* <-- haha, nice autology sina pakala
+		// ^^ shut up and just do the thingy omg
+		let amount = Math.floor(Math.random() * (things.length+23));
+		things.push("this web-site was last nudged unruly on 23.3.28. thatis alot!");
+		// were here, were there
+		things.push("there are "+choose([things.length+1,number_as_silly(things.length+1)],25)+maybe(" different")+" things"+maybe(" (including this one)")+maybe(". that"+choose(["'","i",' i'])+"s "+(things.length+1 - amount) + " more than " + amount + "!"+maybe(" ("+choose(["yes","no"])+" factorial)")));
+		let x = Math.floor(Math.random() * things.length);
+		//x=327;
+		//x=298;
+		//561 is reserved, thank you; miioki.
+		//x=things.length-3; // heetee.
+		let thing = things[x];//x];
+		let transformed = thing; // why ((down further), oh that's why)
+		let backwards = Math.random() > 0.98;
+		let coded = Math.random() > 0.99;
+		let rotation = Math.random() > 0.985 ? 180 : 0;
+		let caesar = Math.random() > 0.99; // i just keep doing funny
+		if (backwards && !(thing.includes("<")) && !(thing.includes(">"))) {
+			if (thing != "palindrome backwards is palindrome") {
+				transformed = backwardsify(transformed);
+			} else {
+				transformed = "palindrome si sdrawkcab palindrome";
+			}
+		}
+		if (coded) {
+			transformed = codeify(transformed);
+			if (Math.random() > 0.91) color = "#00ff00"; // color-coded :)
+		}
+		if (caesar && !(thing.includes("<")) && !(thing.includes(">"))) {
+			transformed = choose([caesarify(transformed, thing),rot13(transformed)]);
+		}
+		let transformed_width = x==38?"100%;display:block":"fit-content"; // let me tell you a tale of akdfhaldjfhkldaghjkshgkj
+		transformed = "<div style=\"color:"+color+";transform:rotate("+rotation+"deg);width:"+transformed_width+";\">" + transformed + "</div>"; // this will not affect the text visually if the color is FFFFFF
+		document.getElementById("welcome").innerHTML = transformed;
+		if (document.getElementById("scampy")) eval(document.getElementById("scampy").innerHTML); // cheater !!!! <-- every sensible person should be strongly opposed to the scampy protocol. <-- so true!!!!!!!h!!
+		if (grapes) document.getElementById("header").innerHTML = "grapes";
+		if (quinac/*ridrone*/) document.getElementById("header").innerHTML = "my basketball";
+		let uloops = 0;
+		let utext = "cat /dev/urandom ";
+		function urandom() {
+			let letter =()=> {return String.fromCharCode(32 + Math.floor(Math.random() * 196));} // used to be 96, not 196
+			if (uloops%25 == 0) utext = "cat /dev/urandom ";
+			utext += letter();
+			let out = utext;
+			if (backwards) out = backwardsify(out);
+			if (coded) out = codeify(out);
+			document.getElementById("welcome").innerHTML = "<div style=\"color:"+color+";transform:rotate("+rotation+"deg);width:fit-content;\">" + out + "</div>";
+			uloops++;
+			utimeout = setTimeout(urandom, 1000/15);
+			//window.requestAnimationFrame(urandom);
+		}
+		let thyme = Date.now();
+		let time_left = ((Math.random()*15)+5)*1000;
+		let plan = 0;
+		let n_link = 1;
+		const link_infos = ["1 is the smallest prime number","in the year 2AD, nothing of particular interest was happening and everyone was pretty bored i think","3 is the second smallest prime number","4 is the smallest composite number","the fifth number is called 'five' and fbgmfbjhxfhjbxhjfbgxfjhgkjfxghbfhxgjbhjxkgbf. 5 is my favourite number, because it's the smallest number which cannot be evenly divided by any other whole number.","6 is a good number because it's the smallest perfect number","Seven is the Smallest Number.","eigh".repeat(100)+"<br><br>The lambda baryons (Λ) are a family of subatomic hadron particles containing one up quark, one down quark, and a third quark from a higher flavour generation, in a combination where the quantum wave function changes sign upon the flavour of any two quarks being swapped (thus slightly different from a neutral sigma baryon, Σ<sup>0</sup>). They are thus baryons, with total isospin of 0, and have either neutral electric charge or the elementary charge +1.","9 = 1 + 3 = 8 * 1 = 7 / 2 = x<sup>2</sup> = 4 + 5 = 9 &plusmn; 0.<br>9 orbits the Earth at an average distance of 98 million miles, in the <a style=\"color:#0f0;\" href=\"https://en.wikipedia.org/wiki/Universal_Chess_Interface\">upper stratosphere</a>. 9 is the largest <a style=\"color:#0f0;\" href=\"https://en.wikipedia.org/wiki/Supersingular_prime_(moonshine_theory)\">Prime Number</a>.","shut yer mouth"+maybe("<br>".repeat(Math.floor(Math.random()*4))+"unshut yer unmouth"),"11 is my favorite composite number, because it's"+maybe("<br>11 is my favourite composite number, because its 11 + 5"),"Ah, Goose Eyes! you rolled a "+choose(["78",(Math.floor(Math.random()*8765)-300)+''],6)+".<br>in the year 12 CE, William the Conquerer conquered, in the William Conquest, christening his Country, \"Williamland.\""+maybe(".")+" A lot of people agree.","you broke my window!","14 is equal to The smallest number, divided by <a style=\"color:#0f0;\" href=\"https://en.wikipedia.org/wiki/Eustachy_Sanguszko\">two.</a>."];
+		link_infos[25-1] = "5<sup>2</sup> = 25";
+		link_infos[81-1] = "the average smallest prime number has 78 factors!";
+		link_infos[1969-1] = "update :: we are going to the moon"+maybe("<br>la!lune");
+		link_infos[1990-1] = '""';
+		link_infos[2009-1] = "michael jackson discovered the smallest prime factor at the exact midpoint of his life";
+		link_infos[2023-1] = "HEY!";
+		let plans = [
+		[0, ()=>{
+			document.getElementById("body").style.setProperty("display","none");
+			root.style.setProperty("background","#323232");
+			//document.querySelector("a").style.setProperty("color","#00ff00");
+		}],
+		[-3, ()=>{
+			let new_header = document.createElement("h3");
+			new_header.setAttribute("style","color:#E9EC54;font-family:none;margin-left:12px;");
+			new_header.innerHTML = "new header";
+			root.appendChild(new_header);
+		}],
+		[-7, ()=>{
+			let new_subheader = document.createElement("h3");
+			new_subheader.setAttribute("style","color:#B387FF;font-family:sans;margin-left:18px;");
+			new_subheader.innerHTML = choose(["new subheader","i stole the colors","shh","imitation is a form of flattery; an honor, but what is the greatest honor possible?","n","&uarr;","sauce","old subheader?","my sincerest of apologies"],2);
+			root.appendChild(new_subheader);
+		}],
+		[-13, ()=>{
+			let info = document.createElement("p"); // the terodactyl is silent
+			info.setAttribute("style","color:white;");
+			info.setAttribute("id","itneedsmore");
+			info.innerHTML = ("&nbsp;".repeat(5))+choose(["enjoy this randomly generated website while i contemplate the vast spiritual emptiness of making a website without a topic. surely i've frolicked too hard.","oops i stole the thing ","i can be a thief of other css files so it balances out ","hii "],1.512);
+			root.appendChild(info);
+		}],
+		[-17, ()=>{
+			let link = document.createElement((link_infos[n_link-1]+'' != "undefined") ? "details" : "a");
+			link.setAttribute("href","#top"); //link.setAttribute("href","#top");// todo: make this actually be an expandable doodad (html summary dropdown) with info about the corresponding year (i.e., link 1990 has cool facts about the year 1990). make the thing only function that way once they've all been made though (ie, when link $currentyear exists (iei.e., once "link 2022" has been created)) <-- cool facts about 1990? more like, ""
+			// done todo yeehaw
+			link.setAttribute("id", "link_"+n_link);
+			let colours = ["00ff00","ffaa00","fab","fff","323232"];
+			link.setAttribute("style","display:block;width:fit-content;margin-left:8px;color:#fff;");
+			link.innerHTML = "<summary style=\"text-decoration:underline;user-select:none;color:#"+choose(colours,100)+";cursor:pointer;\">link "+n_link+"</summary>"+(link_infos[n_link-1]+'' == "undefined" ? "" : link_infos[n_link-1]);
+			//if (link_infos[n_link-1] == "undefined") {link.innerHTML = "link "+n_link; /*CURSEDCURSEDCURSED*/link.outerHTML = link.outerHTML.slice(0,8);link.outerHTML = "<a "+link.outerHTML;link.outerHTML = link.outerHTML.slice(0,link.outerHTML.length-10);link.outerHTML+="</a>";/*ABSOLUTELY CRIMINAL*/} // lo
+			n_link++;
+			if (plans[4][0] > -1000000000) plan--; // huh? (<-- haven't touched this code in ~1 year i'm so cluelses help)
+			plans[4][0]--; // ...what??
+			root.appendChild(link);
+			let charactour = " abc def gp oivcluq []-+=./,;:1237890"+String.fromCharCode(9999);
+			let possiblities = [choose(charactour,1.9)," thy pyramids "," the library is eternal "," the meaning of life is ","MMM"," help i'm stuck in a website factory! "," stop "," \"infinite library\" "," there are an infinite number of monkeys here who say they've worked out this great script for Hamlet "," baloney sandwich "];
+			document.getElementById("itneedsmore").innerHTML += choose(possiblities,10000);
+			let date = new Date; if (n_link > date.getYear() + 1900) {plan++;plans[5][0] = 0;}
+		}],
+		[-1000000000, ()=>{
+			console.log("ok i think that's enough");
+		}]
+		];
+		if (Math.random() > 0.5) plans = [[0, ()=>{document.getElementById("body").style.setProperty("display","none");root.style.setProperty("background","#000");}]];
+		function thymeloop() { // -> it's stable so
+			let current = Date.now();
+			let elapsed = current - thyme;
+			let countdown = (time_left - elapsed)/1000;
+			if (countdown < 1 && (countdown > 0 && Math.random() < 0.9)) {countdown = (countdown+'').substr(1)}
+			let countdown_color = countdown > 5 ? color : "#ff0000";
+			document.getElementById("welcome").innerHTML = "<div style=\"color:"+color+"\">will stop existing in <div style=\"color:"+countdown_color+";display:inline;\">"+(countdown+'').substr(0,3)+"</div></div>";
+			for (let i = 0; i < plans.length; i++) {
+				if (countdown <= plans[i][0] && plan == i) {
+					plans[i][1]();
+					plan++;
+				}
+			}
+			//setTimeout(thymeloop, 1000/15);
+			window.requestAnimationFrame(thymeloop);
+		} // don't worry because ->
+		function embiggening() {
+			let current = Date.now();
+			let elapsed = current - thyme;
+			if (elapsed > 9*99) {
+				document.getElementById("welcome").style.fontSize = Math.min(((elapsed-9*99)/25+14.5),500)+"px";
+			}
+			window.requestAnimationFrame(embiggening);
+		}
+		
+		if (sessionStorage.ended == "true") {} // gotta prevent these funny guys from mucking up the wawa
+		else if (thing == "cat /dev/urandom ") { // that's why
+			urandom(); // urmom
+		}
+		else if (thing == "will stop existing in ") { // kerchow
+			thymeloop(); // thymom
+		}
+		else if (thing == "if you look closely, you can see") {
+			embiggening(); // thoumom
+		}
+		// shouldn't i do these things for that weird "scampy" outlier too? <-- no. read : "all sensible people should be opposed to the scampy protocol" and "you're a stupid butt poop poo dumb stupid stupid dumb dumb dumb". scampy should just be in here after "if you look closely, you can see"
+		
+		if (x==332) document.getElementById("password").value = actual_password;
+		if (x==155) {
+			if (!things[155].includes("all same no game")) bame = false; // can't bame man. door's stuck.
+		}
+		if (x==384 && color != "var(--blank)") { // why do i do this to myself. only nosy programmers would notice this. aarghh
+			root.style.setProperty("--hred_col", "#" + color.substr(1,2) + "0000");
+			root.style.setProperty("--hgreen_col", "#00" + color.substr(3,2) + "00");
+			root.style.setProperty("--hblue_col", "#0000" + color.substr(5,2));
+			// because we love you
+		}
+		if (x==368) {
+			document.getElementById("dropdown").value = actual_option;
+			document.getElementById("dropdown").onchange =(stuff)=> {
+				let picked_option = stuff.target.value;
+				let header = document.getElementById("header");
+				let welcomer = document.getElementById("welcome");
+				document.getElementById("flagoptions").style.display = "none";
+				switch(picked_option) {
+					case 'snakefruit': let new_header = header.innerHTML.split(''); new_header[Math.floor(Math.random()*header.innerHTML.length)] = choose('s0j;.',2); header.innerHTML = new_header.join(''); break;
+					case 'terbiumsulfide': /*welcomer.children[0].style.color="#aaff88"*/let new_w = welcomer.children[0].children[0].innerHTML.split(''); new_w[Math.floor(Math.random()*welcomer.children[0].children[0].innerHTML.length)] = choose('s0j;.',2); welcomer.children[0].children[0].innerHTML = new_w.join(''); break;
+					case 'fish': root.style.setProperty("--blank","#0000ff"); break;
+					case 'glass': root.style.setProperty("--fill","#eeeeff"); break;
+					
+					case 'asterisk': document.getElementById("flagoptions").style.display = "block"; break;
+					case 'banana1': /*welcomer.children[0].style.color=""*/;root.style.setProperty("--fill","#000000"); break;
+					case 'banana2': root.style.setProperty("--blank","#ffffff"); break;
+					case 'option': header.innerHTML = header.innerHTML.substring(1) + header.innerHTML[0]; break;
+					case 'dyingwords': document.getElementById("body").style.setProperty("transform", document.getElementById("body").style.getPropertyValue("transform") == "rotate(180deg)" ? "" : "rotate(180deg)"); break;
+					
+					case 'bosnia': try {clearInterval(global_bosnia); delete global_bosnia; break;} catch(err){ global_bosnia = setInterval('bosnia_time()', 50);} break;
+				}
+				console.log("%cA CHANGE HAS BEEN MADE","font-family:serif;font-size:32px;");//,"font-family:monospace;font-size:8px;vertical-align:middle;");
+				localStorage.setItem("dropdown", picked_option);
+			}
+			bosnia_time=()=>{document.getElementById("dropdown").selectedIndex = Math.floor(Math.random()*document.getElementById("dropdown").options.length);document.getElementById("dropdown").onchange({target:document.getElementById("dropdown")})}
+		}
+		if (x==371) {
+			if (actual_option == "vam") { //lo
+				document.getElementById("welcome").innerHTML = "<div style=\"color:"+color+";transform:rotate("+rotation+"deg);width:fit-content;\">you should not have chosen \"vam\".</div>";
+			}
+		}
+		
+		let has_ended = sessionStorage.getItem("ended");
+		if (!has_ended) { // either false or null
+			sessionStorage.setItem("ended", "");
+		}
+		if (x==239) sessionStorage.setItem("ended", "true");
+		if (has_ended) document.getElementById("welcome").innerHTML = "<div style=\"font-family:consolas\">"+choose(["","sessionStorage","sessionStorage.ended = false","sessionStorage.setItem(\"ended\",\"false\")"],3)+"</div>";
+		let pears = [
+		["think", "is that what you really think? try <u>again</u>."],
+		["go", "no that's not how this works. do i have to spell it out for you? actual keywords aren't that short!"],
+		["go!", "try that without the punctuation"],
+		["tehe", "i do believe you've just been played. try <u>again</u>."],
+		["works", "try again"],
+		["spell", "try again"],
+		["short", "try again"],
+		["there", "is <del>there</del> an echo?"],
+		["is there an echo?", "oh my, no that is way too long to be a proper code. try <u>again</u>!"],
+		["good!", "i am so silly for having included so many 5 character ideographs in that one."],
+		["maybe", "maybe i'm a bit unfair too. this isn't even the correct code. try <u>again</u>!"],
+		["going", "nope! incorrect!"],
+		["nope!", "<del>nope!</del> incorrect!"],
+		["along", "you didn't say the magic word!"],
+		["magic", "oh you're so silly"],
+		["silly", "dead end! (how about you try again?)"],
+		["youre", "i think you forgot an apostrophe,"],
+		["about", "no, i won't have any more of this"],
+		["won't", "i forbid it. try <u>again</u>, and hover above the text closely."],
+		["hover", "no"],
+		["above", "see hover"],
+		["found", "you found <a href=\"ret/me.html\" style=\"color:#ffffff;text-decoration:none;\">me!</a> now go back to what you were doing"],
+		["until", "nope! incorrect! go back to what you were doing"],
+		["would", "<abbr title=\"(just go along with it and say maybe)\" style=\"text-decoration:none;\">you would probably say something like, \"oh perhaps i did! it's possible i cheated! but i won't say yes or no for certain.\"</abbr>"],
+		["(just", "a basketball, yeah i went <del>there</del>"],
+		["like,", "false >:("],
+		["there", "<del>no that was crossed out. </del>maybe<del> you didn't notice?</del>"],
+		["miti",  "oh come on"],
+		["miti ", ">:("],
+		["idea!", "try setting ended to either 'AAAAA' or '' (a completely empty string)"],
+		["ended", "oh wow you set ended to ended that's so intrigue"],
+		["thats", "<abbr title=\"and try again\" style=\"text-decoration:none;\">stop randomly omitting textual articles!</abbr>"],
+		["that's", "that's not a code!"],
+		["code!", "AAAAA"],
+		["code", "that's not a code<del>!</del>"],
+		["pears", "pears"],/*because it's a pair*/ /*<-- oh my god*/
+		
+		["false", "oh you think you can bring be back that easily? well try <u>again</u>."],
+		["again", "no, i do not think i'm <i>ready</i>"],
+		["ready", "you should really <div style=\"display:inline;font-size:115%\">watch</div> what you're typing"],
+		["watch", "<div style=\"color:var(--fill);\">stop!</div>"],
+		["stop!", "is there an echo?"],
+		["echo?", "hopefully by now you've noticed that all these keywords have five characters. and that a key will always be in the message."],
+		["these", "<div style=\"color:green;\">can you keep up? you will need to be more clever than that</div>"],
+		["green", "<abbr title=\"truth\" style=\"text-decoration:none;\">good! okay, maybe that was a bit unfair, but you're probably just reading the source and not going along with the puzzle. you're terrible.</abbr>"],
+		["truth", "<del>truth</del> meaning of course that you <i>are</i> terrible, and that you aren't doing this legitimately."],
+		["doing", "infact, i bet you didn't even discover this until you opened the page source and found it all spelled out for you. what do you have to say for yourself? or rather, what would you say?"],
+		["maybe", "<del>there you see, you ad</del>mit i<del>t</del>"],
+		["mit i", "i don't know how to end this"],
+		["don't", "what an amazing idea! that's better than the invention of the word ' false '!"],/*ouroboros8?*/
+		
+		["AAAAA", "exiting ended mode..."],
+		["AAAAA2", "exiting fun mode... :("]
+		]; /* just a random idea i got but i love it so much */
+		/* also hi easter egg cheaters */
+		let words = [];
+		let locks = [];
+		let keywords = ["false", "again", "ready", "watch", "stop!", "go", "tehe"]; // befuddled?????/
+		for (let i = 0; i < pears.length; i++) {words.push(pears[i][0]); locks.push(pears[i][1]);}
+		if (words.includes(has_ended)) {
+			let message = locks[words.indexOf(has_ended)];
+			if (sessionStorage.getItem("maybe")) message = locks[words.lastIndexOf(has_ended)];
+			document.getElementById("welcome").innerHTML = "<div style=\"font-family:consolas\">"+message;
+			sessionStorage.setItem("ended", "true");
+			if (has_ended == "AAAAA" || has_ended == "AAAAA2") sessionStorage.setItem("ended", "");
+			if (has_ended == "doing") sessionStorage.setItem("maybe", "true");
+		} // also also there is only a 0.0000...01% chance that this entire thing will be discovered and completed without peeking into the source. i hope that happens at least once :(
+		if (has_ended == "true") {
+			if (Math.random() > 0.93) sessionStorage.setItem("ended","AAAAA2");
+		}
+	</script>
+	<br>
+<div class="section_wrapper">
+<div class="section_of_linques">
+	<smallheader><i ondrop="event.target.innerHTML=drop(event)+':'" ondragover="allowDrop(event)" id="rettitle">random experiment things:</i></smallheader>
+	<br>
+	<!--<a href="ret/clickertest.html">clicker test</a><br>-->
+	<a href="ret/super2.html" class="portal">superwaster</a><br>
+	<a href="ret/tiers.html" class="portal">tiers</a><br>
+	<a href="ret/tiers2022.html" class="portal">tiers (newer)</a><br>
+	<a href="ret/universe.html" class="portal">universe</a><br>
+	<a href="ret/universe2.html" class="portal">universe (different)</a><br>
+	<a href="ret/universe3.html" class="portal">universe (3d particle physics!!)</a><br>
+	<a href="ret/lang.html" class="portal">scripting language</a><br>
+	<br>
+</div>
+</div>
+<div class="section_wrapper">
+<div class="section_of_linques" style="text-align:right;background:var(--dark_section)">
+	<smallheader><m id="math" ondrop="event.target.innerHTML=drop(event)" ondragover="allowDrop(event)"></m></smallheader><script>maths = ["math","maths","mathematics","numbers","arithmetic","nerd","2+2","1=1","maffs","MathJax Font","i have a peer-reviewed study","cursive","Z &rarr; z<sup>2</sup> + c","c = x+yi","&ldquo;modern mathematics&rdquo;","syntax error",choose(["&exist;","&forall;"])+"n (n&isin;V)",maybe("f(x) ")+"modus ponens","p &harr; ~Bew(G(p))","3 "+"&uarr;".repeat(Math.floor(Math.random()*6)+1)+" 3","e<sup>i&pi;</sup> + 1 = 0","sin<sup>2</sup>&theta; + cos<sup>2</sup>&theta; = 1","number","&infin;","1 &isin; &complexes;","{&empty;,{&empty;}}","<a href=\"https://www.youtube.com/watch?v=wTUSz-HSaBg\" style=\"color:var(--fill);text-decoration:none;\">homological algebra on a complete intersection, with an application to group representations</a>","&#8708;R((R&isin;R)&harr;(R&notin;R)) &larr; <b>(</b>&not;&exist;x&forall;y(y &isin; x &harr; &not;(y &isin; y)<b>)</b>","12345","this is a pretty rare 1",(things.length**(Math.random()*3))+"","mute mute mute","math is just a sillier version of math","exponentially less likely math props","mreow","<a href=\"m/p.html\" style=\"color:var(--fill);text-decoration:none;\">have i ever told you about pizza theory</a>","the existence of H is logically impossible."];//,"<a href=\"http://hyperphysics.phy-astr.gsu.edu/hbase/pertab/zn.html#c2\" style=\"color:#var(--fill);text-decoration:none;\">zinc</a>"
+	maths.push(maths.length+"");
+	let m = Math.floor(Math.pow(Math.random(), 1.7) * maths.length);
+	if (/*thing=="all same no game"*/x==155&&!bame) maths[m] = /*"all same no game"*/things[x]; // injection >:)
+	document.getElementById("math").innerHTML = maths[m];</script>
+	<br>
+	<a href="m/arrays.html" class="portal">array notation</a><br>
+	<a href="m/counting.html" class="portal">counting transfinite ordinals</a><br>
+	<!--<a href="m/p.html">p</a>--><br>
+	<br>
+</div>
+</div>
+<div class="section_wrapper">
+<div class="section_of_linques">
+	<smallheader id="gaming" ondrop="text=drop(event);" ondragover="allowDrop(event)">gaming</smallheader><script>
+		let g = 0;
+		let m2 = Math.floor(Math.random()*20)+1;
+		let px = Math.floor(Math.random()*8);
+		let texts = ["gaming","gamer games :)","video entertain","gg","gheabdgndambgndavbn","ooooooooooooo","takis are more intense","gamed",choose(["free","paid","bad","good"],2)+" games dot org","?".repeat(Math.floor(Math.random()*10)+1),"gaming.html",";)","guess again, nerd!","headp"+maybe("h")+"ones","W","amog ",maybe("r")+"runnin around","rainbow text","weeeeeeeeee","ez","gamering","game time","woo","well yeah","watch it!","pretender within our ranks","how peculiar of you","the gamer car","GA"+maybe("MES"),"o musi","make believe","so silly","play the games","enough with these","do you"+" ".repeat(Math.floor(Math.random()*10)+1),"be a gamer","not well","your"+maybe("e")+" mom","falling everything?",maybe("-12")+"0% summer sale","rain world","hilariouskeleton","GREEN","  power","mystical dragon awesomeness","thaueank","the TOWER",choose(["boring","exciting"])+" garbage"];
+		texts.push("i have "+texts.length+" games :)");
+		let t = Math.floor(Math.random() * texts.length);
+		let text = texts[t];
+		if (/*thing=="all same no game"*/x==155&&!bame) text = /*"all same no game"*/things[x]; // injection >:)
+		let spacing = Math.floor(Math.random()*15);
+		let saturation = Math.floor(Math.random()*10)+90;
+		let value = Math.floor(Math.random()*5)+50;
+		let left = Math.floor(Math.random()*2)-1;
+		let string = "";
+		let stop_gaming = false;
+		function gaming() { // todo make more customizable and more texts and stuff
+			g+=m2;
+			g=g%360;
+			string = "";
+			if (t == 10) string += "<a href=\"ret/gaming.html\" style=\"text-decoration:none\">";
+			for (let i = 0; i < text.length; i++) {
+				let ter = text[i]; // get it?because.. (no i don't;not anymor e) // (NEW) <-- TEXTER!!!! TEXTURE!!!!!! OH MY WAWAAAAAAAAAtexter pack
+				if (t == 34 && i > 5) ter = "&emsp;";
+				if (t == 43 && i == 0) ter = "<span style=\"font-family:Garamond, serif;font-weight:bold;\">l</span>";
+				string +=
+			"<div style=\"color:hsl("+Number(g-(m2*i))+", "+saturation+"%, "+value+"%);display:inline;position:relative;top:"+Math.sin(((g-(m2*i*spacing))/360)*2*Math.PI)*px+"px;left:"+Math.sin(((g-(m2*i*spacing/5))/360)*2*Math.PI)*px*left+"px\">"+ter+"</div>";
+			}
+			if (t == 10) string += "</a>";
+			document.getElementById("gaming").innerHTML = string;
+			if (!stop_gaming) window.requestAnimationFrame(gaming);
+			else {stop_gaming = false;}
+			//gaming_timeout = setTimeout(gaming, 1000/40);
+		}
+		gaming();
+		if (t == 10) {
+		document.getElementById("gaming").onmouseenter =()=> {
+			//clearTimeout(gaming_timeout);
+			stop_gaming = true;
+		}
+		document.getElementById("gaming").onmouseleave =()=> {
+			stop_gaming = false;
+			gaming();
+		}}
+	</script>
+	<br>
+	<a href="ta">the adventures</a><br>
+	<a href="capitalsim/index.html">capitalsim</a><br>
+	<a href="gamingplease/accumulate.html">accumulate</a><br>
+	<a href="gamingplease/powder.html">powder</a><br>
+	<a href="gamingplease/materialtech.html">materialtech</a><br>
+	<br>
+</div>
+</div>
+<div class="section_wrapper">
+<div class="section_of_linques" style="text-align:right;background:var(--dark_section)">
+	<smallheader><abbr title="you get nothing funny for this one, i am lazy" style="text-decoration:none;" id="doubtful" ondrop="event.target.innerHTML = (drop(event)=='Dragged me!')?'things above this text':drop(event);event.target.title = 'you do get something funny for this one; i am not lazy';" ondragover="allowDrop(event)">things below this text</abbr></smallheader><script>if (/*thing=="all same no game"*/x==155&&!bame) document.getElementById("doubtful").title = /*"all same no game"*/things[x]; // injection >:)</script>
+	<br>
+	<a href="http://falstad.com/vector3d/vector3d.html?f=UserDefinedPotential&d=partsforce&sl=none&st=100&pc=71&tf1=sin(14*x)%2F5%2Bsin(14*y)%2F5%2Bsin(14*z)%2F5&rx=-7&ry=32&rz=1&zm=1.2">sloshy vector nonsense</a><br>
+	<a href="sol/index.html" id="stories">stories</a><script>
+	if (Math.random()>0.99) document.getElementById("stories").innerHTML = "soltries";
+	</script>
+</div>
+</div>
+
+<button id="a_proper_night_mode" style="width:32px;height:32px;background:var(--fill);cursor:pointer;color:var(--blank);font-size:1em;position:fixed;right:8px;bottom:8px;text-align:middle;border:#707 solid 5px;text-baseline:middle;padding:0px"></button>
+
+<script>
+// todo: maybe move all the stuff down here so that everybody (that is, all of the different script tags) has access to all of the elements
+// yknow like a good idea and not a stupid way to organize a webpage
+root.style.setProperty("--full_text_transform", choose(["inherit","capitalize","uppercase","full-width"],400)); // teehee
+
+let eepy_button_decider = Math.floor(Math.random()**2.11111111111 * 3);
+document.getElementById("a_proper_night_mode").innerHTML = [choose(["&#127769;",String.fromCharCode(9789)],3),"d","n","f","u"][eepy_button_decider];
+document.getElementById("a_proper_night_mode").title = ["moda luna","dark mode","night mode","flip colo"+maybe("u")+"rs","unblind"][eepy_button_decider];
+//let ultimate_custom_night = false; // loooooooooo
+if (localStorage.getItem("dark") == null) localStorage.setItem("dark", false);
+let dark = localStorage.getItem("dark") == "true";
+document.getElementById("a_proper_night_mode").addEventListener("click", (event)=>{
+	let old_fill = root.style.getPropertyValue("--fill");
+	if (!ultimate_custom_night) { // de ultiate11111111111!
+		if (old_fill == "#440077") {
+			root.style.setProperty("--fill", "#000000");
+			root.style.setProperty("--blank", "#ffffff");
+			root.style.setProperty("--light_section", "#cccccc");
+			root.style.setProperty("--dark_section", "#aaaaaa");
+			document.getElementById("welcome").children[0].style.color = color;
+		} else {
+			root.style.setProperty("--fill", "#440077");
+			root.style.setProperty("--blank", "#220044");
+			root.style.setProperty("--light_section", "#111111");
+			root.style.setProperty("--dark_section", "#222222");
+			document.getElementById("welcome").children[0].style.color = random_color();
+		}
+	} else { // the far rarer but far more general option: golden fr
+		root.style.setProperty("--fill", root.style.getPropertyValue("--blank"));
+		root.style.setProperty("--blank", old_fill);
+		if (!dark) { // then make it dark!!
+			root.style.setProperty("--light_section", "#111111");
+			root.style.setProperty("--dark_section", "#222222");
+		} else {
+			root.style.setProperty("--light_section", "#cccccc");
+			root.style.setProperty("--dark_section", "#aaaaaa");
+		}
+	}
+	dark = !dark;
+	localStorage.setItem("dark", dark);
+});
+if (dark) {
+	dark = false; // this is simpler and formally notifies the button that the darkness needs to be fully-realized >:3
+	document.getElementById("a_proper_night_mode").click();
+	//dark = true; localStorage.setItem("dark", true); // the button thinks a toggle has occurred because duhh, and now it has to be undone. goosh i hate this so much
+}
+
+// oh my gosh it's like deja vu all over again
+if (x==298) {
+	root.style.setProperty("--blank",choose(["#DCC9B5","#301614","#FBDCF9","#CADBEC"],3.5));
+	root.style.setProperty("--fill",choose(["#454240","#ffffff","#15110D","#301641"],3));
+	
+	root.style.setProperty("--light_section", "#0000");
+	root.style.setProperty("--dark_section", "#0000");
+	let limit = document.getElementsByTagName("a").length;
+	for (let i = 1; i < limit; i++) {
+		document.getElementsByTagName("a")[i].style.color = "var(--blank)";
+	}
+	document.getElementById("rettitle").innerHTML = choose(["52","38"],5);
+	document.getElementById("math").innerHTML = choose(["561","12"],5);
+	text = choose(["1024","26"],5);
+	saturation = 0.1;
+	spacing *= 84;
+	document.getElementById("doubtful").innerHTML = choose(["25","32"],5);
+	document.getElementById("doubtful").title = choose(["these numbers aren't special; i just wanted to make a vibe!\nplease listen to the "+choose(["splash","thing"],2)+"-linked music and enjoy :>"+maybe("\n\np.s. the link even works if it ends up updise nowd !!"+maybe("\np.p.s the numbers are special because "+choose(["they","some of them"])+" are my favorites")),"i like chocolate\nbut so do you"],5);
+	document.getElementById("header").innerHTML = choose(["my website","etu","sed","52525"],4);
+	//
+	let sections = document.getElementsByClassName("section_of_linques");
+	let la = sections.length;
+	for (let j = 0; j < la; j++) {
+		sections[j].style.textAlign = "center";
+	}
+	//
+	document.getElementById("funny").innerHTML = "<a href=\"h/incomplete.txt\" style=\"text-decoration:inherit;color:inherit;\">22222</a>";
+	document.getElementById("funny").style = "position: absolute;top: -100%;left: 70%;animation: the 12s 52;animation-delay: 252s;-webkit-user-select:none;-ms-user-select:none;user-select:none;color: white;-ms-transform: rotate(20deg);font-size:252%;transform: rotate(20deg) scaleX(2) scaleY(2);font-family: serif;";console.log("%c&rew mode ineffect","color:#dcc9b5;");ultimate_custom_night=true;
+}// this webpage is spastic!
+// andrw :)
+
+// todo : i want a blood red creepy one >:]
+// okay here
+// 046a84
+if (x==327) {
+	root.style.setProperty("--blank",choose(["#ff0000","#220000","#900","#300","#ff00ff"],3));
+	root.style.setProperty("--fill",choose(["#000000","#550000","#800","#d00","#330011"],3));
+	let section_colors = "#000"+maybe("0");
+	root.style.setProperty("--light_section", section_colors);
+	root.style.setProperty("--dark_section", section_colors);
+	//
+	if (section_colors == "#0000") {
+		let sections = document.getElementsByClassName("section_of_linques");
+		let la = sections.length;
+		for (let j = 0; j < la; j++) {
+			sections[j].style.textAlign = "center";
+		}
+	}
+	//
+	
+	saturation *= 0.1;
+	spacing *= 120;
+	m2 *= 12;
+	value /= 4;
+	let limit = document.getElementsByTagName("a").length;
+	let the_entire_alphabet = ("qwertyuiopasdfghjklzxcvbnm1234567890(){}[]-_=+;:,.!?@#$%^&*|/'`~");
+	for (let i = 1; i < limit; i++) {
+		document.getElementsByTagName("a")[i].style.color = "var(--blank)";
+		document.getElementsByTagName("a")[i].innerHTML = the_entire_alphabet[Math.floor(Math.random()*the_entire_alphabet.length)].repeat(10);
+	}
+	document.getElementById("rettitle").innerHTML = choose(["n","k"],5);
+	document.getElementById("math").innerHTML = choose(["s","d"],5);
+	let new_text = "";
+	for (let i = 0; i < text.length; i++) {
+		new_text += String.fromCharCode((text[i].charCodeAt(0))+Math.floor(Math.random()*4)-8);
+	}
+	text = new_text;
+	document.getElementById("doubtful").innerHTML = choose(["b","v"],5);
+	document.getElementById("doubtful").title = choose(["nksdbvmc",new_text.repeat(4),"",rot13("what are you doing down here?"),"hii"+maybe(" :p")+maybe(" xp"),rot13("ever again shan't the twain meet"),rot13("IT IS INVARIABLE")],1.4);
+	document.getElementById("header").innerHTML = choose(["<div style=\"color:"+color+";transform:rotate(180deg);width:fit-content;\">my website</div>","awassdawdsa",new_text[0]+backwardsify(new_text.substr(Math.floor(Math.random()*16))),"Mg<sub>3</sub>Al<sub>2</sub>"+choose(["Si<sub>3</sub>O<sub>12</sub>","(SiO<sub>4</sub>)<sub>3</sub>"]),"bz","tk","###","<div style=\"display:inline;font-family:Georgia;\">T</div>","<div style=\"display:inline;font-family:Georgia;\">INVADD DIJ NVNV IVAI</div>","gzduiodzg"],1.14);
+	
+	document.getElementById("funny").innerHTML = "<a href=\"h/incomplete.txt\" style=\"text-decoration:inherit;color:inherit;\">"+choose(["m","c","<m>&phi;</m>"],5)+"</a>";
+	document.getElementById("funny").style = "position: absolute;top: -100%;left: 70%;animation: the 80s 100;animation-delay: 10s;-webkit-user-select:none;-ms-user-select:none;user-select:none;color: var(--fill);font-size:200%;-ms-transform: rotate(220deg);transform: rotate(220deg) scaleX(4) scaleY(4);font-family: serif;";
+	
+	document.getElementById("welcome").children[0].style.color = choose(["var(--blank)","#046a84","#0acfd7","#438e8c","#15bdba","#557898"],2.561);
+	
+	console.log("%cb activ"+maybe("at")+"e"+maybe("d"),"color:#f00");ultimate_custom_night=true;
+}
+
+if (x==332) password_change(); // ez way to check the input without changing it
+// hii changed layout enjoyers
+// oh that's an amazing idea; for the next one make it look like a crppy mobile view
+
+// var(--fill) = #077765
+// &and
+// var(--blank) = #86dad4
+// those are very nice
+
+// kerbal green looks like #a9f96f
+
+// hsl(295.5, 100%, 50%);
+</script>
+
+</body>
+</html>
+<!-- for more information, please refer up -->
