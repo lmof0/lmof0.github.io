@@ -7,20 +7,27 @@
 <!--
 nooooooo don't look at my messy js code! you can't do that!!!!!!!!!!!!
 
+legend:
+- not done
+d done
+/ put off or only just considering
+
 here's the todo, in the form of a tangible list:
 1 d make a move from these clunky BigInts to something much faster (expanding on the idea of a double, mayhaps?), and thus granting much better framerates for 1e+4000 and potentially beyond
 2 - add a horizontal scrollbar to the building table, allowing for arbitrarily many planets.
 3 d only display the money type corresponding to where the mouse is (or something along those lines; make the currency display more compact and less redundant)
-4 - add a dedicated system for angel upgrades
+4 d add a dedicated system for angel upgrades
 5 d saving!
 6 d add a <select> option in the top right of the Upgrades box that allows the number of displayed upgrades to be changed (maybe something like 1, 4, 8, 12, 16?)
 7 d make the settings box retractable/toggleable
-8 - only update the progress bars if they are visible. (improve preformance on progress bars in general)
+8 / only update the progress bars if they are visible. (improve preformance on progress bars in general)
 9 d include upgrade/tier boosts in the get_profit method (alternatively, expand into a recalculate profit method kindof like recalculate prices?) done in spirit; upgrades now only fire when they need to
 10 d add a system for saving and loading from and to a file
 11 d add text announcements that say how long you were gone, or when the game autosaves. also for when an update occurs!
 12 d base64 encoding for savedata, and decoding ofcourse when loading.
 13 - move class attribute changes to classList.add / classList.remove, as they have automated tools for determining whether or not a class is already applied. (it'll make the code cleaner)
+14 - fix weird angel investor bug with large currency values(?)
+15 - fix weird and maybe related bug about building profits not updating correctly on a restart (angel boost appears to be unaccounted for, why?)
 
 -->
 <style>
@@ -32,6 +39,7 @@ body
 	font-weight: lighter;
 	text-align: justify;
 	color: #ffffff;
+	overflow-x: clip;
 }
 hr
 {
@@ -138,8 +146,8 @@ label, select {color:#ffffff;font-family:initial;}
 	position:fixed;
 	bottom:24px;
 	right:24px;
-	width:64px;
-	height:64px;
+	width:350px;
+	height:100px;
 	border:1px solid #dddddd;
 	padding:4px;
 	font-family:initial;
@@ -150,45 +158,46 @@ label, select {color:#ffffff;font-family:initial;}
 	overflow-y:hidden;
 	text-align:left;
 	border-radius:5px;
-	opacity:0.3;
+	opacity:1;
 	animation-name: hide-announcements;
-	animation-duration: 5s;
+	animation-duration: 3s;
 	animation-delay: 0s;
-	/*animation-fill-mode: backwards;*/
+	animation-fill-mode: both;
 }
 .announcements > div {
 	opacity:0;
 	animation-name: hide-announcement-divs;
-	animation-duration: 5s;
+	animation-duration: 3s;
 	animation-delay: 0s;
-	/*animation-fill-mode: backwards;*/
+	animation-fill-mode: both;
 }
 @keyframes hide-announcements {
 	0% {width:350px;height:100px;opacity:1;}
-	60% {width:350px;height:100px;opacity:1;} /* maybe someday i'll find a more satisfying way of doing all of this */
-	100% {width:64px;height:64px;opacity:0.3;} /* or not! who knows! */
+	40% {width:350px;height:100px;opacity:1;} /* maybe someday i'll find a more satisfying way of doing all of this */
+	100% {width:64px;height:64px;opacity:0.3;} /* or not! who knows! */ /* TODO: ORTEIL GAMEGEN BOX WHAT */
 }
 @keyframes hide-announcement-divs {
 	0% {opacity:1;}
-	60% {opacity:1;}
+	40% {opacity:1;}
 	100% {opacity:0;}
 }
+
 .announcements:hover {
-	width:350px;
-	height:100px;
+	width:64px;
+	height:64px;
 	opacity:1;
 	overflow-y:auto;
 	animation-name: show-announcements !important;
 	animation-duration: 1s;
 	animation-delay: -1s; /* gah */
-	animation-fill-mode: forwards;
+	animation-fill-mode: both;
 }
 .announcements:hover > div {
-	opacity:1;
+	opacity:0.3;
 	animation-name: show-announcement-divs !important;
 	animation-duration: 1s;
-	animation-delay: -1s; /* how do i get rid of flickering without getting rid of the cool effect :( */
-	animation-fill-mode: forwards;
+	animation-delay: -1s; /* how do i get rid of flickering without getting rid of the cool effect :( update!: use orteil's neat trick for working it out in their video game idea generator. */
+	animation-fill-mode: both;
 }
 @keyframes show-announcements {
 	0% {width:64px;height:64px;opacity:0.3;}
@@ -221,9 +230,42 @@ label, select {color:#ffffff;font-family:initial;}
 	/*display:inline;*/
 	display:none;
 }
+.unlock-mars-enabled {
+	color: #cf3000;
+	cursor: pointer;
+	animation-name: mars-e;
+	animation-duration: 0.5s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
+.unlock-mars-disabled {
+	color: #800000;
+	cursor: default;
+	animation-name: mars-d;
+	animation-duration: 0.5s;
+}
+@keyframes mars-e {from {color:#800000} to {color:#cf3000}}
+@keyframes mars-d {from {color:#cf3000} to {color:#800000}}
+.unlock-moon-enabled {
+	color: #0054ff;
+	cursor: pointer;
+	animation-name: moon-e;
+	animation-duration: 0.5s;
+	animation-iteration-count: infinite;
+	animation-direction: alternate;
+}
+.unlock-moon-disabled {
+	color: #009949;
+	cursor: default;
+	animation-name: moon-d;
+	animation-duration: 0.5s;
+}
+@keyframes moon-e {from {color:#009949} to {color:#0054ff}}
+@keyframes moon-d {from {color:#0054ff} to {color:#009949}}
 </style>
 </head>
 <body>
+<a href="../index.html" style="position:absolute;left:10px;top:10px;">back</a>
 <center><h1>Capitalsim <div id="version" style="display:inline;font-size:65%;">v.1</div></h1></center>
 <hr>
 <div id="settings" style="position:absolute;right:16px;border:4px solid #ffffff;color:#ffffff;width:440px;font-family:initial;padding:4px;background-color:#000000;text-align:left;">
@@ -280,12 +322,25 @@ label, select {color:#ffffff;font-family:initial;}
 	
 </div>
 
-<table id="buildings" style="width:100%;padding:0;border-collapse:collapse;border-spacing:0;">
+<div id="building_scroll_buttons" style="width:50%;float:right;position:sticky;position:-webkit-sticky;top:4px;" class="hidden">
+  <table style="width:100%;padding:0;border-collapse:collapse;border-spacing:0;">
+	<tr>
+	  <th>
+		<button style="padding:5px;font-size:16px;width:100%;display:inline;" class="button button-enabled" onkeydown="" onmousedown="scroll_buildings_left();">&larr; scroll buildings left</button>
+	  </th>
+	  <th>
+		<button style="padding:5px;font-size:16px;width:100%;display:inline;" class="button button-enabled" onkeydown="" onmousedown="scroll_buildings_right();">scroll buildings right &rarr;</button>
+	  </th>
+	</tr>
+  </table>
+</div>
+<div id="buildings_container" style="width:100%;overflow-x:auto;scrollbar-gutter:stable;scroll-behavior:smooth;">
+<table id="buildings" style="width:max-content;padding:0;border-collapse:collapse;border-spacing:0;">
 	<tr>
 		<th style="width:440px;"></th>
 		<th style="width:440px;"></th>
 		<th style="width:440px;"></th>
-		<th></th>
+		<th style="width:440px;"></th>
 	</tr>
 	<tr></tr>
 	<tr></tr>
@@ -304,6 +359,8 @@ label, select {color:#ffffff;font-family:initial;}
 	<tr></tr>
 	<tr></tr>
 </table>
+</div>
+<br>
 <!--<div id="earth-buildings"></div>
 <div id="moon-buildings"></div>-->
 <div id="upgrades" class="upgrades" onmouseenter="focus_currency(GUI_displayed_upgrades)">
@@ -311,6 +368,10 @@ label, select {color:#ffffff;font-family:initial;}
 	<label for="upgrades_world_selector" id="upgrades_world_selector_label" class="hidden">for world: </label>
 	<select name="upgrades_world_selector" id="upgrades_world_selector" class="button hidden">
 	</select>
+	<select name="upgrades_currency_selector" id="upgrades_currency_selector" class="button" style="color:#ff00ff;">
+		<option value="dollars" style="color:#00ff00;">(using dollars)</option>
+		<option value="angels" style="color:#ffff00;">(using angels)</option>
+	</select> <!-- the name of this object sounds vague i know, but in practice this is only going to be for a distinction between native currency and native angels. -->
 	
 	<div style="float:right;display:inline;">
 	<label for="upgrades_amount_displayed" id="upgrades_amount_displayed_label">number of upgrades to show: </label>
@@ -360,12 +421,12 @@ label, select {color:#ffffff;font-family:initial;}
 	<div style="font-family:initial;font-size:1.5em;text-align:center;color:#ffff00">You currently have <div id="angel_amount" style="display:inline;color:#ff00ff;">0 angels</div> providing a <div id="boost_per_angel" style="display:inline;color:#ff00ff;">1%</div> boost each, resulting in a total multiplier of <div id="total_angel_boost" style="display:inline;color:#ff00ff;">x1.00</div></div>
 	
 	<div style="font-family:initial;font-size:2em;text-align:center;" id="claimable_angels">Restarting now would give you: 0 angels</div>
-	<div style="font-family:initial;text-align:center;" id="cost_of_next_angel">You need $1 trillion to get to the next angel.</div>
+	<div style="font-family:initial;text-align:center;" id="cost_of_next_angel">You need $1 trillion more to get to the next angel.</div>
 	<center><button id="angel_restart_button" class="button noselect button-disabled" disabled>Restart for 0 angels</button></center>
 	<div style="font-family:initial;"><i>holy</i> smokes! look at those profits!</div>
 </div>
 <div id="fps" class="fps"><small>this is an fps counter. i have it disabled for now :)</small></div>
-<div id="announcements" class="announcements"></div>
+<div id="announcements" class="announcements" onmousemove=""></div>
 <script src="decimal.js"></script>
 <script>
 //let t = new Date();
@@ -438,10 +499,12 @@ function fastpow(n, exponent) {
 	return answer;
 }//console.log(fastpow(Decimal(1.15), P).toString() + "; " + Decimal(1.15).pow(P).toString()); P*=10 
 class currency {
-	constructor(name, display_name, symbol) {
+	constructor(name, display_name, plural, symbol, decimals=2) {
 		this.name = name;
 		this.display_name = display_name;
+		this.plural = plural;
 		this.symbol = symbol;
+		this.decimals = decimals;
 		// maybe desc later?
 		
 		this.amount = zero();
@@ -492,7 +555,8 @@ class world {
 		this.angel_cost = Decimal('1e+12');
 		this.claimable_angels = zero();
 		this.cost_of_next_angel = zero();
-		this.boost_per_angel = Decimal('0.01');
+		this.starting_boost_per_angel = Decimal('0.01');
+		this.boost_per_angel = this.starting_boost_per_angel;
 		this.total_angel_boost = zero();
 		this.buildings = [];
 		this.upgrades = [];
@@ -505,6 +569,7 @@ class world {
 		this.progress_bg_color = progress_bg_color;
 		this.progress_bar_color = progress_bar_color;
 		this.currency_color = currency_color;
+		this.upgrade_currencies = [currency, angel_investors];
 		
 		/* * * redundancies * * */
 		this.calculated_building_profits = [];
@@ -528,20 +593,21 @@ class world {
 		
 		let world_unlock_button = document.createElement("button");
 		world_unlock_button.setAttribute("class", "button noselect button-disabled");
-		world_unlock_button.setAttribute("style", "line-height:110%;");
+		world_unlock_button.setAttribute("style", "line-height:110%;width:100%;padding:6px;color:"+progress_bar_color+";");
 		world_unlock_button.setAttribute("id", name+"_unlock_button");
 		world_unlock_button.setAttribute("onclick", name+".unlock();");
 		world_unlock_button.setAttribute("disabled", true);
 		//world_unlock_button.innerHTML = requirement_text(); <- gonna have to wait on this
 		
 		get_element("buildings").children[0].children[0].children[id].appendChild(world_unlock_button);
+		world_unlock_button.parentElement.classList.add("hidden");
 	}
 	calculate_claimable_angels() {
 		if (this.currency.get_total() < this.angel_cost) return zero();
-		this.claimable_angels = Decimal.cbrt(this.currency.get_all_time().div(this.angel_cost)).minus(this.angel_investors.get_amount()).floor();
+		this.claimable_angels = Decimal.cbrt(this.currency.get_all_time().div(this.angel_cost)).minus(this.angel_investors.get_all_time()).floor();
 	}
 	calculate_cost_of_next_angel() {
-		let K = this.claimable_angels.plus(this.angel_investors.get_amount()); // all the angesl :)
+		let K = this.claimable_angels.plus(this.angel_investors.get_all_time()); // all the angesl :)
 		this.cost_of_next_angel = this.angel_cost.times((K.plus('1')).pow('3'));
 	}
 	calculate_total_angel_boost() {
@@ -560,7 +626,7 @@ class world {
 		}
 		this.currency.amount = zero();
 		this.currency.total = zero();
-		this.boost_per_angel = Decimal(0.01);
+		this.boost_per_angel = this.starting_boost_per_angel;
 		refresh_upgrade_buttons(true, this, true); // so truuue
 		this.claimable_angels = zero(); // for some reason you absolutely need this; the update to get this number right gets delayed somehow. investigate later.
 	}
@@ -576,6 +642,7 @@ class world {
 			//this.on_unlock(); // tell me why all this stuff is so fractured please i must know
 			this.unhide_option_in_selectors();
 			this.unlocked = true;
+			get_element(this.name + "_unlock_button").parentElement.classList.remove("hidden");
 		}
 	}
 	get_save_data() {
@@ -595,18 +662,30 @@ class world {
 	}
 	set_from_save_data(string) {
 		let data = string.split(";");
-		if (data[0] != this.id+'') throw 'this world is not loading its corresponding data';
+		if (data[0] != this.id+'') { // this world is new as of loading the savefile, so just don't set anything.
+			if (data[0] == "" || data[0] == undefined) {
+				console.log('assuming world '+this.id+' is new.');
+				return;
+			} else {
+				throw 'this world is not loading its corresponding data';
+			}
+		}
 		this.currency.set_from_save_data(data[1]);
 		this.angel_investors.set_from_save_data(data[2]);
 		let building_data = data[3].split("^");
-		for (let i = 0; i < building_data.length; i++) {
-			this.buildings[i].set_from_save_data(building_data[i]);
+		if (building_data[0] != "") { // if the first entry were empty, this would indicate that an empty string was split.
+			for (let i = 0; i < building_data.length; i++) {
+				this.buildings[i].set_from_save_data(building_data[i]);
+			}
 		}
 		let upgrade_data = data[4];
-		for (let i = 0; i < upgrade_data.length; i++) {
-			this.upgrades[i].set_from_save_data(upgrade_data[i]);
+		if (upgrade_data[0] != "") {
+			for (let i = 0; i < upgrade_data.length; i++) {
+				this.upgrades[i].set_from_save_data(upgrade_data[i]);
+			}
 		}
 		this.unlocked = (data[5] == "1");
+		if (this.unlocked) get_element(this.name + "_unlock_button").parentElement.classList.remove("hidden");
 	}
 }
 get_element("angel_restart_button").addEventListener("click", ()=>{
@@ -615,19 +694,22 @@ get_element("angel_restart_button").addEventListener("click", ()=>{
 });
 let angel_symbol = "A";
 
-let dollars = new currency("dollars", "dollar", "$");
-let earth_angels = new currency("earth_angels", "angel", angel_symbol);
+let dollars = new currency("dollars", "dollar", "dollars", "$");
+let earth_angels = new currency("earth_angels", "angel", "angels", angel_symbol, 0);
 
 let moon_symbol = String.fromCharCode(9789);
-let moon_credits = new currency("moon_credits", "moon credit", moon_symbol);
-let moon_angels = new currency("moon_angels", "moon angel", moon_symbol + angel_symbol);
+let moon_credits = new currency("moon_credits", "moon credit", "moon credits", moon_symbol);
+let moon_angels = new currency("moon_angels", "moon angel", "moon angels", moon_symbol + angel_symbol, 0);
 
-let mars_symbol = String.fromCharCode(8380);
-let mars_dollars = new currency("mars_dollars", "mars dollar", mars_symbol);
-let mars_angels = new currency("mars_angels", "mars angel", mars_symbol + angel_symbol);
+let mars_symbol = String.fromCharCode(8380);// alternatively 10970 (topfork), 8916 (fork)
+let mars_dollars = new currency("mars_dollars", "mars dollar", "mars dollars", mars_symbol);
+let mars_angels = new currency("mars_angels", "mars angel", "mars angels", mars_symbol + angel_symbol, 0);
 
-let termins = new currency("termins", "termin", String.fromCharCode(10810)); // singular: Termin (mercury?)
-let eternity_points = 0n; // megabucks i guess
+let mercury_symbol = String.fromCharCode(10810);
+let termins = new currency("termins", "termin", "termini", mercury_symbol); // singular: Termin (mercury?)
+let mercury_angels = new currency("mercury_angels", "mercury angel", "mercury angels", mercury_symbol + angel_symbol, 0);
+
+let eternity_points = new currency("eternity_points", "eternity point", "eternity points", "E!", 0); // megabucks i guess
 //String.fromCharCode(1000); weird backwards s
 //String.fromCharCode(10000); pencil
 //String.fromCharCode(3497); mogus
@@ -636,16 +718,18 @@ let eternity_points = 0n; // megabucks i guess
 sesame=(c=dollars)=>{c.earn(absolute_limit);}
 sall =()=> {for (let i = 0; i < worlds.length; i++) {worlds[i].currency.earn(absolute_limit);}}
 
-let earth = new world("earth", "Earth", dollars, earth_angels, requirement_met=()=>{return true;}, requirement_text=()=>{return "";}, requirement_price=()=>{}, requirement_discovery=()=>{return false;}, "#002800", "#009600", "#00ff00", true); // you can't discover earth, buddy
+let earth = new world("earth", "Earth", dollars, earth_angels, requirement_met=()=>{return true;}, requirement_text=()=>{return "You already know about earth, silly! No lands left to conquer here!";}, requirement_price=()=>{}, requirement_discovery=()=>{return false;}, "#002800", "#009600", "#00ff00", true); // you can't discover earth, buddy
 // on_unlock=()=>{}
 earth.unhide_option_in_selectors(); // it just makes sense to do
-let moon_price = Decimal('1e+12');
-let moon = new world("moon", "The Moon", moon_credits, moon_angels, requirement_met=()=>{return dollars.get_amount().gt(moon_price);}, requirement_text=()=>{return "Go to the moon for "+money(moon_price, "$")+".";}, requirement_price=()=>{dollars.spend(moon_price);}, requirement_discovery=()=>{return dollars.get_total().gt(moon_price.div(100));}, "#002811", "#009949", "#0054ff");
+let moon_price = Decimal('9.99e+14');
+let moon = new world("moon", "The Moon", moon_credits, moon_angels, requirement_met=()=>{return dollars.get_amount().gt(moon_price);}, requirement_text=()=>{return "Blast off to the moon for "+money(moon_price, "$")+".";}, requirement_price=()=>{dollars.spend(moon_price);}, requirement_discovery=()=>{return dollars.get_total().gt(moon_price.div(100));}, "#002811", "#009949", "#0054ff");
 // on_unlock=()=>{moon_shoes.starting_freebies=1;moon_shoes.freebies=1;}
 let mars_price = Decimal('1e+33');
-let mars = new world("mars", "Mars", mars_dollars, mars_angels, requirement_met=()=>{return moon_credits.get_amount().gt(mars_price);}, requirement_text=()=>{return "Go to mars for "+money(mars_price, moon_symbol)+".";}, requirement_price=()=>{moon_credits.spend(mars_price);}, requirement_discovery=()=>{return moon.unlocked;}, "#300005", "#800000", "#cf3000");
+let mars = new world("mars", "Mars", mars_dollars, mars_angels, requirement_met=()=>{return moon_credits.get_amount().gt(mars_price);}, requirement_text=()=>{return "Colonize mars for "+money(mars_price, moon_symbol)+".";}, requirement_price=()=>{moon_credits.spend(mars_price);}, requirement_discovery=()=>{return moon.unlocked;}, "#300005", "#800000", "#cf3000");
 // on_unlock=()=>{potato_stand.starting_freebies=1; potato_stand.freebies=1;}
-
+let mercury_price = Decimal(200);
+let mercury = new world("mercury", "Mercury", termins, mercury_angels, requirement_met=()=>{return eternity_points.get_amount().gt(mercury_price);}, requirement_text=()=>{return "Seize mercury for "+money(mercury_price, "E!")+".";}, requirement_price=()=>{eternity_points.spend(mercury_price);}, requirement_discovery=()=>{return mars.unlocked;}, "#565656", "#898989", "#ff00ff");
+//                        																			or #a9a9a9
 //let dollars = 0n;
 let money_display_threshold = Decimal('1000000'); // 1 million
 
@@ -662,7 +746,7 @@ let suffixes_short = ["c","g","Cn","Dcn","Tcn","Qan","Qin","Scn","Spn","Ocn","No
 let irregulars_silly = ["","sillion","zillion","rillion","yillion","pillion","lillion","willion","jillion","gillion"];
 let prefixes_silly = ["","silly","zilly","really","yelly","pilly","lily","wily","jilly","gilly"];
 let infixes_silly = ["","sa","zilli","realli","yeli","pilli","lili","wheeli","jelli","gili"];
-let suffixes_silly = ["z","zilliz","bigjav","biggerjav","biggijav","yiljav","piljav","lijav","willajav","jillijavaj","gilliv","gakyak","wawas","kryll","tawas","vrill"];
+let suffixes_silly = ["z","zilliz","bigjav","biggerjav","biggijav","yiljav","piljav","lijav","willajav","jillijavaj","gilliv","gakyak","wawas","kryll","tawas","vrill","amongent","morb","three-","amfbsnabfblhfaklshf"];
 
 function formatting(irregulars, prefixes, infixes, suffixes, illion="illion", spacing=" ") {
 	return function (input, prefix="$", decimals=2) { // decimals controls how many of the digits (starting on the right) do we treat as being after a decimal point.
@@ -1081,6 +1165,7 @@ class building {
 		this.profit_multiplier = Decimal(1);
 		this.speed_multiplier = Decimal(1);
 		this.flag_recalculate_profit = true;
+		this.gui_override_update_profit = true;
 	}
 	on_unlock() {
 		this.gui_override_update_price = true;
@@ -1152,7 +1237,7 @@ class upgrade {
 		let price = document.createElement("div");
 		price.setAttribute("id", "upgrade"+this.id+"price");
 		price.setAttribute("class", "price-cantafford noselect");
-		let price_text = document.createTextNode(money(this.price));
+		let price_text = document.createTextNode(money(this.price, this.currency.symbol, this.currency.decimals));
 		price.appendChild(price_text);
 		
 		button.appendChild(name);
@@ -1228,9 +1313,13 @@ space_rollercoaster = new building("space_rollercoaster", "Space Rollercoaster",
 
 moon_shoes = new building("moon_shoes", "Moon Shoes", Decimal(1.5), Decimal(1.00), Decimal(5.00), Decimal(1.14), moon, default_buy_amounts, undefined, 1, 0);
 //moon_shoes.freebies = 1; // temp
-gravity_booth = new building("gravity_booth", "Gravity Booth", Decimal(3), Decimal(7.00), Decimal(8.00), Decimal(1.145), moon);
-//payday clones
-//lunar express
+moon_shoes.on_unlock =()=> {
+	moon_shoes.starting_freebies = 1;
+	moon_shoes.freebies = 1;
+}
+gravity_booth = new building("gravity_booth", "Gravity Booth", Decimal(3), Decimal(7.00), Decimal(29.00), Decimal(1.145), moon);
+payday_clones = new building("payday_clones", "Payday Clones", Decimal(4), Decimal(49.00), Decimal(1000.00), Decimal(1.147), moon);
+lunar_express = new building("lunar_express", "Lunar Express", Decimal(2.5), Decimal(60.98), Decimal(47_000), Decimal(1.148), moon);
 //oxygen bar
 //helium-3 farm
 //cheese mines
@@ -1245,6 +1334,10 @@ gravity_booth = new building("gravity_booth", "Gravity Booth", Decimal(3), Decim
 //film lab
 
 potato_stand = new building("potato_stand", "Potato Stand", Decimal(0.5), Decimal(0.05), Decimal(1.00), Decimal(1.05), mars, default_buy_amounts, undefined, 1, 0);
+potato_stand.on_unlock =()=> {
+	potato_stand.starting_freebies = 1;
+	potato_stand.freebies = 1;
+}
 //mars chocolate
 //space pirates
 //plutonium mines
@@ -1287,6 +1380,23 @@ let multiply_world_profit =(world, mult)=> {
 		}
 	}
 }
+let multiply_world_speed =(world, mult)=> {
+	return function () {
+		for (let i = 0; i < world.buildings.length; i++) {
+			world.buildings[i].speed_multiplier = world.buildings[i].speed_multiplier.times(mult);
+			world.buildings[i].gui_override_update_speed = true;
+		}
+	}
+}
+let increase_angel_boost =(world, mult)=> {
+	return function () {
+		world.boost_per_angel = world.boost_per_angel.add(mult);
+		for (let i = 0; i < world.buildings.length; i++) {
+			world.buildings[i].gui_override_update_profit = true;
+			world.buildings[i].flag_recalculate_profit = true;
+		}
+	}
+}
 
 lemonade_stand_up0 = new upgrade("Paper Umbrellas", "Lemonade Stand profit x3", Decimal(500), multiply_profit(lemonade_stand, 3), earth);
 newspaper_delivery_up0 = new upgrade("Lasanga Comics", "Newspaper Delivery profit x3", Decimal(3000), multiply_profit(newspaper_delivery, 3), earth);
@@ -1314,12 +1424,21 @@ oil_company_up1 = new upgrade("Seaside Refineries", "Oil Company profit x3", Dec
 
 everything_up1 = new upgrade("Cleverer Strategies", "Everything profit x3", Decimal('5e+13'), multiply_world_profit(earth, 3), earth);
 
+// hockey_team - tantalum skateblades
+
 everything_up2 = new upgrade("Highly Lucrative Proposition", "Everything profit x3", Decimal('5e+16'), multiply_world_profit(earth, 3), earth);
 
 //everything_up? = new upgrade("Oil.", "Everything speed x999", Decimal('1e+????'), multiply_world_speed(earth, 999), earth);
 
+angel_up0 = new upgrade("Ascension", "Angel Investor boost +1% per angel", Decimal(1), increase_angel_boost(earth, 0.01), earth, earth_angels);
+angel_up1 = new upgrade("Divining Predictions", "Everything profit x3", Decimal(200), multiply_world_profit(earth, 3), earth, earth_angels);
+angel_up2 = new upgrade("A Profit from Above", "Everything profit x3", Decimal(50000), multiply_world_profit(earth, 3), earth, earth_angels);
+angel_up3 = new upgrade("Godspeed", "Everything speed x3", Decimal(1_000_000), multiply_world_speed(earth, 3), earth, earth_angels);
+
 moon_shoes_up0 = new upgrade("Titanium-toed", "Moon Shoes profit x3", Decimal(8000), multiply_profit(moon_shoes, 3), moon);
 gravity_booth_up0 = new upgrade("Cushioned Seats", "Gravity Booth profit x3", Decimal(57000), multiply_profit(gravity_booth, 3), moon);
+payday_clones_up0 = new upgrade("Safety Measures", "Payday Clones profit x3", Decimal(480000), multiply_profit(payday_clones, 3), moon);
+lunar_express_up0 = new upgrade("Warp Drives", "Lunar Express profit x3", Decimal(2_900_000), multiply_profit(lunar_express, 3), moon);
 
 potato_stand_up0 = new upgrade("Fresh Fertilizer", "Potato Stand profit x9", Decimal(10000), multiply_profit(potato_stand, 9), mars);
 potato_stand_up1 = new upgrade("Hydrazine Cans", "Potato Stand profit x19", Decimal(10000000), multiply_profit(potato_stand, 19), mars);
@@ -1333,6 +1452,7 @@ lemonade_stand_tier4 = new tier("Lemondacious", "Lemonade Stand speed x2", 200, 
 lemonade_stand_tier5 = new tier("Lemon League", "Lemonade Stand speed x2", 250, multiply_speed(lemonade_stand, 2), lemonade_stand);
 lemonade_stand_tier6 = new tier("Citrus Cardinal", "Lemonade Stand speed x2", 300, multiply_speed(lemonade_stand, 2), lemonade_stand);
 lemonade_stand_tier7 = new tier("Tacky Ambrosia", "Lemonade Stand profit x3", 350, multiply_profit(lemonade_stand, 3), lemonade_stand);
+lemonade_stand_tier8 = new tier("Lord of Lime", "Lemonade Stand speed x3", 400, multiply_speed(lemonade_stand, 3), lemonade_stand);
 
 newspaper_delivery_tier0 = new tier("Extra extra!", "Newspaper Delivery speed x2", 25, multiply_speed(newspaper_delivery, 2), newspaper_delivery);
 newspaper_delivery_tier1 = new tier("Today in Business", "Newspaper Delivery profit x2", 50, multiply_profit(newspaper_delivery, 2), newspaper_delivery);
@@ -1382,25 +1502,60 @@ movie_studio_tier1 = new tier("Filmography", "Movie Studio speed x2", 50, multip
 movie_studio_tier2 = new tier("What a Classic!", "Movie Studio profit x2", 100, multiply_profit(movie_studio, 2), movie_studio);
 movie_studio_tier3 = new tier("The Stage is set", "Movie Studio profit x2", 150, multiply_profit(movie_studio, 2), movie_studio);
 movie_studio_tier4 = new tier("Lights,", "Movie Studio speed x2", 200, multiply_speed(movie_studio, 2), movie_studio);
+// Camera,
+// Action!
+// I'm afraid I can't do that
 
 bank_tier0 = new tier("The root of all evil", "Bank profit x3", 25, multiply_profit(bank, 3), bank);
 bank_tier1 = new tier("Vested Interest", "Bank profit x3", 50, multiply_profit(bank, 3), bank);
+bank_tier2 = new tier("Indebted Servitude", "Bank profit x2", 100, multiply_profit(bank, 2), bank);
+bank_tier3 = new tier("Top dollar Top hat", "Bank profit x2", 150, multiply_profit(bank, 2), bank);
 
 oil_company_tier0 = new tier("A product to change the world", "Earth profit x3", 5, multiply_world_profit(earth, 3), oil_company);
 oil_company_tier1 = new tier("Black Gold", "Oil Company profit x3", 25, multiply_profit(oil_company, 3), oil_company);
+oil_company_tier2 = new tier("Millions of Gallons in Printer ink", "Oil Company profit x2", 50, multiply_profit(oil_company, 2), oil_company);
+oil_company_tier3 = new tier("Impact Fontfluid", "Oil Company profit x2", 100, multiply_profit(oil_company, 2), oil_company);
+oil_company_tier4 = new tier("Oiled Chains", "Oil Company profit x2", 150, multiply_profit(oil_company, 2), oil_company);
+// Hidden in the Sand
+// The oil must flow
+// Worth its blood
 
 moon_shoes_tier0 = new tier("One Small Step", "Moon Shoes speed x3", 25, multiply_speed(moon_shoes, 3), moon_shoes);
 moon_shoes_tier1 = new tier("And a Giant Leap", "Moon Shoes speed x2", 50, multiply_speed(moon_shoes, 2), moon_shoes);
 moon_shoes_tier2 = new tier("For profits!", "Moon Shoes speed x2", 100, multiply_speed(moon_shoes, 2), moon_shoes);
 moon_shoes_tier3 = new tier("Moon running with moon scissors", "Moon Shoes speed x2", 150, multiply_speed(moon_shoes, 2), moon_shoes);
+moon_shoes_tier4 = new tier("Hello Mr. Shoes", "Moon Shoes profit x3", 200, multiply_profit(moon_shoes, 3), moon_shoes);
 
 gravity_booth_tier0 = new tier("Boioioing", "Gravity Booth profit x3", 25, multiply_profit(gravity_booth, 3), gravity_booth);
 gravity_booth_tier1 = new tier("Firmly Planted", "Gravity Booth profit x3", 50, multiply_profit(gravity_booth, 3), gravity_booth);
 gravity_booth_tier2 = new tier("Well, it's gravity", "Gravity Booth speed x2", 100, multiply_speed(gravity_booth, 2), gravity_booth);
+gravity_booth_tier3 = new tier("What goes up,", "Gravity Booth profit x3", 150, multiply_profit(gravity_booth, 3), gravity_booth);
+gravity_booth_tier4 = new tier("...must come down", "Gravity Booth speed x2", 200, multiply_speed(gravity_booth, 2), gravity_booth);
+// Gravity Fell
+
+payday_clones_tier0 = new tier("Beside Myself", "Payday Clones profit x2", 25, multiply_profit(payday_clones, 2), payday_clones);
+payday_clones_tier1 = new tier("Dolly Dee", "Payday Clones profit x2", 50, multiply_profit(payday_clones, 2), payday_clones);
+payday_clones_tier2 = new tier("Splitting Hairs", "Payday Clones profit x4", 100, multiply_profit(payday_clones, 4), payday_clones); // or heirs
+payday_clones_tier3 = new tier("Rabbits and Foxes", "Payday Clones profit x2", 150, multiply_profit(payday_clones, 2), payday_clones);
+payday_clones_tier4 = new tier("World of Today", "Payday Clones profit x8", 200, multiply_profit(payday_clones, 8), payday_clones);
+// next at 400, 800, 1600, etc.
+
+lunar_express_tier0 = new tier("Merrily on its way", "Lunar Express speed x2", 25, multiply_speed(lunar_express, 2), lunar_express);
+lunar_express_tier1 = new tier("Moonly Mendicants", "Lunar Express speed x2", 50, multiply_speed(lunar_express, 2), lunar_express);
+lunar_express_tier2 = new tier("Swiftly to thy Course", "Lunar Express speed x3", 100, multiply_speed(lunar_express, 3), lunar_express);
+lunar_express_tier3 = new tier("Unswayable Couriers", "Lunar Express speed x2", 150, multiply_speed(lunar_express, 2), lunar_express);
+lunar_express_tier4 = new tier("Faster than Light", "Lunar Express speed x2.99", 200, multiply_speed(lunar_express, 2.99), lunar_express);
+lunar_express_tier5 = new tier("Star-Sailor Captain", "Lunar Express profit x2", 250, multiply_profit(lunar_express, 2), lunar_express);
+lunar_express_tier6 = new tier("Spaceship Level 7", "Lunar Express profit x3", 300, multiply_profit(lunar_express, 3), lunar_express);
+// Neither rain nor sleet nor cosmic radiation
 
 potato_stand_tier0 = new tier("Hey There!", "Potato Stand profit x4", 25, multiply_profit(potato_stand, 4), potato_stand);
 
+//electric_cars
+//Oh, is he that, Edison guy?
+
 let n_shown_upgrades = get_element("upgrades_amount_displayed").value;
+let target_upgrade_currency = get_element("upgrades_currency_selector").value;
 function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=false) {
 	if (Number(get_element("upgrades_world_selector").value) != world.id) return; // don't try to mess with stuff if it isn't actually being displayed/updated.
 	let i = 0;
@@ -1419,7 +1574,7 @@ function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=fals
 		}
 	}
 	for (let i = 0; i < world.upgrades.length; i++) {
-		if (!world.upgrades[i].purchased) {
+		if (!world.upgrades[i].purchased && target_upgrade_currency == world.upgrades[i].currency.name) {
 			if (remove) world.upgrades[i].remove_button(); // this removes the old buttons before adding new ones. we shouldn't do this if the buttons have never been drawn before, hence the remove option.
 			world.upgrades[i].add_button(place_to_fill);
 			try { // this function runs once before the gui vars are initialized, which means this can actually cause a ReferenceError (for some reason)
@@ -1433,6 +1588,8 @@ function refresh_upgrade_buttons(remove=true, world=earth, destroy_elements=fals
 refresh_upgrade_buttons(false);
 get_element("upgrades_world_selector").addEventListener("change", function(event) {
 	GUI_update_upgrades_display_world = true;
+	refresh_currency_sections(worlds[Number(event.target.value)]);
+	update_target_upgrade_currency();
 });
 get_element("angels_world_selector").addEventListener("change", function(event) {
 	GUI_update_angels_display_world = true;
@@ -1441,12 +1598,46 @@ get_element("upgrades_amount_displayed").addEventListener("change", function(eve
 	n_shown_upgrades = Number(event.target.value);
 	GUI_update_upgrades_display_world = true; // idk invoking this sounds cool
 });
-
+get_element("upgrades_currency_selector").addEventListener("change", function(event) {
+	//console.log("changed!");
+	GUI_update_upgrades_display_world = true;
+	update_target_upgrade_currency();
+});
+// 0.240629941016383870565
+// 0.552405682621779210585i
+// 1.1715302E9
+function refresh_currency_sections(world) {
+	let currency_selector = get_element("upgrades_currency_selector");
+	let n_children = currency_selector.children.length; // store lieteral
+	for (let i = 0; i < n_children; i++) {
+		currency_selector.children[0].remove();
+	}
+	for (let i = 0; i < world.upgrade_currencies.length; i++) {
+		let option = document.createElement("option");
+		option.setAttribute("value", world.upgrade_currencies[i].name);
+		option.setAttribute("style", "color:"+(world.upgrade_currencies[i]==world.angel_investors?"#ffff00":world.currency_color)+";");
+		option.innerHTML = "(using "+world.upgrade_currencies[i].plural+")";
+		currency_selector.appendChild(option);
+	}
+}
+refresh_currency_sections(earth);
+update_target_upgrade_currency =()=> {target_upgrade_currency = get_element("upgrades_currency_selector").value;}
+// ughghrghrhghgh why can't i come up with nice names
 function is_element_visible(element) { // thank you
 	/*let rect = element.getBoundingClientRect();
 	let view_height = Math.max(document.documentElement.clientHeight, window.innerHeight);
 	return !(rect.bottom < 0 || rect.top - view_height >= 0);*/
+	// document.documentElement.scrollTop || document.body.scrollTop for position
+	// then do recursion for element offsetTop
 	return true;
+}
+
+function scroll_buildings_left() {
+	get_element("buildings_container").scrollLeft -= 220;
+}
+
+function scroll_buildings_right() {
+	get_element("buildings_container").scrollLeft += 220;
 }
 
 function get_time() {
@@ -1495,20 +1686,32 @@ function save_to_file() {
 }
 
 function load_game_from_data(savedata) {
-	if (savedata==null) return false;
+	if (savedata==null || savedata=="") return false;
 	try {savedata = atob(savedata);}
 	catch (err) {console.log("savedata was not base64 encoded (or some other error occurred). loading as unencoded string. err: "+err);}
-	past_loop_time = savedata.split("/")[0];
-	savefile_version = savedata.split("/")[1];
-	//game_updated = savefile_version < game_version;
-	savedata = savedata.substr(savedata.lastIndexOf("/")+1);
-	let worlds_data = savedata.split("|");
-	for (let w = 0; w < worlds.length; w++) {
-		//console.log("loading world "+w);
-		//console.log(worlds_data[w]);
-		worlds[w].set_from_save_data(worlds_data[w]);
-		if (worlds[w].unlocked) worlds[w].unhide_option_in_selectors();
+	// these "loaded" variables are for a quick undo if need be (please don't overwrite data until you know it won't err out)
+	let loaded_past_loop_time = null;
+	let loaded_savefile_version = null;
+	// they're declared here so that they can be accessed later.
+	try {
+		loaded_past_loop_time = savedata.split("/")[0];
+		loaded_savefile_version = savedata.split("/")[1];
+		//game_updated = savefile_version < game_version;
+		savedata = savedata.substr(savedata.lastIndexOf("/")+1);
+		let worlds_data = savedata.split("|");
+		for (let w = 0; w < worlds.length; w++) {
+			//console.log("loading world "+w);
+			//console.log(worlds_data[w]);
+			worlds[w].set_from_save_data(worlds_data[w]);
+			if (worlds[w].unlocked) worlds[w].unhide_option_in_selectors();
+		}
 	}
+	catch (err) {
+		console.log(err);
+		return false;
+	}
+	past_loop_time = loaded_past_loop_time; // hopefully success!
+	savefile_version = loaded_savefile_version;
 	refresh_upgrade_buttons(true, earth, true);
 	announce("game loaded!",/*"#555555"*/"#aaaaaa",5000);
 	// done!
@@ -1534,7 +1737,7 @@ function confirm_import() {
 		get_element("import_export_window").classList.add("hidden");
 	}
 	else {
-		get_element("import_export_info").innerHTML = "error! load failed!";
+		get_element("import_export_info").innerHTML = "<br>error! load failed!<br>";
 	}
 	get_element("confirm_import_button").classList.add("hidden");
 }
@@ -1613,6 +1816,8 @@ let fps = 0; // frames per second
 let tof = 0; // time of frames
 let nof = 0; // number of frames
 let tpf = 0; // time per frame
+let lowest_tpf = 999;
+let highest_tpf = 0;
 barrelroll =()=> {roll=true;}
 let roll = false;
 
@@ -1635,7 +1840,7 @@ for (let w = 0; w < worlds.length; w++) {
 		unlocked_buttons[i] = new Array(worlds[w].buildings[i].buy_amounts.length).fill(null);
 	}
 	GUI_buy_qty_buttons_unlocked.push([...unlocked_buttons]);
-	// sorry for having two copies of the same code here but right now i can't figure out how to bypass javascript's insatiable hunger for not deep-copying lists.
+	// sorry for having two copies of the same code here but right now i can't figure out how to bypass javascript's insatiable hunger for not deep-copying lists. TODO
 	let buyable_buttons = new Array(worlds[w].buildings.length);
 	for (let i = 0; i < worlds[w].buildings.length; i++) {
 		buyable_buttons[i] = new Array(worlds[w].buildings[i].buy_amounts.length).fill(null);
@@ -1652,8 +1857,11 @@ let GUI_displayed_upgrades = 0; // referring to which active world, not amount o
 let GUI_displayed_angels = 0;
 let GUI_update_upgrades_display_world = true;
 let GUI_update_angels_display_world = true;
+let GUI_angels_unlocked = null;
+let GUI_building_scrollers_unlocked = null;
 
 let focus_currency =(world)=> {GUI_displayed_currency = world;}
+let empty_save = get_game_save_data();
 let loaded = load_from_localStorage();
 
 let time_since_last_online = cur_loop_time - past_loop_time;
@@ -1680,7 +1888,7 @@ if (loaded) {announce("welcome back! you "/*made "+profits_display+", and*/+" we
 else {
 	announce("welcome to capitalsim! this is a silly game where you make money at an exponentially increasing rate.");
 }
-if (game_updated()) announce("the game has been updated since you last played it (which was v."+savefile_version+")! welcome to v."+game_version+"!", random_color());
+if (game_updated() && savefile_version != 0) announce("the game has been updated since you last played it (which was v."+savefile_version+")! welcome to v."+game_version+"!", random_color());
 
 function loop() {
 	cur_loop_time = get_time();
@@ -1718,7 +1926,7 @@ function loop() {
 		world.calculate_cost_of_next_angel();
 		world.calculate_total_angel_boost();
 		/* * * check loops * * */ // why are they called that though (what was c actually for???????????????)
-		for (let c = 0; c < upgrades.length; c++) { // first, fire all non-fired, purchased upgrades (c is for check)
+		for (let c = 0; c < upgrades.length; c++) { // first, fire all non-fired, purchased upgrades (c is for check (this was typed before above question, so please still elaborate))
 			if (upgrades[c].purchased) {
 				if (!upgrades[c].fired) {
 					upgrades[c].fire_action();
@@ -1739,17 +1947,17 @@ function loop() {
 			if (upgrades[i].purchased) {
 				// if (!upgrades[i].fired) upgrades[i].fire_action(); please refer to the check loops
 			} else {
-				if (GUI_displayed_upgrades == world.id) { // we can't update button graphics if the buttons are in another world!
+				if (GUI_displayed_upgrades == world.id && target_upgrade_currency == upgrades[i].currency.name) { // we can't update button graphics if the buttons are in another world!
 					let can_afford = upgrades[i].currency.get_amount().gte(upgrades[i].price);
+					if (can_afford) get_element("upgrades_title").attributes.class.value = "title important-text";
 					if (can_afford != GUI_can_afford_upgrade[w][i]) {
 						get_element("upgrade"+upgrades[i].id+"price").setAttribute("class", "price-can"+(can_afford ? "" : "t")+"afford noselect");
 						get_element("upgrade"+upgrades[i].id).setAttribute("class", "button noselect button-"+(can_afford ? "enabled" : "disabled"));
 						get_element("upgrade"+upgrades[i].id).disabled = !can_afford;
-						if (can_afford) get_element("upgrades_title").attributes.class.value = "title important-text";
 						GUI_can_afford_upgrade[w][i] = can_afford;
 					}
 					if (GUI_number_formatting != formatting_mode) { // this cannot be updated in tandem with the affordness check but that's okay
-						get_element("upgrade"+upgrades[i].id+"price").innerHTML = money(upgrades[i].price, currency.symbol);
+						get_element("upgrade"+upgrades[i].id+"price").innerHTML = money(upgrades[i].price, upgrades[i].currency.symbol, upgrades[i].currency.decimals);
 					}
 					currently_displayed_upgrades++;
 				}
@@ -1894,7 +2102,7 @@ function loop() {
 		//world.calculate_claimable_angels();
 		//world.calculate_cost_of_next_angel();
 		//world.calculate_total_angel_boost();
-		if (dollars.get_all_time().gt(10**9)) { // specific gating for the discovery of investors
+		if (GUI_angels_unlocked) { // specific gating for the discovery of investors
 			get_element("angels").className = "angels";
 			if (GUI_displayed_angels == world.id) { // otherwise you get the wacky conflicts hehe tehe
 				let angel_name = world.angel_investors.display_name;
@@ -1914,7 +2122,7 @@ function loop() {
 					let till_next = world.cost_of_next_angel.minus(world.currency.get_all_time());
 					let should_display = till_next.gte(0); // grrrr weird cuberoot shenanigans (this also happens in cookie clicker)
 					
-					get_element("cost_of_next_angel").innerHTML = "You need " + (should_display ? money(world.cost_of_next_angel - world.currency.get_all_time(), world.currency.symbol) : world.currency.symbol + "(some amount)") + " to get to the next "+angel_name+".";
+					get_element("cost_of_next_angel").innerHTML = "You need " + (should_display ? money(world.cost_of_next_angel - world.currency.get_all_time(), world.currency.symbol) : world.currency.symbol + "(some amount)") + " more to get to the next "+angel_name+".";
 					get_element("cost_of_next_angel").style.color = world.currency_color;
 				}
 				
@@ -1938,9 +2146,10 @@ function loop() {
 		
 		let world_unlock_button = get_element(world.name+"_unlock_button");
 		world_unlock_button.innerHTML = world.requirement_text();
-		let requirements_met = world.requirement_met(); // are the requirement criteria for getting to this world met yet? ugh this project is rife with bad function names. (<-- fix this!)
+		let requirements_met = world.requirement_met(); // are the requirement criteria for getting to this world met yet? ugh this project is rife with bad function names. (<-- fix this! (<-- no))
 		world_unlock_button.disabled = !requirements_met;
-		world_unlock_button.className = requirements_met ? "button noselect button-enabled" : "button noselect button-disabled";
+		world_unlock_button.className = "button noselect unlock-"+world.name + (requirements_met ? "-enabled" : "-disabled");
+		if (world.requirement_discovery()) {world_unlock_button.parentElement.classList.remove("hidden");}
 		if (!world.requirement_discovery() || world.unlocked) get_element(world.name+"_unlock_button").className += " hidden"; // have we met the requirements for the discovery of this world? if not, add "hidden" to the list of css classes. also, if we've unlocked the world already, then we don't need this button.
 		
 		if (world.id == GUI_displayed_currency) {
@@ -1959,6 +2168,22 @@ function loop() {
 		get_element("angels_world_selector").className = "button" + (moon.unlocked ? "" : " hidden");
 		get_element("upgrades_world_selector_label").className = moon.unlocked ? "" : "hidden";
 		get_element("angels_world_selector_label").className = moon.unlocked ? "" : "hidden";
+	}
+	if (dollars.get_all_time().gt(10**9) != GUI_angels_unlocked) {
+		GUI_angels_unlocked = dollars.get_all_time().gt(10**9);
+		if (GUI_angels_unlocked) {
+			get_element("upgrades_currency_selector").classList.remove("hidden");
+		} else {
+			get_element("upgrades_currency_selector").classList.add("hidden");
+		}
+	}
+	if (get_element("buildings_container").scrollLeftMax > 0 != GUI_building_scrollers_unlocked) {
+		GUI_building_scrollers_unlocked = get_element("buildings_container").scrollLeftMax > 0;
+		if (GUI_building_scrollers_unlocked) {
+			get_element("building_scroll_buttons").classList.remove("hidden");
+		} else {
+			get_element("building_scroll_buttons").classList.add("hidden");
+		}
 	}
 	//document.getElementById("dollars").innerHTML = money(dollars.get_amount(), dollars.symbol);
 	//document.getElementById("moon_credits").innerHTML = money(moon_credits.get_amount(), moon_credits.symbol);
@@ -1982,7 +2207,9 @@ function loop() {
 	tof += dt;
 	nof ++;
 	tpf = tof/nof;
-	get_element("fps").innerHTML = "lps: "+((fps+'').substr(0,6))+", dt="+dt+", tpf="+(tpf+'').substr(0,6);
+	if (dt < lowest_tpf) lowest_tpf = dt;
+	if (dt > highest_tpf) highest_tpf = dt;
+	get_element("fps").innerHTML = "lps: "+((fps+'').substr(0,6))+", dt="+dt+", tpf="+(tpf+'').substr(0,6)+", h="+highest_tpf+", l="+lowest_tpf;
 	// */
 	setTimeout(loop, Math.max(dt,10));
 	//window.requestAnimationFrame(loop);// wwawa
@@ -1990,6 +2217,8 @@ function loop() {
 loop();
 //lemonade_stand.base_speed /= 8888888888888
 wawa = "";
+let tehe = ["hey vsauce, michael here. or do i?","remember : cheated cookies taste awful","hey get outta here what's your deal","infinite money new hack found","stop youev violated the lwa","console easter egg text","pls don't cheat","there's a function in here called \"sall()\" which sets every single world's currency to its maximum value :)","poking around eh?","you're looking in the wrong place for weird secrets"];
+console.log("%c"+tehe[Math.floor(Math.random()*(tehe.length-1))],"font-size: 12px;color: #ff7");
 </script>
 </body>
 </html>
