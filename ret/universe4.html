@@ -1,0 +1,445 @@
+<!doctype html><!-- in this version i made it 99x less crap and less bloat. let's see how it turns out. -->
+<html>
+<head>
+<meta charset="utf-8">
+<title>a website: UNIVERSE4</title>
+<style>
+html {
+	width:100%;
+	height:100%;
+}
+body {
+	background: #777;
+	margin:0;
+	overflow:hidden;
+}
+</style>
+</head>
+<body>
+
+<a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
+
+<canvas id="canvas" width="800" height="600" style="border:5px solid #000000;" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
+Your browser does not support the HTML canvas tag.</canvas>
+
+<div style="width:fit-content;height:600px;display:inline;position:absolute;margin:10px;">
+<label for="units_setting">units: </label>
+<select id="units_setting" name="units_setting">
+	<option value="natural">natural units (hbar = c = 1)</option>
+	<option value="si">si units (hbar ~ 6.6e-18, c ~ 3.0e+8)</units>
+</select>
+</div>
+
+<script>
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+function vec2dist(a,b) {
+	return Math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2);
+}
+function vec3dist(a,b) {
+	return Math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2 + (a[2] - b[2])**2);
+}
+function lerp(a,b,f) {
+	return (b-a)*f+a;
+}
+let vec2add =(a,b)=> {
+	return [a[0]+b[0], a[1]+b[1]];
+}
+let vec2sub =(a,b)=> {
+	return [a[0]-b[0], a[1]-b[1]];
+}
+let vec2mul =(a,s)=> { // scalar
+	return [a[0]*s, a[1]*s];
+}
+let vec2div =(a,s)=> { // scalar
+	return [a[0]/s, a[1]/s];
+}
+let vec2neg =(a)=> {return [-a[0], -a[1]];}
+let vec2lerp =(a,b,f)=> {return [lerp(a[0],b[0],f), lerp(a[1],b[1],f)];}
+let vec2magn =(a)=> {return Math.sqrt(Math.pow(a[0],2) + Math.pow(a[1],2));}
+
+let vec3add =(a,b)=> {
+	return [a[0]+b[0], a[1]+b[1], a[2]+b[2]];
+}
+let vec3sub =(a,b)=> {
+	return [a[0]-b[0], a[1]-b[1], a[2]+b[2]];
+}
+let vec3mul =(a,s)=> { // scalar
+	return [a[0]*s, a[1]*s, a[2]*s];
+}
+let vec3div =(a,s)=> { // scalar
+	return [a[0]/s, a[1]/s, a[2]*s];
+}
+let vec3neg =(a)=> {return [-a[0], -a[1], -a[2]];}
+let vec3lerp =(a,b,f)=> {return [lerp(a[0],b[0],f), lerp(a[1],b[1],f), lerp(a[2],b[2],f)];}
+
+const hbar = 6.582119569e-16;//e-16;//6.6e-25 // used to be in GeV but that might actually be wrong
+const c = 299792458;//3.0e+8; // gee great variable name
+
+const a_EM = 1/(137.04);
+const a_S = 1;//0.2;
+const a_W = (1/30);
+
+// 0.0854 is sqrt(1/137.04)
+const g_EM = (4*Math.PI*a_EM)**0.5; // e ~ 0.30(n.u.)
+const e_EM = a_EM**.5;
+const g_S = (4*Math.PI*a_S)**0.5;//1;
+const e_S = a_S**.5;
+const g_W = (4*Math.PI*a_W)**0.5;
+
+//const color_singlets = ["r", "g", "b"];
+// color charge is stored as a vector [r,g,b], for all color charge quantities.
+const colorless = [1,1,1];
+const red = [1,0,0];
+const green = [0,1,0];
+const blue = [0,0,1];
+//const antired = vec3mul(red, -1);
+//const antigreen = vec3mul(green, -1);
+//const antiblue = vec3mul(blue, -1);
+
+let units_setting = "";
+
+let si_prefixes = ["y", "z", "a", "f", "p", "n", String.fromCharCode("956"), "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+function si_formatting(u,prec) {
+	/*if (eV < 1) {
+		return eV + " eV";
+	}
+	let prefixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"];*/
+	let significand = u;
+	let negative = significand < 0;
+	if (negative) u = 0 - u;
+	let i = Math.floor(Math.log10(u)/3);
+	significand /= 1000**(i > -9 ? i : -8);
+	let prefix = (i > -9) ? si_prefixes[i+8] : si_prefixes[0];
+	return (significand+'').substr(0,prec) + " " + prefix;
+}
+let energy_formatted =(eV)=> {
+	switch (units_setting) {
+		case "natural": return si_formatting(eV) + "eV";
+		case "si": return si_formatting(eV*1.602e-19) + "J";
+	}
+}
+let time_value =(t)=> {return t*hbar;}
+let time_formatted =(value,prec=24)=> {
+	switch (units_setting) {
+		case "natural": return (value+'').substr(0,prec);
+		case "si": return si_formatting(time_value(value),prec) + "s";
+	}
+}
+let length_value =(l)=> {return l*hbar*c;}
+let length_formatted =(value,prec=24)=> {
+	switch (units_setting) {
+		case "natural": return (value+'').substr(0,prec);
+		case "si": return si_formatting(length_value(value),prec) + "m";
+	}
+}
+let velocity_value =(v)=> {return v*c;}
+let velocity_formatted =(value,prec=24)=> {
+	switch (units_setting) {
+		case "natural": return (value+'').substr(0,prec) + "c";
+		case "si": return (velocity_value(value)+'').substr(0,prec) + " m/s";
+	}
+}
+
+class ParticleType {
+	constructor(name, symbol, color, mass, charge, spin, colorful=false) {
+		this.name = name;
+		this.symbol = symbol;
+		this.color = color;
+		this.mass = mass;
+		this.charge = charge;
+		this.spin = spin;
+		this.colorful = colorful;
+	}
+}
+
+const up_quark = new ParticleType("up quark", "u", "#0f0", 2300000, +2/3, 1/2, true);
+const down_quark = new ParticleType("down quark", "d", "#0ff", 4800000, -1/3, 1/2, true);
+const charm_quark = new ParticleType("c quark", "c", "#f0f", 1.275e9, +2/3, 1/2, true);
+const strange_quark = new ParticleType("s quark", "s", "#70f", 95000000, -1/3, 1/2, true);
+
+const electron = new ParticleType("electron", "e", "#ff0", 511000, -1, 1/2);
+
+const photon = new ParticleType("photon", String.fromCharCode("947"), "#fff", 0, 0, 1);
+
+const proton = new ParticleType("proton", "p", "#e00", /*text_color="#fff",*/938.27203e6, 1, 1/2);
+
+let particles = [];
+class Particle {
+	constructor(type, pos, momentum, anti, color=[0,0,0]) {
+		this.type = type;
+		this.pos = pos;
+		this.momentum = momentum;
+		this.anti = anti;
+		this.color = color;
+		
+		this.start_time = 0;
+		
+		particles.push(this);
+	}
+	update_pos(step_size) {
+		let vel = this.get_velocity();
+		this.pos[0] += vel[0]*step_size;
+		this.pos[1] += vel[1]*step_size;
+		this.pos[2] += vel[2]*step_size;
+	}
+	get_sphere_of_influence() {
+		return elapsed_time - this.start_time;
+	}
+	get_charge() {
+		return this.anti ? -this.type.charge : this.type.charge;
+	}
+	get_magn_color_charge() {
+		return this.type.colorful ? (this.anti ? -1 : 1) : 0;
+	}
+	get_sqr_magn_momentum() { // |p|^2
+		return (this.momentum[0]**2 + this.momentum[1]**2);
+	}
+	get_magn_momentum() { // p
+		return this.get_sqr_magn_momentum()**0.5; // teehee
+	}
+	get_total_energy() { // E
+		return (this.type.mass**2 + this.get_sqr_magn_momentum())**0.5;
+	}
+	get_mass() { // m
+		return this.type.mass;
+	}
+	get_kinetic_energy() { // T
+		return this.get_total_energy() - this.type.mass;
+	}
+	get_velocity() { // v
+		let total_energy = this.get_total_energy();
+		return vec2div(this.momentum, total_energy);
+	}
+	get_speed() { // magn of v
+		let vel = this.get_velocity();
+		return (vel[0]**2 + vel[1]**2)**.5; // can this be made more efficient? i'm not sure if this is completely reducible and unnecessary. please todo
+	}
+}
+
+//let part = new Particle(electron, [0,2,0], [10,0,0], false);//[294922.02359267776, 0, 0], 1);
+//let part2 = new Particle(electron, [0,-2,0], [10,0,0], false);//[294922.02359267776*Math.cos(0), 294922.02359267776*Math.sin(0), 0], 1);
+//let part3 = new Particle(electron, [3,0,0], [15,0,0], true);
+let r_quark = new Particle(up_quark, vec2mul([Math.cos(0), Math.sin(0)], 1e-9), [0,0], false, red);
+let g_quark = new Particle(up_quark, vec2mul([Math.cos(120*Math.PI/180), Math.sin(120*Math.PI/180)], 1e-9), [0,0], false, green);
+let b_quark = new Particle(down_quark, vec2mul([Math.cos(240*Math.PI/180), Math.sin(240*Math.PI/180)], 1e-9), [0,0], false, blue);
+
+//let e1 = new Particle(electron, [1,0], [0,0], false);
+let e0 = new Particle(electron, [hbar*c*100,0], [0,-40000], false);
+//let e2 = new Particle(electron, [-1,0], [0,0], false);
+
+let zoom = 1e11;
+function zoom_screen(event) {
+	let change = 1 - (event.deltaY/1000);
+	if (change < 0) return;
+	zoom *= change;
+	pan[0] *= change;
+	pan[1] *= change;
+}
+let active_keys = [];
+window.addEventListener('keydown', function (e) {
+	active_keys = (active_keys || []);
+	active_keys[e.keyCode] = (e.type == "keydown");
+});
+window.addEventListener('keyup', function (e) {
+	active_keys[e.keyCode] = (e.type == "keydown");            
+});
+let pan = [0,0];
+let mouse_pos = [0,0];
+function update_mouse_pos(event) {
+	//console.log(event.x+", "+event.y);
+	//console.log(event);
+	mouse_pos[0] = event.layerX - 5; // border of 5px
+	mouse_pos[1] = event.layerY - 5;
+}
+let step = 1e-11;//1e-4;
+let speed = 1; // steps per loop
+let elapsed_time = 0; // time since beginning
+
+let hovered_particle = null;
+let hp_onscreen_pos = [0,0]; // hp for hovered_particle
+
+function loop() {
+	/* * * get settings * * */
+	units_setting = document.getElementById("units_setting").value;
+	
+	/* * * display - particles * * */
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	let w = canvas.width/2;
+	let h = canvas.height/2;
+	hovered_particle = null; // if u fail tha tehe check (laetr)
+	for (let i = 0; i < particles.length; i++) {
+		let particle = particles[i];
+		let property = particles[i].type;
+		let onscreen_x = pan[0] + w + particle.pos[0]*zoom;
+		let onscreen_y = pan[1] + h + particle.pos[1]*zoom;
+		let scale = Math.max(zoom/property.mass/1000,10);
+		if (onscreen_x > 800+scale || onscreen_x < -scale || onscreen_y < -scale || onscreen_y > 600+scale) {
+			// donot display if not onscreen pls (oncanvas).
+		} else {
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			
+			ctx.beginPath();
+			let gradient = ctx.createLinearGradient(onscreen_x - scale, onscreen_y - scale, onscreen_x + scale, onscreen_y + scale);
+			gradient.addColorStop(0, property.color);
+			gradient.addColorStop(1, property.color);
+			ctx.fillStyle = gradient;
+			ctx.arc(onscreen_x, onscreen_y, scale, 0, 2*Math.PI);
+			ctx.fill();
+			ctx.font = "italic "+Math.floor(scale)+"px Times";
+			ctx.fillStyle = "#000";
+			let color_charge = "#000";
+			if (property.colorful) {
+				color_charge = "#";
+				let red = 0;
+				let green = 0;
+				let blue = 0;
+				red = Math.max(particle.color[0]*0xff,0).toString(16);
+				green = Math.max(particle.color[1]*0xff,0).toString(16);
+				blue = Math.max(particle.color[2]*0xff,0).toString(16);
+				color_charge += ((red.length==1 ? '0' : '') + red + (green.length==1 ? '0' : '') + green + (blue.length==1 ? '0' : '') + blue);
+				//console.log(particle.color + ": " + color_charge);
+			}
+			ctx.fillText(property.symbol, onscreen_x - (0.25*scale) + scale/150, onscreen_y + scale/150);
+			ctx.fillStyle = color_charge;
+			ctx.fillText(property.symbol, onscreen_x - (0.25*scale), onscreen_y);
+			
+			
+			if (vec2dist([onscreen_x, onscreen_y], [mouse_pos[0], mouse_pos[1]]) < scale) { // mouse is over particle; show some info
+				hovered_particle = particle;
+				hp_onscreen_pos = [onscreen_x, onscreen_y];
+			}
+		}
+	}
+	
+	/* * * display - particle info box * * */
+	if (hovered_particle != null) {
+		let window_zoom = 50;
+		ctx.textAlign = "left";
+		ctx.textBaseline = "top";
+		ctx.font = "italic "+Math.floor(0.5*window_zoom)+"px Times";
+		ctx.fillStyle = "#ffffff";
+		ctx.fillRect(hp_onscreen_pos[0] + 0.9*window_zoom, hp_onscreen_pos[1] + 0.9*window_zoom, 7*window_zoom, 3*window_zoom);
+		ctx.fillStyle = "#000000";
+		ctx.fillText("E = "+energy_formatted(hovered_particle.get_total_energy()), hp_onscreen_pos[0] + window_zoom, hp_onscreen_pos[1] + window_zoom);
+		ctx.fillText("T = "+energy_formatted(hovered_particle.get_kinetic_energy()), hp_onscreen_pos[0] + window_zoom, hp_onscreen_pos[1] + 1.5*window_zoom);
+		ctx.fillText("m = "+energy_formatted(hovered_particle.get_mass()), hp_onscreen_pos[0] + window_zoom, hp_onscreen_pos[1] + 2*window_zoom);
+		ctx.fillText("v = "+velocity_formatted(hovered_particle.get_speed()), hp_onscreen_pos[0] + window_zoom, hp_onscreen_pos[1] + 2.5*window_zoom);
+		ctx.fillText("p = "+energy_formatted(hovered_particle.get_magn_momentum()), hp_onscreen_pos[0] + window_zoom, hp_onscreen_pos[1] + 3*window_zoom);
+		let relation = Math.sqrt((hovered_particle.get_magn_momentum()*1)**2 + (hovered_particle.get_mass()*1)**2);
+		//ctx.fillText("E-p = "+energy_formatted(relation), fp_onscreen_pos[0] + window_zoom, fp_onscreen_pos[1] + 3.5*window_zoom);
+		//ctx.fillText("a = "+(hovered_particle.vel_angle), hp_onscreen_pos[0] + window_zoom, hp_onscreen_pos[1] + 3.5*window_zoom);
+	}
+	
+	/* * * tick * * */
+	for (let i = 0; i < particles.length; i++) {
+		for (let s = 0; s < speed; s++) {
+			particles[i].update_pos(step);
+			for (let i = 0; i < particles.length; i++) {			// CONTINUOUS NON-BUBBLE BUBBLES
+				for (let ii = 0; ii < particles.length; ii++) { // N^2 xd. sorry i'll use voronoi later (no i won't)
+					// [i] is shooting a boson at [ii]! but only if [i] != [ii]. (no self interactions please, those are not possible to deal with)
+					if (i != ii) {
+						let R_range = vec2dist(particles[i].pos, particles[ii].pos);
+						
+						/* * * EM * * */
+						let vertex_from = g_EM * (particles[i].get_charge());
+						let vertex_to = g_EM * (particles[ii].get_charge());
+						let parity_sign = (particles[i].get_charge() * particles[ii].get_charge() > 0 ? 1 : -1);
+						if (/*vertex_from * vertex_to > Math.random()/step &&*/ R_range <= particles[i].get_sphere_of_influence() && i != ii) {
+							let force_vector = vec2div(vec2sub(particles[i].pos, particles[ii].pos), R_range); // extra division to normalize the vector
+							let dE = 1/R_range; // maximum energy exchange allowable by the heisenberg uncertainty principle
+							let dP = (dE**2 - photon.mass**2)**.5;
+							force_vector = vec2div(force_vector, R_range**2); // dE ~ hbar * c / R (which is just 1/R, because natural units are amazing)
+							force_vector = vec2mul(force_vector, vertex_from*vertex_to/*4*Math.PI*a_EM*parity_sign*/*step);//*parity_sign
+							particles[i].momentum = vec2add(particles[i].momentum, force_vector);
+							particles[ii].momentum = vec2sub(particles[ii].momentum, force_vector);
+							//particles[i].start_time = elapsed_time;
+							//particles[ii].start_time = elapsed_time;
+							
+							//console.log(particles[i].id + " to " + particles[ii].id + ". " + force_vector);
+						}
+						
+						/* * * Strong * * */
+						vertex_from = e_S * particles[i].get_magn_color_charge();
+						vertex_to = e_S * particles[ii].get_magn_color_charge();
+						if (R_range <= particles[i].get_sphere_of_influence() && vertex_from != 0 && vertex_to != 0) {
+							let force_vector = vec2div(vec2sub(particles[i].pos, particles[ii].pos), R_range); // extra division to normalize the vector
+							//force_vector = vec2div(force_vector, 1/R_range); // dE ~ hbar * c / R (which is just 1/R, because natural units are amazing)
+							//force_vector = vec2mul(force_vector, vertex_from*vertex_to*-1*step);
+							let femtometer = hbar*c/38.937937211162965;
+							//force_vector = vec2mul(force_vector, ((-2/3)*0.3/R_range - (1e9*R_range/femtometer))*step*vertex_to*vertex_from); // oh my god how does this work
+							// -2/3 is C, color factor for baryons
+							// 0.3 is alpha_s, according to ???
+							// linear term is k; 1 GeV/fm.
+							force_vector = vec2mul(force_vector, ((2/3)*0.3/R_range**2 - (1e9/femtometer))*step); // this ver is more mathematically acceptable
+							/*if (vec2magn(force_vector) > up_quark.mass*2) {
+								let midpoint = vec2div([particles[i].pos[0]+particles[ii].pos[0], particles[i].pos[1]+particles[ii].pos[1]],2);
+								let random_offset = [Math.random(), Math.random()];
+								let new_up = new Particle(up_quark, vec2add([...midpoint], random_offset), [0,0], false, red);
+								let new_antiup = new Particle(up_quark, vec2add([...midpoint], vec2neg(random_offset)), [0,0], true, red);
+								console.log("a");
+							} else {*/
+								particles[i].momentum = vec2add(particles[i].momentum, force_vector);
+								particles[ii].momentum = vec2sub(particles[ii].momentum, force_vector);
+							//}
+							//particles[i].start_time = elapsed_time;
+							//particles[ii].start_time = elapsed_time;
+							
+							//console.log(particles[i].color + " to " + particles[ii].color + ": " + force_vector);
+						}
+					}
+				}
+			}
+		}
+		elapsed_time += Math.max(step*speed,0);
+	}
+	
+	/* * * sim info / (e)xtra info * * */
+	ctx.textAlign = "left";
+	ctx.textBaseline = "top";
+	ctx.font = "24px Times";
+	ctx.fillStyle = "#000000";
+	ctx.fillText("pan: "+/*((pan[0]/zoom)+'').substr(0,7)+", "+((pan[1]/zoom)+'').substr(0,7)+" | "+*/length_formatted(pan[0]/zoom,7)+", "+length_formatted(pan[1]/zoom,7), 10, 10);
+	ctx.fillText("zoom: "+/*(zoom+'')+" | "+*/length_formatted(1/zoom,7)+" ("+zoom.toFixed(5)+")", 10, 10+(24));
+	ctx.fillText("step: "+/*(step+'')+" | "+*/time_formatted(step,7), 10, 10+(24*2));
+	ctx.fillText("speed: "+(speed+'')+"*step = "+time_formatted(step*speed,7), 10, 10+(24*3));
+	ctx.fillText("particle count: "+(particles.length+''), 10, 10+(24*4));
+	ctx.fillText("elapsed time: "+time_formatted(elapsed_time,10), 10, 10+(24*5));
+	ctx.textAlign = "center";
+	ctx.fillText(length_formatted(200/zoom, 6), 110, 10+(24*6));
+	let yolg = 7.5; // y_offset_length_graphic
+	ctx.beginPath();
+	ctx.lineTo(10, 10+(24*yolg));
+	ctx.lineTo(210, 10+(24*yolg));
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.lineTo(110, 10+(24*(yolg-.5)));
+	ctx.lineTo(110, 10+(24*yolg));
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.lineTo(10, 10+(24*(yolg+.5)));
+	ctx.lineTo(10, 10+(24*yolg));
+	ctx.stroke();
+	ctx.beginPath();
+	ctx.lineTo(210, 10+(24*(yolg+.5)));
+	ctx.lineTo(210, 10+(24*yolg));
+	ctx.stroke();
+	
+	/* * * controls * * */
+	if (active_keys && (active_keys[37] || active_keys[65])) {pan[0] += 10; }
+    if (active_keys && (active_keys[39] || active_keys[68])) {pan[0] -= 10; }
+    if (active_keys && (active_keys[38] || active_keys[87])) {pan[1] += 10; }
+    if (active_keys && (active_keys[40] || active_keys[83])) {pan[1] -= 10; }
+	if (active_keys && active_keys[70]) {step *= 1.1;}
+	if (active_keys && active_keys[82]) {step /= 1.1;}
+	if (active_keys && active_keys[71]) /*particles[0].kinetic_energy *= 1.01;*/{speed += Math.max(1,Math.floor(speed/50));}
+	if (active_keys && active_keys[84]) /*particles[0].kinetic_energy /= 1.01;*/{speed -= Math.max(1,Math.floor(speed/50));}
+	if (active_keys && active_keys[32]) {speed = 1; /*step = 1e-4;*/} // spacebar
+	
+	window.requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
