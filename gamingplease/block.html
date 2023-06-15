@@ -3,7 +3,9 @@
 <head>
 <title>a website: blocks</title>
 <style>
-
+body {
+	background: #9af;
+}
 </style>
 </head>
 <body>
@@ -94,6 +96,9 @@ let cube_tris = [
 	[4, 7, 0, 3], // Left Face
 	[1, 2, 5, 6]  // Right Face
 ];
+let test_colors = [
+	[]//todo
+];
 let positions = [];
 let colors = [];
 for (let i = 0; i < 6; i++) {
@@ -108,10 +113,12 @@ for (let i = 0; i < 6; i++) {
 	});
 	//let tri_1 = [...face].splice(0,3);
 	//let tri_2 = [...face].splice(1,3);
-	verts.forEach((i)=>{ positions.push((i-0.5)*2); });
-	colors.push(200, 70, 120, 255);
+	verts.forEach((i)=>{
+		positions.push((i-0.5)*2);
+		colors.push(Math.random()*255, Math.random()*255, Math.random()*255);
+	});
 }
-colors = positions; // what. why.
+//colors = positions; // what. why. (<-- the color list was too small. webgl is nothing but quirks.)
 let positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
@@ -120,7 +127,7 @@ let colorBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
 
-let camera_pan = [0,0,0];
+let camera_pan = [0,0,-10];
 let camera_rot = [0,0,0];
 let camera_scale = [1,1,1];
 let t = 0;
@@ -173,12 +180,22 @@ function draw() {
 	offset = 0;
 	let count = 36; // 12 tris in a cube, 36 verts
 	gl.drawArrays(primitiveType, offset, count);
-	camera_pan = [0, 0, -10];
+	
 	t+=0.01
 	camera_rot = [3*t,2*t,t];
 	window.requestAnimationFrame(draw);
 }
 draw();
+
+let active_keys = [];
+window.addEventListener('keydown', function (e) {
+	active_keys = (active_keys || []);
+	active_keys[e.keyCode] = (e.type == "keydown");
+});
+window.addEventListener('keyup', function (e) {
+	active_keys[e.keyCode] = (e.type == "keydown");            
+});
+
 class Block {
 	constructor(name, tex) {
 		this.name = name;
