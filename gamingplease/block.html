@@ -40,7 +40,9 @@ hey i heard you like webgl draw calls
 	}
 </script>
 </body>
-<script src="matrixutils.js"></script>
+<script src="blockmath.js"></script>
+<script src="http://joeiddon.github.io/perlin/perlin.js"></script>
+<!-- could also use https://github.com/josephg/noisejs -->
 <script>
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("webgl");
@@ -104,38 +106,49 @@ let cube_tris = [
 	[4, 7, 0, 3], // Left Face
 	[1, 2, 5, 6]  // Right Face
 ];
-let positions = [];
-let colors = [];
-let texcoords = [];
-for (let i = 0; i < 6; i++) {
-	let face = cube_tris[i];
-	let tris = [];
-	tris.push(face[0], face[1], face[2],
-			  face[2], face[1], face[3]);
-	let verts = [];
-	tris.forEach((i)=>{
-		let vertex = cube_verts[i];
-		verts.push(vertex[0], vertex[1], vertex[2]); // god please forgive me
-	});
-	//let tri_1 = [...face].splice(0,3);
-	//let tri_2 = [...face].splice(1,3);
-	verts.forEach((i)=>{
-		positions.push((i-0.5)*2);
-		colors.push(Math.random()*255);
-	});
-	texcoords.push(
-		0, 0, // 0
-		0, 1, // 1
-		1, 0, // 2
-		1, 0, // 2
-		0, 1, // 1
-		1, 1  // 3
-	);
+let cube_face_checks = [
+	[0, 0, -1],
+	[0, 0, 1],
+	[0, 1, 0],
+	[0, -1, 0],
+	[-1, 0, 0],
+	[1, 0, 0]
+];
+function make_cube_verts(mask, x, y, z) {
+	let positions = [];
+	let uvs = [];
+	for (let i = 0; i < 6; i++) {
+		if (mask >> i & 1 == 1) {
+			let face = cube_tris[i];
+			let tris = [];
+			tris.push(face[0], face[1], face[2],
+					  face[2], face[1], face[3]);
+			let verts = [];
+			tris.forEach((i)=>{
+				let vertex = cube_verts[i];
+				verts.push(vertex[0] + x, vertex[1] + y, vertex[2] + z); // god please forgive me
+			});
+			//let tri_1 = [...face].splice(0,3);
+			//let tri_2 = [...face].splice(1,3);
+			verts.forEach((i)=>{
+				positions.push(i-0.5);
+			});
+			uvs.push(
+				0, 0, // 0
+				0, 1, // 1
+				1, 0, // 2
+				1, 0, // 2
+				0, 1, // 1
+				1, 1  // 3
+			);
+		}
+	}
+	return [positions, uvs];
 }
 //colors = positions; // what. why. (<-- the color list was too small. don't mess up the color list!)
 let positionBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+//gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
 /*let colorBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
@@ -143,7 +156,7 @@ gl.bufferData(gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);*/
 
 let texcoordBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texcoords), gl.STATIC_DRAW);
+//gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texcoords), gl.STATIC_DRAW);
 
 let texture = gl.createTexture();
 gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -161,7 +174,79 @@ for (let i = 0; i < 256; i++) {
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 16, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(grass));
 gl.generateMipmap(gl.TEXTURE_2D);
 
-let camera_pan = [0,0,-10];
+class Block {
+	constructor(name, texture, is_solid) {
+		this.name = name;
+		this.texture = texture;
+		this.is_solid = is_solid;
+	}
+}
+const Blocks = {
+	0: new Block("Air", [0,0], false),
+	1: new Block("Stone", [0,0], true),
+	2: new Block("Grass", [0,0], true)
+}
+class Chunk {
+	constructor() {
+		this.blockdata = new Uint8Array(16*128*16).fill(0);
+		this.vertdata = [];
+		this.uvdata = [];
+	}
+	get_block(x, y, z) {
+		let index = x + y*16 + z*16*128;
+		if (index < 0 || index > this.blockdata.length - 1) return 0;
+		return this.blockdata[index];
+	}
+	set_block(x, y, z, id) {
+		this.blockdata[x+y*16+z*16*128] = id;
+	}
+	populate() {
+		for (let y = 0; y < 128; y++) {
+			for (let x = 0; x < 16; x++) {
+				for (let z = 0; z < 16; z++) {
+					let height = perlin.get(x/10, z/10)*4+60;
+					if (y == height) this.set_block(x,y,z,2);
+					else if (y < height) this.set_block(x,y,z,1);
+				}
+			}
+		}
+	}
+	create_vert_data() {
+		for (let y = 0; y < 128; y++) {
+			for (let x = 0; x < 16; x++) {
+				for (let z = 0; z < 16; z++) {
+					let mask = 0b111111; // right, left, bottom, top, front, back
+					for (let f = 0; f < 6; f++) {
+						let bit = 0b1 << f;
+						let check = cube_face_checks[f];
+						if (Blocks[this.get_block(x + check[0], y + check[1], z + check[2])].is_solid) {
+							mask -= bit;
+						}
+					}
+					let data = make_cube_verts(mask, x, y, z);
+					data[0].forEach((i)=>{this.vertdata.push(i);});
+					data[1].forEach((i)=>{this.uvdata.push(i);});
+				}
+			}
+		}
+	}
+}
+class World {
+	constructor() {
+		this.chunks = new Array(4*4);
+		for (let i = 0; i < this.chunks.length; i++) {
+			this.chunks[i] = new Chunk();
+			this.chunks[i].populate();
+			this.chunks[i].create_vert_data();
+		}
+	}
+}
+world = new World();
+gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].vertdata), gl.STATIC_DRAW);
+gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].uvdata), gl.STATIC_DRAW);
+let camera_pan = [0,-60,-50];
 let camera_rot = [0,0,0];
 let camera_scale = [1,1,1];
 let t = 0;
@@ -171,7 +256,7 @@ function draw() {
 	gl.clearColor(0, 0, 0, 0);
 	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	gl.enable(gl.CULL_FACE);
+	//gl.enable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 	
 	gl.useProgram(program);
@@ -179,7 +264,7 @@ function draw() {
 	gl.enableVertexAttribArray(positionLocation);
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
+	//gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].vertdata), gl.STATIC_DRAW);
 	let size = 3;
 	let type = gl.FLOAT;
 	let normalize = false;
@@ -201,7 +286,7 @@ function draw() {
 	gl.enableVertexAttribArray(texcoordLocation);
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-	
+	//gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].uvdata), gl.STATIC_DRAW);
 	gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
 	
 	let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -221,7 +306,7 @@ function draw() {
 	
 	let primitiveType = gl.TRIANGLES;
 	offset = 0;
-	let count = positions.length/3;
+	let count = world.chunks[0].vertdata/3;
 	gl.drawArrays(primitiveType, offset, count);
 	
 	t+=0.01
@@ -238,46 +323,5 @@ window.addEventListener('keydown', function (e) {
 window.addEventListener('keyup', function (e) {
 	active_keys[e.keyCode] = (e.type == "keydown");            
 });
-
-class Block {
-	constructor(name, texture, is_solid) {
-		this.name = name;
-		this.texture = texture;
-		this.is_solid = is_solid;
-	}
-}
-const Blocks = {
-	AIR: new Block("Air", [0,0], false),
-	STONE: new Block("Stone", [0,0], true),
-	GRASS: new Block("Grass", [0,0], true)
-}
-class Chunk {
-	constructor() {
-		this.blockdata = new Array(16*128*16).fill(0);
-	}
-	get_block(x, y, z) {
-		return this.blockdata[x+y*16+z*16*128];
-	}
-	set_block(x, y, z, id) {
-		this.blockdata[x+y*16+z*16*128] = id;
-	}
-	populate() {
-		for (let y = 0; y < 128; y++) {
-			for (let x = 0; x < 16; x++) {
-				for (let z = 0; z < 16; z++) {
-					if (y == 64) this.set_block(x,y,z,2);
-					else if (y < 64) this.set_block(x,y,z,1);
-				}
-			}
-		}
-	}
-}
-class World {
-	constructor() {
-		this.chunks = new Array(16*16);
-		for (let i = 0; i < this.chunks.length; i++) this.chunks[i] = new Chunk();
-	}
-}
-world = new World();
 </script>
 </html>
