@@ -40,10 +40,12 @@ hey i heard you like webgl draw calls
 	}
 </script>
 </body>
+<img src="blocks.png" id="blocks" hidden></img>
 <script src="blockmath.js"></script>
-<script src="http://joeiddon.github.io/perlin/perlin.js"></script>
+<!--<script src="http://joeiddon.github.io/perlin/perlin.js"></script>-->
 <!-- could also use https://github.com/josephg/noisejs -->
 <script>
+'use strict';
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("webgl");
 if (!gl) console.log("you are slime");
@@ -114,7 +116,7 @@ let cube_face_checks = [
 	[-1, 0, 0],
 	[1, 0, 0]
 ];
-function make_cube_verts(mask, x, y, z) {
+function make_cube_verts(mask, x, y, z, block) {
 	let positions = [];
 	let uvs = [];
 	for (let i = 0; i < 6; i++) {
@@ -133,13 +135,17 @@ function make_cube_verts(mask, x, y, z) {
 			verts.forEach((i)=>{
 				positions.push(i-0.5);
 			});
+			let u = 1/16; // uv_unit
+			let ux = block.texture[0] * u; // offset_x
+			let uy = block.texture[1] * u; // offset_y
 			uvs.push(
-				0, 0, // 0
-				0, 1, // 1
-				1, 0, // 2
-				1, 0, // 2
-				0, 1, // 1
-				1, 1  // 3
+				ux, uy, // 0
+				ux, uy+u, // 1
+				ux+u, uy, // 2
+				ux+u, uy, // 2
+				ux, uy+u, // 1
+				ux+u, uy+u  // 3
+				// +u refers to a 1, no +u refers to 0
 			);
 		}
 	}
@@ -164,15 +170,38 @@ gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-let missing_texture = [255, 0, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255, 255];
+let missing_texture = [];
+for (let i = 0; i < 32*32; i+=2) {
+	if ((i&32)==32) missing_texture.push(255, 0, 255, 255, 0, 0, 0, 255);
+	else missing_texture.push(0, 0, 0, 255, 255, 0, 255, 255);
+}
 let grass = [];
 for (let i = 0; i < 256; i++) {
 	let b = Math.random();
 	grass.push(Math.floor(b*b*40+90), Math.floor(b*70+185), Math.floor(Math.pow(b, 18)*150+60), 255);
 }
+let random = [];
+for (let i = 0; i < 1024; i++) random.push(Math.random()*255, Math.random()*255, Math.random()*255, 255);
 "120,246,74,255,90,186,60,255,90,195,60,255,92,203,60,255,96,213,60,255,124,249,96,255,94,209,60,255,120,246,73,255,100,220,60,255,93,206,60,255,93,206,60,255,90,189,60,255,117,242,64,255,101,222,60,255,124,249,94,255,90,188,60,255,90,192,60,255,117,243,65,255,124,249,96,255,101,222,60,255,120,246,74,255,93,206,60,255,114,239,61,255,129,254,182,255,105,229,60,255,90,194,60,255,99,218,60,255,100,221,60,255,97,214,60,255,90,185,60,255,90,188,60,255,113,239,61,255,125,251,114,255,109,233,60,255,127,252,148,255,96,212,60,255,97,215,60,255,110,234,60,255,103,225,60,255,125,251,113,255,120,246,72,255,125,250,106,255,103,225,60,255,91,199,60,255,109,233,60,255,126,251,122,255,97,215,60,255,111,236,60,255,115,241,62,255,90,195,60,255,121,247,78,255,99,219,60,255,93,206,60,255,90,185,60,255,104,226,60,255,102,223,60,255,90,189,60,255,102,224,60,255,112,238,61,255,101,222,60,255,90,195,60,255,100,221,60,255,127,252,145,255,91,197,60,255,108,232,60,255,113,238,61,255,100,220,60,255,100,221,60,255,120,245,72,255,118,243,66,255,106,229,60,255,106,229,60,255,111,236,60,255,109,233,60,255,125,250,110,255,91,196,60,255,126,252,128,255,100,220,60,255,125,250,110,255,90,194,60,255,97,215,60,255,93,205,60,255,117,242,64,255,90,186,60,255,105,228,60,255,106,230,60,255,111,235,60,255,92,200,60,255,99,218,60,255,94,207,60,255,91,199,60,255,90,190,60,255,94,207,60,255,124,249,96,255,114,239,61,255,96,212,60,255,103,225,60,255,101,223,60,255,93,205,60,255,109,234,60,255,100,220,60,255,90,190,60,255,91,199,60,255,126,252,130,255,91,198,60,255,93,204,60,255,101,223,60,255,120,246,74,255,105,227,60,255,100,220,60,255,90,193,60,255,93,205,60,255,108,233,60,255,99,219,60,255,109,233,60,255,128,253,174,255,90,194,60,255,107,231,60,255,90,191,60,255,93,207,60,255,107,231,60,255,108,232,60,255,90,192,60,255,95,211,60,255,107,231,60,255,96,212,60,255,92,201,60,255,91,196,60,255,90,192,60,255,91,197,60,255,96,212,60,255,93,204,60,255,90,194,60,255,115,240,62,255,101,222,60,255,92,203,60,255,95,211,60,255,95,212,60,255,114,240,62,255,101,222,60,255,97,214,60,255,108,232,60,255,120,245,71,255,107,231,60,255,105,228,60,255,106,229,60,255,95,211,60,255,90,190,60,255,100,220,60,255,127,252,140,255,95,211,60,255,102,224,60,255,91,199,60,255,92,202,60,255,90,188,60,255,100,220,60,255,91,197,60,255,124,250,103,255,95,210,60,255,110,234,60,255,90,188,60,255,91,197,60,255,98,216,60,255,118,244,67,255,97,214,60,255,98,217,60,255,92,203,60,255,90,189,60,255,98,217,60,255,104,226,60,255,98,217,60,255,116,242,64,255,90,192,60,255,107,231,60,255,90,190,60,255,121,247,78,255,96,213,60,255,96,213,60,255,117,243,65,255,108,232,60,255,106,229,60,255,90,194,60,255,93,204,60,255,124,249,98,255,90,186,60,255,91,198,60,255,99,219,60,255,108,233,60,255,95,211,60,255,96,214,60,255,126,251,126,255,99,219,60,255,102,224,60,255,93,205,60,255,93,205,60,255,123,248,86,255,104,227,60,255,112,236,60,255,91,196,60,255,92,203,60,255,110,235,60,255,121,246,76,255,90,195,60,255,91,196,60,255,99,218,60,255,112,237,60,255,121,247,79,255,90,185,60,255,90,191,60,255,102,224,60,255,106,229,60,255,95,211,60,255,129,254,193,255,100,221,60,255,92,202,60,255,124,249,98,255,123,249,92,255,125,250,109,255,101,221,60,255,95,211,60,255,112,237,60,255,95,210,60,255,90,193,60,255,114,239,61,255,90,189,60,255,98,216,60,255,90,192,60,255,93,205,60,255,122,248,84,255,101,223,60,255,126,251,126,255,90,190,60,255,94,209,60,255,90,185,60,255,94,207,60,255,102,223,60,255,126,251,120,255,111,236,60,255,94,208,60,255,97,214,60,255,101,222,60,255,119,244,68,255,92,202,60,255,111,235,60,255,103,226,60,255,92,200,60,255,94,208,60,255,90,193,60,255,113,238,61,255,106,229,60,255,106,230,60,255,103,226,60,255,103,225,60,255,124,250,100,255,116,241,63,255,95,211,60,255"; // good texture
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 16, 16, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(grass));
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 32, 32, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(missing_texture));
 gl.generateMipmap(gl.TEXTURE_2D);
+
+var image = new Image();
+image.crossOrigin = "";
+image.src = "blocks.png";
+image.addEventListener('load', function() {
+	// Now that the image has loaded make copy it to the texture.
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	
+	if (image.width & (image.width-1) == 0 && image.height & (image.height-1) == 0) {
+		gl.generateMipmap(gl.TEXTURE_2D);
+	} else {
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	}
+});
 
 class Block {
 	constructor(name, texture, is_solid) {
@@ -183,7 +212,7 @@ class Block {
 }
 const Blocks = {
 	0: new Block("Air", [0,0], false),
-	1: new Block("Stone", [0,0], true),
+	1: new Block("Stone", [1,0], true),
 	2: new Block("Grass", [0,0], true)
 }
 class Chunk {
@@ -193,6 +222,9 @@ class Chunk {
 		this.uvdata = [];
 	}
 	get_block(x, y, z) {
+		if (x < 0 || x > 15) return 0;
+		if (y < 0 || y > 128) return 0;
+		if (z < 0 || z > 15) return 0;
 		let index = x + y*16 + z*16*128;
 		if (index < 0 || index > this.blockdata.length - 1) return 0;
 		return this.blockdata[index];
@@ -204,7 +236,7 @@ class Chunk {
 		for (let y = 0; y < 128; y++) {
 			for (let x = 0; x < 16; x++) {
 				for (let z = 0; z < 16; z++) {
-					let height = perlin.get(x/10, z/10)*4+60;
+					let height = Math.floor(perlin.get(x/10, z/10)*14+60);
 					if (y == height) this.set_block(x,y,z,2);
 					else if (y < height) this.set_block(x,y,z,1);
 				}
@@ -215,17 +247,20 @@ class Chunk {
 		for (let y = 0; y < 128; y++) {
 			for (let x = 0; x < 16; x++) {
 				for (let z = 0; z < 16; z++) {
-					let mask = 0b111111; // right, left, bottom, top, front, back
-					for (let f = 0; f < 6; f++) {
-						let bit = 0b1 << f;
-						let check = cube_face_checks[f];
-						if (Blocks[this.get_block(x + check[0], y + check[1], z + check[2])].is_solid) {
-							mask -= bit;
+					let block_id = this.get_block(x, y, z);
+					if (Blocks[block_id].is_solid) {
+						let mask = 0b111111; // right, left, bottom, top, front, back
+						for (let f = 0; f < 6; f++) {
+							let bit = 0b1 << f;
+							let check = cube_face_checks[f];
+							if (Blocks[this.get_block(x + check[0], y + check[1], z + check[2])].is_solid) {
+								mask -= bit;
+							}
 						}
+						let data = make_cube_verts(mask, x, y, z, Blocks[block_id]);
+						data[0].forEach((i)=>{this.vertdata.push(i);});
+						data[1].forEach((i)=>{this.uvdata.push(i);});
 					}
-					let data = make_cube_verts(mask, x, y, z);
-					data[0].forEach((i)=>{this.vertdata.push(i);});
-					data[1].forEach((i)=>{this.uvdata.push(i);});
 				}
 			}
 		}
@@ -241,22 +276,42 @@ class World {
 		}
 	}
 }
-world = new World();
+class Player {
+	constructor() {
+		this.pos = [0,80,0];
+		this.vel = [0,0,0];
+	}
+}
+let world = new World();
+let player = new Player();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].vertdata), gl.STATIC_DRAW);
 gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].uvdata), gl.STATIC_DRAW);
-let camera_pan = [0,-60,-50];
+
+let active_keys = [];
+window.addEventListener('keydown', function (e) {
+	active_keys = (active_keys || []);
+	active_keys[e.keyCode] = (e.type == "keydown");
+});
+window.addEventListener('keyup', function (e) {
+	active_keys[e.keyCode] = (e.type == "keydown");            
+});
+let camera_pan = [-8,-65,-25];
 let camera_rot = [0,0,0];
 let camera_scale = [1,1,1];
 let t = 0;
+let t0 = Date.now();
+let t1 = Date.now();
+let dt = t0-t1;
 function draw() {
+	t0 = Date.now();
 	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 	
 	gl.clearColor(0, 0, 0, 0);
 	
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	//gl.enable(gl.CULL_FACE);
+	gl.enable(gl.CULL_FACE);
 	gl.enable(gl.DEPTH_TEST);
 	
 	gl.useProgram(program);
@@ -290,7 +345,7 @@ function draw() {
 	gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
 	
 	let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-	let zNear = 1;
+	let zNear = 0.01;
 	let zFar = 2000;
 	let matrix = m4.perspective(1, aspect, zNear, zFar);
 	//let matrix = m4.projection(gl.canvas.clientWidth, gl.canvas.clientHeight, 400);
@@ -306,22 +361,22 @@ function draw() {
 	
 	let primitiveType = gl.TRIANGLES;
 	offset = 0;
-	let count = world.chunks[0].vertdata/3;
+	let count = world.chunks[0].vertdata.length/3;
 	gl.drawArrays(primitiveType, offset, count);
 	
-	t+=0.01
-	camera_rot = [3*t,2*t,t];
+	t1 = Date.now();
+	dt = t1 - t0;
+	t+=dt;
+	let speed = 0.05;
+	if (active_keys && (active_keys[37] || active_keys[65])) {camera_pan[0] += speed; }
+    if (active_keys && (active_keys[39] || active_keys[68])) {camera_pan[0] -= speed; }
+    if (active_keys && (active_keys[38] || active_keys[87])) {camera_pan[2] += speed; }
+    if (active_keys && (active_keys[40] || active_keys[83])) {camera_pan[2] -= speed; }
+	if (active_keys && active_keys[70]) {camera_pan[1] += speed;}
+	if (active_keys && active_keys[82]) {camera_pan[1] -= speed;}
+	//camera_rot = [3*t,2*t,t];
 	window.requestAnimationFrame(draw);
 }
 draw();
-
-let active_keys = [];
-window.addEventListener('keydown', function (e) {
-	active_keys = (active_keys || []);
-	active_keys[e.keyCode] = (e.type == "keydown");
-});
-window.addEventListener('keyup', function (e) {
-	active_keys[e.keyCode] = (e.type == "keydown");            
-});
 </script>
 </html>
