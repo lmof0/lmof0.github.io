@@ -188,7 +188,7 @@ gl.generateMipmap(gl.TEXTURE_2D);
 
 var image = new Image();
 image.crossOrigin = "";
-image.src = "blocks.png";
+image.src = "atlas.png";
 image.addEventListener('load', function() {
 	// Now that the image has loaded make copy it to the texture.
 	gl.bindTexture(gl.TEXTURE_2D, texture);
