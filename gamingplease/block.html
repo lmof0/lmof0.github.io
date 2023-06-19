@@ -139,15 +139,21 @@ function make_cube_verts(mask, x, y, z, block) {
 			let u = 1/16; // uv_unit
 			let ux = block.texture[0] * u; // offset_x
 			let uy = block.texture[1] * u; // offset_y
-			uvs.push(
-				ux, uy, // 0
-				ux, uy+u, // 1
-				ux+u, uy, // 2
-				ux+u, uy, // 2
-				ux, uy+u, // 1
-				ux+u, uy+u  // 3
-				// +u refers to a 1, no +u refers to 0
-			);
+			if (i == 2) { // the top face is already the right way around. AWESOME!!!!!!!
+				uvs.push(
+					ux, uy, // 0
+					ux, uy+u, // 1
+					ux+u, uy, // 2
+					ux+u, uy, // 2
+					ux, uy+u, // 1
+					ux+u, uy+u  // 3
+					// +u refers to a 1, no +u refers to 0
+				);
+			} else {
+				uvs.push(
+					ux+u,uy+u, ux+u,uy, ux,uy+u, ux,uy+u, ux+u,uy, ux,uy
+				); // i don't know but it puts everything the right way around so who cares
+			}
 		}
 	}
 	return [positions, uvs];
@@ -295,6 +301,9 @@ class Player {
 		this.vel = [0,0,0];
 		this.angle = 0;
 		this.grounded = false;
+		
+		this.collision_mask = 0b111111; // right, left, bottom, top, front, back
+		
 	}
 	forward(speed) {
 		//this.pos = [this.pos[0] + Math.sin(this.angle) * speed, this.pos[1], this.pos[2] - Math.cos(this.angle) * speed];
@@ -320,7 +329,10 @@ class Player {
 		this.pos[0] += this.vel[0];
 		this.pos[1] += this.vel[1];
 		this.pos[2] += this.vel[2];
-	}	
+	}
+	change_pos(dx,dy,dz) {
+		// restrict based on cube-based collision mask
+	}
 }
 let world = new World();
 let player = new Player();
@@ -430,7 +442,7 @@ function draw() {
 	player.angle = camera_rot[1];
 	camera_pan = [-player.pos[0], -player.pos[1]-0.8, -player.pos[2]];
 	player.gravity();
-	if (Blocks[world.chunks[0].get_block(Math.ceil(player.pos[0]+1), Math.floor(player.pos[1]), Math.floor(player.pos[0]+0))].is_solid) {
+	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]+1), Math.floor(player.pos[1]), Math.floor(player.pos[0]+0))].is_solid) {
 		player.vel[0] = (player.vel[0] < 0) ? 0 : player.vel[0];
 	}
 	player.momentum();
