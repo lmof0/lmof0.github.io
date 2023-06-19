@@ -349,6 +349,16 @@ window.addEventListener('keydown', function (e) {
 window.addEventListener('keyup', function (e) {
 	active_keys[e.keyCode] = (e.type == "keydown");            
 });
+canvas.addEventListener('click', async () => {
+	await canvas.requestPointerLock({ unadjustedMovement: true });
+	if (!promise) {console.log("hAh! u fool'd!!!!!!!"); return}
+	return 
+});
+let mouse_sensitivity = 2;
+canvas.addEventListener('mousemove', async (e) => {
+	camera_rot[0] += e.movementY*mouse_sensitivity/canvas.height;
+	camera_rot[1] += e.movementX*mouse_sensitivity/canvas.width;
+});
 let mouse_pos = [0,0];
 let old_mouse_pos = [0,0];
 let mouse_delta = [0,0];
@@ -363,11 +373,16 @@ let camera_pan = [-8,-65,-25];
 let camera_rot = [0,0,0];
 let camera_scale = [1,1,1];
 let t = 0;
-let t0 = Date.now();
-let t1 = Date.now();
-let dt = t0-t1;
+let curr_t = performance.now();
+let prev_t = performance.now();
+let dt = curr_t - prev_t;
 function draw() {
-	t0 = Date.now();
+	curr_t = performance.now();
+	dt = curr_t - prev_t;
+	prev_t = curr_t;
+	// dt code courtesy of unnick
+	t += dt;
+	
 	gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 	
 	gl.clearColor(0, 0, 0, 0);
@@ -426,10 +441,7 @@ function draw() {
 	let count = world.chunks[0].vertdata.length/3;
 	gl.drawArrays(primitiveType, offset, count);
 	
-	t1 = Date.now();
-	dt = t1 - t0;
-	t+=dt;
-	let speed = 0.02;
+	let speed = 0.02/*speed*/ * (1/16)/*adjustment for 60hz dt*/ * dt;
 	player.vel[0] /= 1.1;
 	player.vel[2] /= 1.1;
 	if (active_keys && (active_keys[37] || active_keys[65])) { player.left(speed); } else {player.vel[0] /= 1.1; player.vel[2] /= 1.1;}
@@ -438,7 +450,7 @@ function draw() {
     if (active_keys && (active_keys[40] || active_keys[83])) { player.forward(-speed); } else {player.vel[0] /= 1.1; player.vel[2] /= 1.1;}
 	if (active_keys && active_keys[70]) {camera_pan[1] += speed;}
 	if (active_keys && active_keys[82]) {camera_pan[1] -= speed;}
-	camera_rot = [camera_rot[0]+(mouse_pos[1]/canvas.height - 1/2)**3*.36, camera_rot[1]+(mouse_pos[0]/canvas.width - 1/2)**3*.48, 0];
+	//camera_rot = [camera_rot[0]+(mouse_pos[1]/canvas.height - 1/2)**3*.36, camera_rot[1]+(mouse_pos[0]/canvas.width - 1/2)**3*.48, 0];
 	player.angle = camera_rot[1];
 	camera_pan = [-player.pos[0], -player.pos[1]-0.8, -player.pos[2]];
 	player.gravity();
