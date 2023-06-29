@@ -211,18 +211,24 @@ image.addEventListener('load', function() {
 	}
 });
 
+let Blocks = [];
 class Block {
-	constructor(name, texture, is_solid) {
+	constructor(name, texture, is_solid=true) {
+		this.id = Blocks.length;
 		this.name = name;
 		this.texture = texture;
 		this.is_solid = is_solid;
+		
+		Blocks.push(this);
 	}
 }
-const Blocks = {
-	0: new Block("Air", [0,0], false),
-	1: new Block("Stone", [1,0], true),
-	2: new Block("Grass", [0,0], true)
-}
+const Air = new Block("Air", [0,0], false);
+const Stone = new Block("Stone", [1,0]);
+const Grass = new Block("Grass", [0,0]);
+const Dirt = new Block("Dirt", [2,0]);
+
+const Bedrock = new Block("Bedrock", [8,0]);
+
 function fractal_noise(x, y, offset, scale, octaves, persistance, lacunarity) {
 	let sample_x = (x + 0.1) / 16 * scale + offset;
 	let sample_y = (y + 0.1) / 16 * scale + offset;
@@ -256,11 +262,14 @@ class Chunk {
 			for (let x = 0; x < 16; x++) {
 				for (let z = 0; z < 16; z++) {
 					let height = Math.floor(fractal_noise(x, z, 0, 0.05, 5, 0.65, 3)*34+60);
-					if (y == height) this.set_block(x,y,z,2);
-					else if (y < height) this.set_block(x,y,z,1);
+					if (y == height) this.set_block(x,y,z,Grass.id);
+					else if (y >= height-3 && y < height) this.set_block(x,y,z,Dirt.id);
+					else if (y < height-3) this.set_block(x,y,z,Stone.id);
+					if (y == 0) this.set_block(x,y,z,Bedrock.id);
 				}
 			}
 		}
+		this.set_block(8,70,8,1);
 	}
 	create_vert_data() {
 		for (let y = 0; y < 128; y++) {
@@ -299,7 +308,7 @@ class Player {
 	constructor() {
 		this.pos = [8,65,8];
 		this.vel = [0,0,0];
-		this.angle = 0;
+		this.angle = 0; // rotation about y axis
 		this.grounded = false;
 		
 		this.collision_mask = 0b111111; // right, left, bottom, top, front, back
@@ -315,10 +324,10 @@ class Player {
 		this.vel[0] += -Math.cos(this.angle)*speed;
 		this.vel[2] += -Math.sin(this.angle)*speed;
 	} // all trig here figured out by trial-and-error :^)
-	gravity() {
+	gravity(strength, terminal_vel) {
 		if (!this.grounded) {
-			this.vel[1] -= 0.002;
-			this.vel[1] = (this.vel[1] < -4) ? -4 : this.vel[1];
+			this.vel[1] -= strength;
+			this.vel[1] = (this.vel[1] < -terminal_vel) ? -terminal_vel : this.vel[1];
 		}
 	}
 	hit_ground() {
@@ -326,12 +335,22 @@ class Player {
 		this.vel[1] = 0;
 	}
 	momentum() {
-		this.pos[0] += this.vel[0];
+		/*this.pos[0] += this.vel[0];
 		this.pos[1] += this.vel[1];
-		this.pos[2] += this.vel[2];
+		this.pos[2] += this.vel[2];*/
+		this.change_pos(this.vel[0], this.vel[1], this.vel[2]);
 	}
 	change_pos(dx,dy,dz) {
 		// restrict based on cube-based collision mask
+		if (((this.collision_mask >> 0) & 1) == 0) dz = (dz < 0) ? 0 : dz;
+		if (((this.collision_mask >> 1) & 1) == 0) dz = (dz > 0) ? 0 : dz;
+		if (((this.collision_mask >> 2) & 1) == 0) dy = (dy < 0) ? 0 : dy;
+		if (((this.collision_mask >> 3) & 1) == 0) dy = (dy > 0) ? 0 : dy;
+		if (((this.collision_mask >> 4) & 1) == 0) dx = (dx < 0) ? 0 : dx;
+		if (((this.collision_mask >> 5) & 1) == 0) dx = (dx > 0) ? 0 : dx;
+		this.pos[0] += dx;
+		this.pos[1] += dy;
+		this.pos[2] += dz;
 	}
 }
 let world = new World();
@@ -350,7 +369,7 @@ window.addEventListener('keyup', function (e) {
 	active_keys[e.keyCode] = (e.type == "keydown");            
 });
 canvas.addEventListener('click', async () => {
-	await canvas.requestPointerLock({ unadjustedMovement: true });
+	let promise = canvas.requestPointerLock({ unadjustedMovement: true });
 	if (!promise) {console.log("hAh! u fool'd!!!!!!!"); return}
 	return 
 });
@@ -448,17 +467,29 @@ function draw() {
     if (active_keys && (active_keys[39] || active_keys[68])) { player.left(-speed); } else {player.vel[0] /= 1.1; player.vel[2] /= 1.1;}
     if (active_keys && (active_keys[38] || active_keys[87])) { player.forward(speed); } else {player.vel[0] /= 1.1; player.vel[2] /= 1.1;}
     if (active_keys && (active_keys[40] || active_keys[83])) { player.forward(-speed); } else {player.vel[0] /= 1.1; player.vel[2] /= 1.1;}
-	if (active_keys && active_keys[70]) {camera_pan[1] += speed;}
-	if (active_keys && active_keys[82]) {camera_pan[1] -= speed;}
+	//if (active_keys && active_keys[70]) {camera_pan[1] += speed;}
+	//if (active_keys && active_keys[82]) {camera_pan[1] -= speed;}
+	if (active_keys && active_keys[70]) {player.gravity(0, -0.14);}
+	if (active_keys && active_keys[82]) {player.pos = [Math.random()*16, 80, Math.random()*16];}
 	//camera_rot = [camera_rot[0]+(mouse_pos[1]/canvas.height - 1/2)**3*.36, camera_rot[1]+(mouse_pos[0]/canvas.width - 1/2)**3*.48, 0];
 	player.angle = camera_rot[1];
 	camera_pan = [-player.pos[0], -player.pos[1]-0.8, -player.pos[2]];
-	player.gravity();
-	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]+1), Math.floor(player.pos[1]), Math.floor(player.pos[0]+0))].is_solid) {
-		player.vel[0] = (player.vel[0] < 0) ? 0 : player.vel[0];
+	player.gravity(.0001*dt, 4);
+	player.collision_mask = 0b111111;
+	if (Blocks[world.chunks[0].get_block(Math.ceil(player.pos[0]-1), Math.floor(player.pos[1]+1), Math.round(player.pos[2]))].is_solid) {
+		player.collision_mask -= 0b010000;
+	}
+	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]+1), Math.floor(player.pos[1]+1), Math.round(player.pos[2]))].is_solid) {
+		player.collision_mask -= 0b100000;
+	}
+	if (Blocks[world.chunks[0].get_block(Math.round(player.pos[0]), Math.floor(player.pos[1]+1), Math.ceil(player.pos[2]-1))].is_solid) {
+		player.collision_mask -= 0b000001;
+	}
+	if (Blocks[world.chunks[0].get_block(Math.round(player.pos[0]), Math.floor(player.pos[1]+1), Math.floor(player.pos[2]+1))].is_solid) {
+		player.collision_mask -= 0b000010;
 	}
 	player.momentum();
-	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]), Math.ceil(player.pos[1]-1), Math.floor(player.pos[2]))].is_solid) {
+	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]+0.5), Math.ceil(player.pos[1]-1), Math.floor(player.pos[2]+0.5))].is_solid) {
 		player.hit_ground();
 	} else { player.grounded = false; }
 	if (player.grounded) {
@@ -467,7 +498,7 @@ function draw() {
 			player.grounded = false;
 		}
 	}
-	document.getElementById("keys").innerHTML = active_keys.toString();
+	document.getElementById("keys").innerHTML = active_keys.toString() + "<br>" + player.collision_mask.toString(2) + "<br>" + player.pos;
 	window.requestAnimationFrame(draw);
 }
 draw();
