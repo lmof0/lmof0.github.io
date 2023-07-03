@@ -117,7 +117,7 @@ let cube_face_checks = [
 	[-1, 0, 0],
 	[1, 0, 0]
 ];
-function make_cube_verts(mask, x, y, z, block) {
+function make_cube_verts(mask, x, y, z, blocktype) {
 	let positions = [];
 	let uvs = [];
 	for (let i = 0; i < 6; i++) {
@@ -136,23 +136,47 @@ function make_cube_verts(mask, x, y, z, block) {
 			verts.forEach((i)=>{
 				positions.push(i-0.5);
 			});
-			let u = 1/16; // uv_unit
-			let ux = block.texture[0] * u; // offset_x
-			let uy = block.texture[1] * u; // offset_y
-			if (i == 2) { // the top face is already the right way around. AWESOME!!!!!!!
-				uvs.push(
-					ux, uy, // 0
-					ux, uy+u, // 1
-					ux+u, uy, // 2
-					ux+u, uy, // 2
-					ux, uy+u, // 1
-					ux+u, uy+u  // 3
-					// +u refers to a 1, no +u refers to 0
-				);
-			} else {
-				uvs.push(
-					ux+u,uy+u, ux+u,uy, ux,uy+u, ux,uy+u, ux+u,uy, ux,uy
-				); // i don't know but it puts everything the right way around so who cares
+			let mapping_type = blocktype.texture.type;
+			const u = 1/16; // uv_unit
+			if (mapping_type == undefined) { // default mapping; same texture on all sides.
+				let ux = blocktype.texture[0] * u; // offset_x
+				let uy = blocktype.texture[1] * u; // offset_y
+				if (i == 2) { // the top face is already the right way around. AWESOME!!!!!!!
+					uvs.push(
+						ux, uy, // 0
+						ux, uy+u, // 1
+						ux+u, uy, // 2
+						ux+u, uy, // 2
+						ux, uy+u, // 1
+						ux+u, uy+u  // 3
+						// +u refers to a 1, no +u refers to 0
+					);
+				} else {
+					uvs.push(
+						ux+u,uy+u, ux+u,uy, ux,uy+u, ux,uy+u, ux+u,uy, ux,uy
+					); // i don't know but it puts everything the right way around so who cares
+				}
+			} else if (mapping_type == "tsb") { // top side bottom
+				// back front top bottom left right, in order of least bit to highest bit.
+				if (i == 0 || i == 1 || i == 4 || i == 5) {
+					let ux = blocktype.texture.side[0] * u;
+					let uy = blocktype.texture.side[1] * u;
+					uvs.push(
+						ux+u,uy+u, ux+u,uy, ux,uy+u, ux,uy+u, ux+u,uy, ux,uy // reversed
+					);
+				} else if (i == 2) {
+					let ux = blocktype.texture.top[0] * u;
+					let uy = blocktype.texture.top[1] * u;
+					uvs.push(
+						ux,uy,/*0*/ ux,uy+u,/*1*/ ux+u,uy,/*2*/ ux+u,uy,/*2*/ ux,uy+u,/*1*/ ux+u,uy+u/*3*/
+					);
+				} else if (i == 3) {
+					let ux = blocktype.texture.bottom[0] * u;
+					let uy = blocktype.texture.bottom[1] * u;
+					uvs.push(
+						ux,uy,/*0*/ ux,uy+u,/*1*/ ux+u,uy,/*2*/ ux+u,uy,/*2*/ ux,uy+u,/*1*/ ux+u,uy+u/*3*/
+					);
+				}
 			}
 		}
 	}
@@ -188,7 +212,7 @@ for (let i = 0; i < 256; i++) {
 	grass.push(Math.floor(b*b*40+90), Math.floor(b*70+185), Math.floor(Math.pow(b, 18)*150+60), 255);
 }
 Math.seedrandom(0);
-let random = [];
+let random = []; // randits
 for (let i = 0; i < 1024; i++) random.push(Math.random()*255, Math.random()*255, Math.random()*255, 255);
 "120,246,74,255,90,186,60,255,90,195,60,255,92,203,60,255,96,213,60,255,124,249,96,255,94,209,60,255,120,246,73,255,100,220,60,255,93,206,60,255,93,206,60,255,90,189,60,255,117,242,64,255,101,222,60,255,124,249,94,255,90,188,60,255,90,192,60,255,117,243,65,255,124,249,96,255,101,222,60,255,120,246,74,255,93,206,60,255,114,239,61,255,129,254,182,255,105,229,60,255,90,194,60,255,99,218,60,255,100,221,60,255,97,214,60,255,90,185,60,255,90,188,60,255,113,239,61,255,125,251,114,255,109,233,60,255,127,252,148,255,96,212,60,255,97,215,60,255,110,234,60,255,103,225,60,255,125,251,113,255,120,246,72,255,125,250,106,255,103,225,60,255,91,199,60,255,109,233,60,255,126,251,122,255,97,215,60,255,111,236,60,255,115,241,62,255,90,195,60,255,121,247,78,255,99,219,60,255,93,206,60,255,90,185,60,255,104,226,60,255,102,223,60,255,90,189,60,255,102,224,60,255,112,238,61,255,101,222,60,255,90,195,60,255,100,221,60,255,127,252,145,255,91,197,60,255,108,232,60,255,113,238,61,255,100,220,60,255,100,221,60,255,120,245,72,255,118,243,66,255,106,229,60,255,106,229,60,255,111,236,60,255,109,233,60,255,125,250,110,255,91,196,60,255,126,252,128,255,100,220,60,255,125,250,110,255,90,194,60,255,97,215,60,255,93,205,60,255,117,242,64,255,90,186,60,255,105,228,60,255,106,230,60,255,111,235,60,255,92,200,60,255,99,218,60,255,94,207,60,255,91,199,60,255,90,190,60,255,94,207,60,255,124,249,96,255,114,239,61,255,96,212,60,255,103,225,60,255,101,223,60,255,93,205,60,255,109,234,60,255,100,220,60,255,90,190,60,255,91,199,60,255,126,252,130,255,91,198,60,255,93,204,60,255,101,223,60,255,120,246,74,255,105,227,60,255,100,220,60,255,90,193,60,255,93,205,60,255,108,233,60,255,99,219,60,255,109,233,60,255,128,253,174,255,90,194,60,255,107,231,60,255,90,191,60,255,93,207,60,255,107,231,60,255,108,232,60,255,90,192,60,255,95,211,60,255,107,231,60,255,96,212,60,255,92,201,60,255,91,196,60,255,90,192,60,255,91,197,60,255,96,212,60,255,93,204,60,255,90,194,60,255,115,240,62,255,101,222,60,255,92,203,60,255,95,211,60,255,95,212,60,255,114,240,62,255,101,222,60,255,97,214,60,255,108,232,60,255,120,245,71,255,107,231,60,255,105,228,60,255,106,229,60,255,95,211,60,255,90,190,60,255,100,220,60,255,127,252,140,255,95,211,60,255,102,224,60,255,91,199,60,255,92,202,60,255,90,188,60,255,100,220,60,255,91,197,60,255,124,250,103,255,95,210,60,255,110,234,60,255,90,188,60,255,91,197,60,255,98,216,60,255,118,244,67,255,97,214,60,255,98,217,60,255,92,203,60,255,90,189,60,255,98,217,60,255,104,226,60,255,98,217,60,255,116,242,64,255,90,192,60,255,107,231,60,255,90,190,60,255,121,247,78,255,96,213,60,255,96,213,60,255,117,243,65,255,108,232,60,255,106,229,60,255,90,194,60,255,93,204,60,255,124,249,98,255,90,186,60,255,91,198,60,255,99,219,60,255,108,233,60,255,95,211,60,255,96,214,60,255,126,251,126,255,99,219,60,255,102,224,60,255,93,205,60,255,93,205,60,255,123,248,86,255,104,227,60,255,112,236,60,255,91,196,60,255,92,203,60,255,110,235,60,255,121,246,76,255,90,195,60,255,91,196,60,255,99,218,60,255,112,237,60,255,121,247,79,255,90,185,60,255,90,191,60,255,102,224,60,255,106,229,60,255,95,211,60,255,129,254,193,255,100,221,60,255,92,202,60,255,124,249,98,255,123,249,92,255,125,250,109,255,101,221,60,255,95,211,60,255,112,237,60,255,95,210,60,255,90,193,60,255,114,239,61,255,90,189,60,255,98,216,60,255,90,192,60,255,93,205,60,255,122,248,84,255,101,223,60,255,126,251,126,255,90,190,60,255,94,209,60,255,90,185,60,255,94,207,60,255,102,223,60,255,126,251,120,255,111,236,60,255,94,208,60,255,97,214,60,255,101,222,60,255,119,244,68,255,92,202,60,255,111,235,60,255,103,226,60,255,92,200,60,255,94,208,60,255,90,193,60,255,113,238,61,255,106,229,60,255,106,230,60,255,103,226,60,255,103,225,60,255,124,250,100,255,116,241,63,255,95,211,60,255"; // good texture
 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 32, 32, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(random));
@@ -224,7 +248,7 @@ class Block {
 }
 const Air = new Block("Air", [0,0], false);
 const Stone = new Block("Stone", [1,0]);
-const Grass = new Block("Grass", [0,0]);
+const Grass = new Block("Grass", {type: "tsb", top: [0,0], side: [3,0], bottom: [2,0]});
 const Dirt = new Block("Dirt", [2,0]);
 
 const Bedrock = new Block("Bedrock", [8,0]);
@@ -245,23 +269,29 @@ class Chunk {
 		this.blockdata = new Uint8Array(16*128*16).fill(0);
 		this.vertdata = [];
 		this.uvdata = [];
+		this.world = null; // just a reference back to za world
+		this.chunk_x = 0;
+		this.chunk_z = 0;
 	}
 	get_block(x, y, z) {
-		if (x < 0 || x > 15) return 0;
+		if (x < 0 || x > 15) return this.world.get_block(x+this.chunk_x*16, y, z+this.chunk_z*16);
 		if (y < 0 || y > 128) return 0;
-		if (z < 0 || z > 15) return 0;
+		if (z < 0 || z > 15) return this.world.get_block(x+this.chunk_x*16, y, z+this.chunk_z*16);
 		let index = x + y*16 + z*16*128;
 		if (index < 0 || index > this.blockdata.length - 1) return 0;
 		return this.blockdata[index];
 	}
 	set_block(x, y, z, id) {
+		if (x < 0 || x > 15) throw "setblock outta bounds for x, man";
+		if (y < 0 || y > 128) throw "setblock outta bounds for y, man";
+		if (z < 0 || z > 15) throw "setblock outta bounds for z, man";
 		this.blockdata[x+y*16+z*16*128] = id;
 	}
 	populate() {
 		for (let y = 0; y < 128; y++) {
 			for (let x = 0; x < 16; x++) {
 				for (let z = 0; z < 16; z++) {
-					let height = Math.floor(fractal_noise(x, z, 0, 0.05, 5, 0.65, 3)*34+60);
+					let height = Math.floor(fractal_noise(x + this.chunk_x*16, z + this.chunk_z*16, 0, 0.05, 5, 0.65, 3)*34+60);
 					if (y == height) this.set_block(x,y,z,Grass.id);
 					else if (y >= height-3 && y < height) this.set_block(x,y,z,Dirt.id);
 					else if (y < height-3) this.set_block(x,y,z,Stone.id);
@@ -269,7 +299,7 @@ class Chunk {
 				}
 			}
 		}
-		this.set_block(8,70,8,1);
+		this.set_block(8,70,8,Grass.id);
 	}
 	create_vert_data() {
 		for (let y = 0; y < 128; y++) {
@@ -285,7 +315,7 @@ class Chunk {
 								mask -= bit;
 							}
 						}
-						let data = make_cube_verts(mask, x, y, z, Blocks[block_id]);
+						let data = make_cube_verts(mask, x + this.chunk_x*16, y, z + this.chunk_z*16, Blocks[block_id]);
 						data[0].forEach((i)=>{this.vertdata.push(i);});
 						data[1].forEach((i)=>{this.uvdata.push(i);});
 					}
@@ -297,11 +327,28 @@ class Chunk {
 class World {
 	constructor() {
 		this.chunks = new Array(4*4);
+		this.vertdata = []; // pls forgive for the abominable sins i am about to commence xd (abdomenal sins (indomitable sins))
+		this.uvdata = [];
 		for (let i = 0; i < this.chunks.length; i++) {
 			this.chunks[i] = new Chunk();
+			this.chunks[i].world = this;
+			this.chunks[i].chunk_x = i%4;
+			this.chunks[i].chunk_z = Math.floor(i/4);
 			this.chunks[i].populate();
-			this.chunks[i].create_vert_data();
 		}
+		// i realized i had to cut the loops in half, because to create vert data for one, it asked for the population data of the next (to cull faces which would be hidden when the chunks get stitched together) and so i need to prepopulate le chunks. waowie!
+		for (let i = 0; i < this.chunks.length; i++) {
+			this.chunks[i].create_vert_data();
+			this.chunks[i].vertdata.forEach((i)=>{this.vertdata.push(i);}); // the sin
+			this.chunks[i].uvdata.forEach((i)=>{this.uvdata.push(i);}); // me when i'm sinning
+		}
+	}
+	get_block(x, y, z) {
+		const chunk_x = Math.floor(x/16);
+		const chunk_z = Math.floor(z/16);
+		if (chunk_x < 0 || chunk_x > 3) return 0;
+		if (chunk_z < 0 || chunk_z > 3) return 0;
+		return this.chunks[chunk_x + chunk_z*4].get_block(x%16, y, z%16);
 	}
 }
 class Player {
@@ -356,9 +403,9 @@ class Player {
 let world = new World();
 let player = new Player();
 gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].vertdata), gl.STATIC_DRAW);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.vertdata), gl.STATIC_DRAW);
 gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].uvdata), gl.STATIC_DRAW);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.uvdata), gl.STATIC_DRAW);
 
 let active_keys = [];
 window.addEventListener('keydown', function (e) {
@@ -391,6 +438,8 @@ function update_mouse_pos(event) {
 let camera_pan = [-8,-65,-25];
 let camera_rot = [0,0,0];
 let camera_scale = [1,1,1];
+let noclip = false;
+let sv_cheats = 0;
 let t = 0;
 let curr_t = performance.now();
 let prev_t = performance.now();
@@ -457,7 +506,7 @@ function draw() {
 	
 	let primitiveType = gl.TRIANGLES;
 	offset = 0;
-	let count = world.chunks[0].vertdata.length/3;
+	let count = world.vertdata.length/3;
 	gl.drawArrays(primitiveType, offset, count);
 	
 	let speed = 0.02/*speed*/ * (1/16)/*adjustment for 60hz dt*/ * dt;
@@ -476,20 +525,21 @@ function draw() {
 	camera_pan = [-player.pos[0], -player.pos[1]-0.8, -player.pos[2]];
 	player.gravity(.0001*dt, 4);
 	player.collision_mask = 0b111111;
-	if (Blocks[world.chunks[0].get_block(Math.ceil(player.pos[0]-1), Math.floor(player.pos[1]+1), Math.round(player.pos[2]))].is_solid) {
+	if (Blocks[world.get_block(Math.ceil(player.pos[0]-1), Math.floor(player.pos[1]+1), Math.round(player.pos[2]))].is_solid) {
 		player.collision_mask -= 0b010000;
 	}
-	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]+1), Math.floor(player.pos[1]+1), Math.round(player.pos[2]))].is_solid) {
+	if (Blocks[world.get_block(Math.floor(player.pos[0]+1), Math.floor(player.pos[1]+1), Math.round(player.pos[2]))].is_solid) {
 		player.collision_mask -= 0b100000;
 	}
-	if (Blocks[world.chunks[0].get_block(Math.round(player.pos[0]), Math.floor(player.pos[1]+1), Math.ceil(player.pos[2]-1))].is_solid) {
+	if (Blocks[world.get_block(Math.round(player.pos[0]), Math.floor(player.pos[1]+1), Math.ceil(player.pos[2]-1))].is_solid) {
 		player.collision_mask -= 0b000001;
 	}
-	if (Blocks[world.chunks[0].get_block(Math.round(player.pos[0]), Math.floor(player.pos[1]+1), Math.floor(player.pos[2]+1))].is_solid) {
+	if (Blocks[world.get_block(Math.round(player.pos[0]), Math.floor(player.pos[1]+1), Math.floor(player.pos[2]+1))].is_solid) {
 		player.collision_mask -= 0b000010;
 	}
+	if (noclip) player.collision_mask = 0b111111;
 	player.momentum();
-	if (Blocks[world.chunks[0].get_block(Math.floor(player.pos[0]+0.5), Math.ceil(player.pos[1]-1), Math.floor(player.pos[2]+0.5))].is_solid) {
+	if (Blocks[world.get_block(Math.floor(player.pos[0]+0.5), Math.ceil(player.pos[1]-1), Math.floor(player.pos[2]+0.5))].is_solid) {
 		player.hit_ground();
 	} else { player.grounded = false; }
 	if (player.grounded) {
