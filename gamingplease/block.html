@@ -47,6 +47,7 @@ hey i heard you like webgl draw calls
 <!-- could also use https://github.com/josephg/noisejs -->
 <script>
 'use strict';
+let perlin = new Perlin();
 let canvas = document.getElementById("canvas");
 let gl = canvas.getContext("webgl");
 if (!gl) console.log("you are slime");
@@ -211,7 +212,8 @@ for (let i = 0; i < 256; i++) {
 	let b = Math.random();
 	grass.push(Math.floor(b*b*40+90), Math.floor(b*70+185), Math.floor(Math.pow(b, 18)*150+60), 255);
 }
-Math.seedrandom(0);
+const seed = 0;
+Math.seedrandom(seed);
 let random = []; // randits
 for (let i = 0; i < 1024; i++) random.push(Math.random()*255, Math.random()*255, Math.random()*255, 255);
 "120,246,74,255,90,186,60,255,90,195,60,255,92,203,60,255,96,213,60,255,124,249,96,255,94,209,60,255,120,246,73,255,100,220,60,255,93,206,60,255,93,206,60,255,90,189,60,255,117,242,64,255,101,222,60,255,124,249,94,255,90,188,60,255,90,192,60,255,117,243,65,255,124,249,96,255,101,222,60,255,120,246,74,255,93,206,60,255,114,239,61,255,129,254,182,255,105,229,60,255,90,194,60,255,99,218,60,255,100,221,60,255,97,214,60,255,90,185,60,255,90,188,60,255,113,239,61,255,125,251,114,255,109,233,60,255,127,252,148,255,96,212,60,255,97,215,60,255,110,234,60,255,103,225,60,255,125,251,113,255,120,246,72,255,125,250,106,255,103,225,60,255,91,199,60,255,109,233,60,255,126,251,122,255,97,215,60,255,111,236,60,255,115,241,62,255,90,195,60,255,121,247,78,255,99,219,60,255,93,206,60,255,90,185,60,255,104,226,60,255,102,223,60,255,90,189,60,255,102,224,60,255,112,238,61,255,101,222,60,255,90,195,60,255,100,221,60,255,127,252,145,255,91,197,60,255,108,232,60,255,113,238,61,255,100,220,60,255,100,221,60,255,120,245,72,255,118,243,66,255,106,229,60,255,106,229,60,255,111,236,60,255,109,233,60,255,125,250,110,255,91,196,60,255,126,252,128,255,100,220,60,255,125,250,110,255,90,194,60,255,97,215,60,255,93,205,60,255,117,242,64,255,90,186,60,255,105,228,60,255,106,230,60,255,111,235,60,255,92,200,60,255,99,218,60,255,94,207,60,255,91,199,60,255,90,190,60,255,94,207,60,255,124,249,96,255,114,239,61,255,96,212,60,255,103,225,60,255,101,223,60,255,93,205,60,255,109,234,60,255,100,220,60,255,90,190,60,255,91,199,60,255,126,252,130,255,91,198,60,255,93,204,60,255,101,223,60,255,120,246,74,255,105,227,60,255,100,220,60,255,90,193,60,255,93,205,60,255,108,233,60,255,99,219,60,255,109,233,60,255,128,253,174,255,90,194,60,255,107,231,60,255,90,191,60,255,93,207,60,255,107,231,60,255,108,232,60,255,90,192,60,255,95,211,60,255,107,231,60,255,96,212,60,255,92,201,60,255,91,196,60,255,90,192,60,255,91,197,60,255,96,212,60,255,93,204,60,255,90,194,60,255,115,240,62,255,101,222,60,255,92,203,60,255,95,211,60,255,95,212,60,255,114,240,62,255,101,222,60,255,97,214,60,255,108,232,60,255,120,245,71,255,107,231,60,255,105,228,60,255,106,229,60,255,95,211,60,255,90,190,60,255,100,220,60,255,127,252,140,255,95,211,60,255,102,224,60,255,91,199,60,255,92,202,60,255,90,188,60,255,100,220,60,255,91,197,60,255,124,250,103,255,95,210,60,255,110,234,60,255,90,188,60,255,91,197,60,255,98,216,60,255,118,244,67,255,97,214,60,255,98,217,60,255,92,203,60,255,90,189,60,255,98,217,60,255,104,226,60,255,98,217,60,255,116,242,64,255,90,192,60,255,107,231,60,255,90,190,60,255,121,247,78,255,96,213,60,255,96,213,60,255,117,243,65,255,108,232,60,255,106,229,60,255,90,194,60,255,93,204,60,255,124,249,98,255,90,186,60,255,91,198,60,255,99,219,60,255,108,233,60,255,95,211,60,255,96,214,60,255,126,251,126,255,99,219,60,255,102,224,60,255,93,205,60,255,93,205,60,255,123,248,86,255,104,227,60,255,112,236,60,255,91,196,60,255,92,203,60,255,110,235,60,255,121,246,76,255,90,195,60,255,91,196,60,255,99,218,60,255,112,237,60,255,121,247,79,255,90,185,60,255,90,191,60,255,102,224,60,255,106,229,60,255,95,211,60,255,129,254,193,255,100,221,60,255,92,202,60,255,124,249,98,255,123,249,92,255,125,250,109,255,101,221,60,255,95,211,60,255,112,237,60,255,95,210,60,255,90,193,60,255,114,239,61,255,90,189,60,255,98,216,60,255,90,192,60,255,93,205,60,255,122,248,84,255,101,223,60,255,126,251,126,255,90,190,60,255,94,209,60,255,90,185,60,255,94,207,60,255,102,223,60,255,126,251,120,255,111,236,60,255,94,208,60,255,97,214,60,255,101,222,60,255,119,244,68,255,92,202,60,255,111,235,60,255,103,226,60,255,92,200,60,255,94,208,60,255,90,193,60,255,113,238,61,255,106,229,60,255,106,230,60,255,103,226,60,255,103,225,60,255,124,250,100,255,116,241,63,255,95,211,60,255"; // good texture
@@ -252,7 +254,7 @@ const Grass = new Block("Grass", {type: "tsb", top: [0,0], side: [3,0], bottom: 
 const Dirt = new Block("Dirt", [2,0]);
 
 const Bedrock = new Block("Bedrock", [8,0]);
-
+/*
 function fractal_noise(x, y, offset, scale, octaves, persistance, lacunarity) {
 	let sample_x = (x + 0.1) / 16 * scale + offset;
 	let sample_y = (y + 0.1) / 16 * scale + offset;
@@ -264,6 +266,27 @@ function fractal_noise(x, y, offset, scale, octaves, persistance, lacunarity) {
 	}
 	return noise_value;
 }
+function perlin_3d(x, y, z, offset, scale) {
+	let sample_x = (x + offset + 0.1) * scale;
+	let sample_y = (y + offset + 0.1) * scale;
+	let sample_z = (z + offset + 0.1) * scale;
+	
+	let AB = perlin.get(sample_x, sample_y);
+    let BC = perlin.get(sample_y, sample_z);
+    let AC = perlin.get(sample_x, sample_z);
+    let BA = perlin.get(sample_y, sample_x);
+    let CB = perlin.get(sample_z, sample_y);
+    let CA = perlin.get(sample_z, sample_x);
+	
+	return (AB+BC+AC+BA+CB+CA)/6;
+}
+*/
+const Noises = { // todo: move to worldgen within world class maybe or something
+	terrain_height: new Perlin(),
+	
+	cn0: new Perlin(),
+	cn1: new Perlin(),
+}
 class Chunk {
 	constructor() {
 		this.blockdata = new Uint8Array(16*128*16).fill(0);
@@ -272,11 +295,21 @@ class Chunk {
 		this.world = null; // just a reference back to za world
 		this.chunk_x = 0;
 		this.chunk_z = 0;
+		this.redraw_flag = false;
 	}
 	get_block(x, y, z) {
-		if (x < 0 || x > 15) return this.world.get_block(x+this.chunk_x*16, y, z+this.chunk_z*16);
-		if (y < 0 || y > 128) return 0;
-		if (z < 0 || z > 15) return this.world.get_block(x+this.chunk_x*16, y, z+this.chunk_z*16);
+		if (y < 0 || y > 128 || x < 0 || x > 15 || z < 0 || z > 15) return 0;
+		
+		/*if (x < 0 || x > 15 || z < 0 || z > 15) {
+			try {
+				if (x < 0)  return this.world.chunks[this.chunk_x-1][this.chunk_z].get_block(x+16, y, z);
+				if (x > 15) return this.world.chunks[this.chunk_x+1][this.chunk_z].get_block(x-16, y, z);
+				if (z < 0)  return this.world.chunks[this.chunk_x][this.chunk_z-1].get_block(x, y, z+16);
+				if (z > 15) return this.world.chunks[this.chunk_x][this.chunk_z+1].get_block(x, y, z-16);
+			} catch (TypeError) {
+				return 0;
+			}
+		}*/
 		let index = x + y*16 + z*16*128;
 		if (index < 0 || index > this.blockdata.length - 1) return 0;
 		return this.blockdata[index];
@@ -291,11 +324,24 @@ class Chunk {
 		for (let y = 0; y < 128; y++) {
 			for (let x = 0; x < 16; x++) {
 				for (let z = 0; z < 16; z++) {
-					let height = Math.floor(fractal_noise(x + this.chunk_x*16, z + this.chunk_z*16, 0, 0.05, 5, 0.65, 3)*34+60);
+					/*const wx = x + this.chunk_x*16; // world coordinates
+					const wy = y;
+					const wz = z + this.chunk_z*16;
+					// bear in mind, chunk set_block functions use chunk coordinates, so wx,wy,wz are not used there.
+					let height = Math.floor(perlin.fractal_noise(wx, wz, 0, this.world.main_noise_scale, 5, 0.65, 3)*34+60);
 					if (y == height) this.set_block(x,y,z,Grass.id);
 					else if (y >= height-3 && y < height) this.set_block(x,y,z,Dirt.id);
 					else if (y < height-3) this.set_block(x,y,z,Stone.id);
 					if (y == 0) this.set_block(x,y,z,Bedrock.id);
+					
+					let cave_noise = (Noises.cn0.noise_3d(wx,wy,wz,0,0.09)) - (Noises.cn1.noise_3d(wx,wy,wz,0,0.05));
+					cave_noise -= (Noises.cn0.noise_3d(wx,wy,wz,1000,0.05)) - (Noises.cn1.noise_3d(wx,wy,wz,1000,0.09));
+					if (cave_noise < 0.05 && cave_noise > -0.05) {
+						this.set_block(x,y,z,Air.id);
+					}*/
+					if (y == 63) this.set_block(x,y,z,Grass.id);
+					else if (y < 63 && y > 59) this.set_block(x,y,z,Dirt.id);
+					else if (y < 60) this.set_block(x,y,z,Stone.id);
 				}
 			}
 		}
@@ -311,7 +357,7 @@ class Chunk {
 						for (let f = 0; f < 6; f++) {
 							let bit = 0b1 << f;
 							let check = cube_face_checks[f];
-							if (Blocks[this.get_block(x + check[0], y + check[1], z + check[2])].is_solid) {
+							if (Blocks[this.world.get_block(this.chunk_x + x + check[0], y + check[1], this.chunk_z + z + check[2])].is_solid) {
 								mask -= bit;
 							}
 						}
@@ -326,8 +372,10 @@ class Chunk {
 }
 class World {
 	constructor() {
-		this.chunks = new Array(4*4);
-		this.vertdata = []; // pls forgive for the abominable sins i am about to commence xd (abdomenal sins (indomitable sins))
+		this.chunks = [];
+		
+		this.main_noise_scale = 1/80;
+		/*this.vertdata = []; // pls forgive for the abominable sins i am about to commence xd (abdomenal sins (indomitable sins))
 		this.uvdata = [];
 		for (let i = 0; i < this.chunks.length; i++) {
 			this.chunks[i] = new Chunk();
@@ -341,14 +389,36 @@ class World {
 			this.chunks[i].create_vert_data();
 			this.chunks[i].vertdata.forEach((i)=>{this.vertdata.push(i);}); // the sin
 			this.chunks[i].uvdata.forEach((i)=>{this.uvdata.push(i);}); // me when i'm sinning
+		}*/
+	}
+	request_chunk(x, z) {
+		if (this.chunks[x] == undefined) this.chunks[x] = [];
+		if (this.chunks[x][z] == undefined) {
+			this.chunks[x][z] = new Chunk();
+			this.chunks[x][z].world = this;
+			this.chunks[x][z].chunk_x = x;
+			this.chunks[x][z].chunk_z = z;
+			this.chunks[x][z].populate();
+			this.chunks[x][z].create_vert_data();
 		}
+		//if (this.chunks[x+1][z] != undefined) this.chunks[x+1][z].redraw_flag = true;
+		//if (this.chunks[x][z+1] != undefined) this.chunks[x][z+1].redraw_flag = true;
+		//if (this.chunks[x-1][z] != undefined) this.chunks[x-1][z].redraw_flag = true;
+		//if (this.chunks[x][z-1] != undefined) this.chunks[x][z-1].redraw_flag = true;
+		// why are these here even
+		return this.chunks[x][z];
 	}
 	get_block(x, y, z) {
 		const chunk_x = Math.floor(x/16);
 		const chunk_z = Math.floor(z/16);
-		if (chunk_x < 0 || chunk_x > 3) return 0;
-		if (chunk_z < 0 || chunk_z > 3) return 0;
-		return this.chunks[chunk_x + chunk_z*4].get_block(x%16, y, z%16);
+		//if (chunk_x < 0 || chunk_x > 3) return 0;
+		//if (chunk_z < 0 || chunk_z > 3) return 0;
+		//return this.chunks[chunk_x + chunk_z*4].get_block(x%16, y, z%16);
+		if (this.chunks[chunk_x] == undefined) return 0;
+		if (this.chunks[chunk_x][chunk_z] == undefined) return 0; // air
+		let sample_x = (x>0) ? x%16 : 16-(x%16);
+		let sample_z = (z>0) ? z%16 : 16-(z%16); // because negative mod in js doesn't do what i want
+		return this.chunks[chunk_x][chunk_z].get_block(sample_x, y, sample_z);
 	}
 }
 class Player {
@@ -360,6 +430,11 @@ class Player {
 		
 		this.collision_mask = 0b111111; // right, left, bottom, top, front, back
 		
+		// clientside methinks
+		this.render_length = 3;
+		this.loaded_chunks = [];
+		this.loaded_vertdata = [];
+		this.loaded_uvdata = [];
 	}
 	forward(speed) {
 		//this.pos = [this.pos[0] + Math.sin(this.angle) * speed, this.pos[1], this.pos[2] - Math.cos(this.angle) * speed];
@@ -371,6 +446,7 @@ class Player {
 		this.vel[0] += -Math.cos(this.angle)*speed;
 		this.vel[2] += -Math.sin(this.angle)*speed;
 	} // all trig here figured out by trial-and-error :^)
+	// p.s., combining left&right allows for wavedash. this is intended because wavedash is funny.
 	gravity(strength, terminal_vel) {
 		if (!this.grounded) {
 			this.vel[1] -= strength;
@@ -399,13 +475,28 @@ class Player {
 		this.pos[1] += dy*dt/17;
 		this.pos[2] += dz*dt/17;
 	}
+	load_chunks() {
+		let render_area = this.render_length**2;
+		//let i = ???;
+		for (let i = 0; i < render_area; i++) {
+			let x = i%this.render_length + Math.floor(this.pos[0]/16);
+			let z = Math.floor(i/this.render_length) + Math.floor(this.pos[2]/16);
+			let offset_center = Math.floor(this.render_length/2);
+			this.loaded_chunks.push(world.request_chunk(x-offset_center,z-offset_center));
+		}
+	}
+	build_chunk_meshes() {
+		for (let i = 0; i < this.loaded_chunks.length; i++) {
+			this.loaded_chunks[i].create_vert_data();
+			this.loaded_chunks[i].vertdata.forEach((i)=>{this.loaded_vertdata.push(i);}); // the sin
+			this.loaded_chunks[i].uvdata.forEach((i)=>{this.loaded_uvdata.push(i);}); // me when i'm sinning
+		}
+	}
 }
 let world = new World();
 let player = new Player();
-gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.vertdata), gl.STATIC_DRAW);
-gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.uvdata), gl.STATIC_DRAW);
+player.load_chunks();
+player.build_chunk_meshes();
 
 let active_keys = [];
 window.addEventListener('keydown', function (e) {
@@ -418,7 +509,7 @@ window.addEventListener('keyup', function (e) {
 canvas.addEventListener('click', async () => {
 	let promise = canvas.requestPointerLock({ unadjustedMovement: true });
 	if (!promise) {console.log("hAh! u fool'd!!!!!!!"); return}
-	return 
+	return promise;
 });
 let mouse_sensitivity = 2;
 canvas.addEventListener('mousemove', async (e) => {
@@ -464,7 +555,7 @@ function draw() {
 	gl.enableVertexAttribArray(positionLocation);
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-	//gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].vertdata), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(player.loaded_vertdata), gl.STATIC_DRAW);
 	let size = 3;
 	let type = gl.FLOAT;
 	let normalize = false;
@@ -486,7 +577,7 @@ function draw() {
 	gl.enableVertexAttribArray(texcoordLocation);
 	
 	gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-	//gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(world.chunks[0].uvdata), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(player.loaded_uvdata), gl.STATIC_DRAW);
 	gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0);
 	
 	let aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
@@ -504,9 +595,13 @@ function draw() {
 	
 	gl.uniform1i(textureLocation, 0);
 	
+	/*gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(player.loaded_chunks[i].vertdata), gl.STATIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(player.loaded_chunks[i].uvdata), gl.STATIC_DRAW);*/
 	let primitiveType = gl.TRIANGLES;
 	offset = 0;
-	let count = world.vertdata.length/3;
+	let count = player.loaded_vertdata.length/3;
 	gl.drawArrays(primitiveType, offset, count);
 	
 	let speed = 0.02/*speed*/ * (1/16)/*adjustment for 60hz dt*/ * dt;
