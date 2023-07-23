@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+<title>a website: linear beaf</title>
+<style>
+body {
+	color: #000;
+	background: DarkKhaki;
+}
+html {
+	height: 100%;
+}
+.math {
+	font-size:1.5em;
+	width:100%;
+	display:block;
+}
+</style>
+<script>
+MathJax = {
+	tex: {
+		inlineMath: [['$', '$'], ['\\(', '\\)']],
+		tags: 'ams'
+	},
+	svg: {
+		fontCache: 'global'
+	}
+}
+</script>
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+</head>
+<body>
+<input id="input">
+<button onclick="eval_input()">Evaluate</button>
+<div id="evaluation" class="math">
+
+</div>
+</body>
+<script>
+let show_steps = true;
+function stringify_array(array) {
+	let string = "\\{";
+	for (let i = 0; i < array.length; i++) {
+		if (typeof(array[i]) == "number") string += array[i];
+		else string += stringify_array(array[i]);
+		if (i != array.length - 1) string += ",";
+	}
+	return string + "\\}";
+}
+let display_string = "";
+function display() {
+	let total_eval = document.getElementById("evaluation");
+	if (total_eval.children.length > 0) total_eval.children[0].remove();
+	total_eval.appendChild(MathJax.tex2svg("\\begin{align*}"+display_string+"\\end{align*}"));
+}
+function eval_beaf(array, top) {
+	if (top == undefined) top = array;
+	while (true) {
+		if (show_steps) display_string += "&"+stringify_array(top)+"\\\\";
+		if (array.length == 2) {
+			display_string += ("\\text{base rule}&\\\\");
+			return Math.pow(array[0], array[1]);
+		}
+		else if (array[1] == 1) {
+			display_string += ("\\text{prime rule}&\\\\");
+			return array[0];
+		}
+		else if (array[array.length-1] == 1) {
+			display_string+=("\\text{tailing rule}&\\\\");
+			array.pop();//array = array.slice(0,array.length-1);
+		}
+		else if (array.length > 2) {
+			if (array[2] == 1) { // hyperoperation
+				display_string+=("\\text{hyperoperation rule}&\\\\");
+				let s = array.slice(2);
+				for (let i = 0; i < s.length; i++) {
+					if (s[i] > 1) {
+						array[i+1] = [...array];
+						array[i+1][1] -= 1;
+						array[i+2] -= 1;
+						for (let x = 0; x < i+1; x++) {
+							array[x] = array[0];
+						}
+						break;
+					}
+				}
+			} else { // recursion
+				display_string+=("\\text{recursion rule}&\\\\");
+				if (array[1]>100) {
+					if (array.length == 3) {
+						array = array[0]+("&uarr;").repeat(array[2])+array[1];
+					}
+					throw top;
+				}
+				let inner = [...array];
+				inner[1] -= 1;
+				array[1] = inner;
+				array[2] -= 1;
+			}
+		}
+		for (let i = 0; i < array.length; i++) {
+			if (typeof(array[i]) == "object") {
+				array[i] = eval_beaf(array[i], top);
+			}
+		}
+	}
+	return array;
+}
+function eval_input() {
+	let array = document.getElementById("input").value;
+	display_string = "";
+	array = array.slice(1,array.length-1).split(',');
+	for(let i = 0; i < array.length; i++) array[i] = Number(array[i]);
+	console.log(array);
+	try{eval_beaf(array);}catch{}
+	display();
+}
+// todo: slow-growing array function. instead of recursion, just add 1.
+</script>
+</html>
