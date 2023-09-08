@@ -5,7 +5,15 @@
 <title>a website: gravity</title>
 <link href="../math.css" rel="stylesheet" type="text/css">
 <!--
-todo: fix trails acting odd with reference frames/high velocities/high timesteps
+todo
+
+- not done
+d done
+/ in progress (i think)
+
+fixes:
+- fix trails acting odd with reference frames/high velocities/high timesteps
+- if the parent of a body is itself, it becomes unselectable due to distance criteria. pls fix
 -->
 <style>
 html {
@@ -25,6 +33,10 @@ canvas {
 }
 abbr {
 	cursor:help;
+}
+td {
+	padding:0;
+	padding-bottom:1px;
 }
 .inline {display:inline;}
 .hidden {display:none;}
@@ -51,7 +63,7 @@ abbr {
 	text-align:center;
 }
 /* ortieial ende */
-#yz-rot-setting {
+.range-setting {
 	height:15px;
 	margin:0px;
 	vertical-align:middle;
@@ -69,14 +81,26 @@ abbr {
 }
 .info-parameter {
 	/*user-select: none;*/
-	color: #fff;
+	color: #0f0;
 	font-family:ms ui gothic, monospace;
 	display:inline;
-	color:#0f0;
+}
+.input-parameter {
+	color: #0ff;
+	font-family: ms ui gothic, monospace;
+	display: inline;
+	background: #000;
+	border: 1px solid #777;
+	border-radius: 1px;
+	width:80%; /* good enough */
+	width:-moz-available; /* better enough */
 }
 .blue {color:#00f;}
 .white {color:#fff;}
 .white-glow {color:#fff;text-shadow: 0px 0px 2px #fff;}
+.red {color:#f00;}
+.green {color:#0f0;}
+.yellow {color:#ff0;}
 button.toggle-motion {
 	position: fixed; /* armenian */
 	right: 10px;
@@ -96,7 +120,8 @@ button.toggle-motion:active {
 </head>
 <body>
 <a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
-	<div style="position:absolute;left:10px;top:10px;font-size:2em;color:#f00;">ps this is like hugley wip please check back frequently for updates</div>
+	<!--<div style="position:absolute;left:10px;top:10px;font-size:2em;color:#f00;">ps this is like hugley wip please check back frequently for updates</div>-->
+	<div style="position:absolute;left:10px;top:10px;font-size:1em;color:#ddd;font-family:ms ui gothic, monospace;text-shadow:0px 0px 2px #fff;">all solar system position/velocity data obtained<br>using nasa's <a href="https://ssd.jpl.nasa.gov/horizons/" style="color:#aaa">jpl horizons service</a> :)<br>currently simulating <div id="bodycount" class="inline red">some number of bodies.</div></div>
 
 <div id="wrap"><div id="wrapped-wrap">
 <canvas id="canvas" width="600" height="480" style="border:1px solid #fff;transform: scale(80%);" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
@@ -105,12 +130,13 @@ Your browser does not support the HTML canvas tag.</canvas>
 <div style="top:-40px;position:relative;text-align:center;color:#aaa;text-shadow:0px 0px 2px #fff;display:table;width:100%;font-family:ms ui gothic;font-size:16px;">
 <div style="width:481.28px;display:inline-block;text-align:left;">
 <div style="width:200%;display:inline-block;"> <!-- i don't not dislike this solution -->
-simulation time: <div id="simulation-time-indicator" class="inline"></div>
+<abbr title="note: this simulation does not take relativistic time effects into account, so all mentions of 'time' should be taken with a potentially-infinite grain of salt">simulation time</abbr>: <div id="simulation-time-indicator" class="inline"></div><br>
+zoom: <div id="zoom-indicator" class="inline"></div>
 </div></div></div>
 
 </div></div>
 
-<div style="width:fit-content;height:600px;right:40px;top:40px;display:inline;position:absolute;margin:10px;overflow-y:scroll;">
+<div id="sidebar-r" style="width:fit-content;height:600px;right:40px;top:40px;display:inline;position:absolute;margin:10px;overflow-y:scroll;">
 	<div id="settings" class="info-box">
 		<details open>
 		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">settings</div></summary>
@@ -120,7 +146,9 @@ simulation time: <div id="simulation-time-indicator" class="inline"></div>
 		<label for="labels-setting">labels enabled: </label>
 		<input type="checkbox" id="labels-setting" name="labels-setting" value="labels-setting"><br>
 		<label for="yz-rot-setting">y-z rotation: </label>
-		<input type="range" id="yz-rot-setting" name="yz-rot-setting"><div id="yz-rot-indicator" style="display:inline;">&emsp;0 rad</div>
+		<input type="range" id="yz-rot-setting" name="yz-rot-setting" class="range-setting"><div id="yz-rot-indicator" style="display:inline;">&emsp;0 rad</div>
+		<label for="yz-fine-setting">fine-tune: </label>
+		<input type="range" id="yz-fine-setting" name="yz-fine-setting" class="range-setting"><div id="yz-fine-indicator" style="display:inline;">&emsp; .00 rad</div>
 		</details>
 	</div>
 	
@@ -136,33 +164,116 @@ simulation time: <div id="simulation-time-indicator" class="inline"></div>
 			<summary class="noselect" style="color:#fff;">physical properties</summary>
 				radius: <div id="info-body-radius" class="info-parameter white"></div> <br>
 				mass: <div id="info-body-mass" class="info-parameter white"></div> <br>
+				srf. gravity: <div id="info-body-surface-gravity" class="info-parameter white"></div> <br>
 				color: <div id="info-body-color" class="info-parameter white"></div> <br>
+				satellites: <div id="info-body-satellites" class="info-parameter white"></div> <br>
 				<!--position: <div id="info-body-position" class="info-parameter" style="color:#fff;"></div><br>
 				velocity: <div id="info-body-velocity" class="info-parameter" style="color:#fff;"></div><br>-->
 			</details>
-			<details open>
+			<details>
 			<summary class="noselect" style="color:#fff;">orbital parameters</summary>
 				<abbr title="Time of measurement">epoch:</abbr> <div id="info-body-epoch" class="info-parameter" style="color:#fff;"></div> <br>
 				<abbr title="Semi-major axis">SMA:</abbr> <div id="info-body-sma" class="info-parameter"></div> <br>
-				<abbr title="Eccentricity">ecc:</abbr> <div id="info-body-ecc" class="info-parameter"></div> <br>
+				<abbr title="Eccentricity, the elongation or stretch of the orbit">ecc:</abbr> <div id="info-body-ecc" class="info-parameter"></div> <br>
 				<abbr title="Inclination">inc:</abbr> <div id="info-body-inc" class="info-parameter"></div> <br>
 				<abbr title="Argument of Pericenter"><m>&omega;</m>:</abbr> <div id="info-body-arg-per" class="info-parameter"></div> <br>
 				<abbr title="Longitude of the Ascending Node"><m>&Omega;</m>:</abbr> <div id="info-body-lon-asc" class="info-parameter"></div> <br>
 				<abbr title="Mean Anomaly">M:</abbr> <div id="info-body-mean-anomaly" class="info-parameter"></div> <br>
 				<abbr title="True Anomaly"><m>&nu;</m>:</abbr> <div id="info-body-true-anomaly" class="info-parameter blue"></div> <br>
-				<abbr title="Orbital Period"><m>T</m>:</abbr> <div id="info-body-orbital-period" class="info-parameter blue"></div> <br>
+				<abbr title="Orbital Period"><m>T</m>:</abbr> <div id="info-body-orbital-period" class="info-parameter yellow"></div> <br>
 				<abbr title="Speed"><m>v</m>:</abbr> <div id="info-body-speed" class="info-parameter blue"></div> <br>
 				<abbr title="Speed from the reference frame of the parent body"><m>v<sub>rel</sub></m>:</abbr> <div id="info-body-relative-speed" class="info-parameter blue"></div> <br>
 				dist. to parent:</abbr> <div id="info-body-distance-to-parent" class="info-parameter blue"></div> <br>
+				<abbr title="Pericenter / Periapsis, The closest this body will be from its parent"><m>r<sub>per</sub></m>:</abbr> <div id="info-body-pericenter" class="info-parameter red"></div> <br>
+				<abbr title="Apocenter / Apoapsis, The furthest this body will be from its parent"><m>r<sub>ap</sub></m>:</abbr> <div id="info-body-apocenter" class="info-parameter red"></div> <br>
 			</details>
-			<textarea id="info-body-desc" style="width:90%;height:8em;font-size:14px;border:1px solid #555555;color:#aaffaa;font-family:ms gothic, monospace;padding:4px;margin:2px;overflow-y:auto;resize:none;background-color: #000000;cursor:auto;"></textarea><br>
+			<textarea id="info-body-desc" style="width:90%;height:14em;font-size:14px;border:1px solid #555555;color:#aaffaa;font-family:ms gothic, monospace;padding:4px;margin:2px;overflow-y:auto;resize:none;background-color: #000000;cursor:auto;"></textarea><br>
 		</div>
 		</details>
 	</div>
 	
-	<div id="create_body" class="info-box" style="border:4px solid #00f;">
+	<div id="create_body" class="info-box" style="border:4px solid #00f;color:#ccc;">
 		<details>
-		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">create body</div></summary>
+		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;color:#fff;">create body</div></summary>
+		<br>
+		<table style="width:100%;padding:0;border-collapse:collapse;border-spacing:0">
+			<tbody>
+				<tr><th style="width:10%"></th><th style="width:35%"></th></tr>
+				<tr>
+					<td>name:</td>
+					<td><input id="create-body-name" class="input-parameter" placeholder="name your object!" value="awawawa"></td>
+				</tr>
+				<tr>
+					<td>color:</td>
+					<td><input id="create-body-color" class="input-parameter white" placeholder="#rrggbb"></td>
+				</tr>
+				<tr>
+					<td>mass:</td>
+					<td><input id="create-body-mass" class="input-parameter green" placeholder="mass in kilograms"></td>
+				</tr>
+				<tr>
+					<td>radius:</td>
+					<td><input id="create-body-radius" class="input-parameter green" placeholder="radius in meters"></td>
+				</tr>
+				<!--
+				<tr>
+					<td>parent:</td>
+					<td>
+					<select id="create-body-parent" type="dropdown" class="input-parameter">
+						<option value="sun">sun</option>
+					</select>
+					</td>
+				</tr>-->
+				<tr>
+					<td><abbr title="Time of measurement">epoch:</abbr></td>
+					<td><input id="create-body-epoch" class="input-parameter" placeholder="days since 1/1/2000 12:00"></td>
+				</tr>
+				<tr>
+					<td><abbr title="Semi-major axis">SMA:</abbr></td>
+					<td><input id="create-body-sma" class="input-parameter" placeholder="mean distance from parent in meters"></td>
+				</tr>
+				<tr>
+					<td><abbr title="Eccentricity">ecc:</abbr></td>
+					<td><input id="create-body-ecc" class="input-parameter" placeholder="uncircularness of orbit (0 to 1)"></td>
+				</tr>
+				<tr>
+					<td><abbr title="Inclination">inc:</abbr></td>
+					<td><input id="create-body-inc" class="input-parameter" placeholder="tilt of orbit w.r.t. the icrf plane"></td>
+				</tr>
+				<tr>
+					<td><abbr title="Argument of Pericenter"><m>&omega;</m>:</abbr></td>
+					<td><input id="create-body-arg-per" class="input-parameter red" placeholder="angle of the periapsis w.r.t. the icrf plane"></td>
+				</tr>
+				<tr>
+					<td><abbr title="Longitude of the Ascending Node"><m>&Omega;</m>:</abbr></td>
+					<td><input id="create-body-lon-asc" class="input-parameter red" placeholder="angle of tilt's orientation w.r.t. icrf"></td>
+				</tr>
+				<tr>
+					<td><abbr title="Mean Anomaly">M:</abbr></td>
+					<td><input id="create-body-mean-anomaly" class="input-parameter red" placeholder="angle along path of orbit @ epoch"></td>
+				</tr>
+			</tbody>
+		</table>
+		
+		body will be set in orbit around the currently focused celestial body, which is: <div id="create-body-currently-focused-body" class="inline"></div><br>
+		
+		<button id="create-body-button" style="font-weight:bold;font-family:ms ui gothic;color:#0fa;background:#000;cursor:pointer;">create!</button>
+		
+		</details>
+	</div>
+	
+	<div id="edit_body" class="info-box" style="border:4px solid #0f0;">
+		<details>
+		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">edit body</div></summary>
+		<br>
+		todo:<br>
+		as many params can be edited as can be set from creation !!
+		</details>
+	</div>
+	
+	<div id="delete_body" class="info-box" style="border:4px solid #f00;">
+		<details>
+		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">delete body</div></summary>
 		<br>
 		todo :^)
 		</details>
@@ -181,6 +292,7 @@ use wasd or arrows to pan the camera. click on an object to follow it. [f] speed
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 const G = 6.67430 * 10**-11; // m^3*kg^-1*s^-2 = N*m^2*kg^-2 ==> force times area per two masses (i'm sure that makes sense)
+const M = 1.988435e+30; // kg; mass of the sun
 function lerp(a,b,f) {
 	return (b-a)*f+a;
 }
@@ -193,6 +305,7 @@ function vec_lerp(V,U,f) { // VUF!!!! VUFFY!!!!
 	return [lerp(V[0],U[0],f), lerp(V[1],U[1],f), lerp(V[2],U[2],f)];
 }
 function deg(angle) {return angle/180*Math.PI;} // turns degrees into radians, for ecliptic trig use/usage
+function as_kg(GM_km) {return (GM_km*1e9)/G;} // lmaoooo GM is just the gravitational constant times the mass of the object, not times the mass of the sun. incredible.
 
 let bodies = [];
 class Body {
@@ -215,16 +328,20 @@ class Body {
 		a
 		s
 		*/
-		
+		//this.pos = [Math.random()*1000, Math.random()*1000, Math.random()*1000];
 		this.parent = neutral_reference;
+		this.satellites = [];
+		this.is_barycenter = false;
 		
 		bodies.push(this);
 	}
 	/*kepler_te(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch) {
 		this.kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, Math.sqrt((G*parent.mass)/sma**3)*(time-epoch));
 	}*/
-	kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch) {
-		this.parent = parent; // makeshift
+	kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch, mass=-1) {
+		this.parent = parent; // makeshift (oops it isn't makeshift haha)
+		this.parent.satellites.push(this); // just for the body info section
+		this.parent = neutral_reference;
 		// all of this is makeshift i apologize
 		// mu = G * mass
 		let mu = G * parent.mass; // gravitational parameter
@@ -241,7 +358,7 @@ class Body {
 		
 		// here we go again
 		// mostly using ComputeStateVectors() from http://orbitsimulator.com/gsim.html at line 9312
-		let m = this.mass + parent.mass;
+		let m = this.mass + (mass == -1 ? parent.mass : mass); // mass can be overridden if need be
 		let ecc_anomaly = mean_anomaly_at_t + ecc / 2;
 		let delta = 1;
 		let epsilon = 1e-9;
@@ -409,8 +526,19 @@ class Body {
 		let mean_anomaly = Math.atan2(-Math.sqrt(1-ecc*ecc)*Math.sin(true_anomaly), -ecc - Math.cos(true_anomaly)) + Math.PI - ecc*(Math.sqrt(1-ecc*ecc)*Math.sin(true_anomaly)/(1+ecc*Math.cos(true_anomaly))); // stolen from wikipedieres
 		
 		let orbital_period = 2*Math.PI*Math.sqrt(sma**3/(G*(this.mass + this.parent.mass)));
+		// T = 2pi * sqrt(sma**3 / mu)
+		// T/2pi = sqrt(sma**3 / mu)
+		// (T/2pi)**2 = sma**3 / mu
+		// mu * (T/2pi)**2 = sma**3
+		// sma = (mu * (T/2pi)**2)**(1/3)
 		
-		return [sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly*180/Math.PI, true_anomaly*180/Math.PI, orbital_period];
+		// sma * X = T * 13/6
+		// sma / (13/6) = T / X
+		
+		let pericenter = (1-ecc)*sma;
+		let apocenter = (1+ecc)*sma;
+		
+		return [sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly*180/Math.PI, true_anomaly*180/Math.PI, orbital_period, pericenter, apocenter];		
 	}
 	
 	// taken from stackoverflow: https://astronomy.stackexchange.com/questions/45456/how-to-translate-from-local-laplace-plane-to-ecliptic-j2000-or-icrf
@@ -474,7 +602,23 @@ class Body {
 		this.vel = [xec, yec, zec];
 	}
 }
-let neutral_reference = new Object; // is this a neutral reference ?????????????????
+let barycenters = [];
+class Barycenter extends Body {
+	constructor(name, color, things) {
+		super(name, color, 1e-99, 1, [0,0,0], [0,0,0], true);
+		//bodies.splice(bodies.indexOf(this), 1); // this isn't a body, get rid of it in the thing gjfkdhgdfk
+		this.things = things; // bodies
+		this.is_barycenter = true;
+		barycenters.push(this); // just incase
+	}
+	position_barycenter() {
+		let body_1_next_pos = vec_add(this.things[0].pos, vec_mul(this.things[0].vel, step));
+		let body_2_next_pos = vec_add(this.things[1].pos, vec_mul(this.things[1].vel, step));
+		this.pos = vec_div(vec_add(vec_mul(body_1_next_pos, this.things[0].mass), vec_mul(body_2_next_pos, this.things[1].mass)), this.things[0].mass+this.things[1].mass);
+		this.vel = vec_div(vec_add(this.things[0].vel, this.things[1].vel), 2);
+	}
+}
+let neutral_reference = new Object; // is this a neutral reference ????????????????? <-- no this is jo
 neutral_reference.pos = [0,0,0];
 neutral_reference.vel = [0,0,0];
 let JD_epoch =(year, month, day, hour, minute=0, second=0, ms=0)=> {return new Date(year, month, day, hour, minute, second, ms);}
@@ -482,12 +626,14 @@ let J2000 = JD_epoch(2000, 0, 01, 12); // 2000, 0th month (January), 01st day, 1
 // J2000.0 = 2451545 Julian Days
 let J2000_epoch = J2000.getTime()/1000; // in seconds, instead of ms
 let ceres_epoch = J2000.getTime()/1000 + (4856*24*60*60);
-let NOW = Date.now()/1000; // check your clock, now :)
+let NOW = /*JD_epoch(2020, 0, 01, 12).getTime()/1000;*/Date.now()/1000; // check your clock, now :)
 //NOW = J2000_epoch;
+NOW = JD_epoch(2023, 09-1, 01, 00).getTime()/1000;
 let au = 149597870691; // 149597870691 meters = 1 AU
+let GM = 1.32712440018e+20; // m^3 / s^2
 
-let sun = new Body("Sun", "#ff0", 1.9885*10**30, 695700000, vec_mul([-5.689*10**5,1.113*10**6,3.476*10**3],1000), vec_mul([-1.446*10**-2,-3.456*10**-3,3.988*10**-4],1000));
-sun.desc = "please ignore the funny math breaking above this textbox";
+let sun = new Body("Sun", "#ff0", M, 695700000, vec_mul([-5.689*10**5,1.113*10**6,3.476*10**3],1000), vec_mul([-1.446*10**-2,-3.456*10**-3,3.988*10**-4],1000));
+sun.desc = "the sun is the gravitational center of the solar system. it is a common misconception that it is yellow in color. in reality, the sun is almost completely white. its classification as a 'yellow dwarf' is infact a double-misnomer, it is neither yellow nor small. the reason it was thought to be small, is that only the largest and brightest stars are most visible to the naked eye. only when telescopes became more powerful was it clear that there are much smaller and much dimmer stars which far outnumber every other type of star in the milky way galaxy. the sun is larger than approximately 60% of the stars in the galaxy.\n\n\nbelieve or not\n\nyou cannot land on the Sun";
 /*let sun2 = new Body("Sun 2", "#f00", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
 sun2.kepler(sun, 10000000222, 0, 0, 0, 0, 0);
 let sun3 = new Body("Sun 3", "#0ff", 1.9885*10**30, 695700000, [0,0,0], [0,0,0]);
@@ -496,7 +642,7 @@ let sun4 = new Body("Sun 4", "#fff", 1.9885*10**30, 695700000, [0,0,0], [0,0,0])
 sun4.kepler(sun3, 10000000222, 0, 0, 0, 0, 0);*/
 let earth = new Body("Earth", "#00f", 5.972168*10**24, 6371000, [152097597000,0,0], [0,-29782.7,0]);
 earth.kepler(sun, 149598023000, 0.0167086, 0.00005/180*Math.PI, 114.20783/180*Math.PI, -11.26064/180*Math.PI, 358.617/180*Math.PI, NOW, J2000_epoch);//358.617/180*Math.PI);
-earth.desc = "mostly harmless. please see back for details";
+earth.desc = "mostly harmless.\n\n\n\nplease see back for details";
 /*		Period		   1.0          // years
 		SemiMajorAxis  1.0000010178 // a.u.
 		Eccentricity   0.0167086342
@@ -505,7 +651,7 @@ earth.desc = "mostly harmless. please see back for details";
 		LongOfPericen  102.93734808 // degrees
 		MeanLongitude  100.46645683 // degrees*/
 let moon = new Body("Moon", "#aaa", 7.342*10**22, 1737400, [152097597000+405400000,0,0], [0,-29782.7-1022,0]);
-moon.kepler(earth, 384399000, 0.0549, 5.145/180*Math.PI, 318.15/180*Math.PI, 125.08/180*Math.PI, 135.27/180*Math.PI, NOW, J2000_epoch);//135.27/180*Math.PI);
+//moon.kepler(earth, 384399000, 0.0549, 5.145/180*Math.PI, 318.15/180*Math.PI, 125.08/180*Math.PI, 135.27/180*Math.PI, NOW, J2000_epoch);//135.27/180*Math.PI);
 moon.desc = "the moon, also called selene, cynthia, e la lune, is made of cheese. it holds the record for being the biggest in comparison to its parent planet, at around 1/9th the radius of the earth.\n\nno es la locura,\nen realidad es el amor...";
 //moon.convert_to_ecliptic(deg(23.4363051));
 /*		Period          0.07480422854
@@ -517,7 +663,7 @@ moon.desc = "the moon, also called selene, cynthia, e la lune, is made of cheese
 		ArgOfPericen    318.15*/
 let venus = new Body("Venus", "#fa0", earth.mass*.815, 6052000, [0,0,0], [0,0,0]);
 venus.kepler(sun, 0.7233*149597870691, 0.0068, 3.3947/180*Math.PI, (131.533-76.681)/180*Math.PI, 76.681/180*Math.PI, (181.979-131.533)/180*Math.PI, NOW, J2000_epoch);
-venus.desc = "don't go here";
+venus.desc = "don't go here, you'd probably melt or evaporate or something";
 /*		Period          0.6152
 		SemiMajorAxis   0.7233
 		Eccentricity    0.0068
@@ -545,6 +691,7 @@ mars.desc = "so-named for its bountiful mounds of cheap, easy-to-manufacture cho
 
 let phobos = new Body("Phobos","#a00", 1.0659*10**16, 11266.7, [0,0,0], [0,0,0]);
 phobos.kepler(mars, 9376000, 0.0151, 26.710/180*Math.PI, 92.19863/180*Math.PI, 82.8611/180*Math.PI, 0.00/180*Math.PI, /*NOW,*/ JD_epoch(2023, 3,11, 07,03,53,630).getTime()/1000, J2000_epoch);
+phobos.desc = "AH!";
 
 //phobos.kepler(mars, 9376000, 0.0151, 1.093/180*Math.PI, deg(216.3), deg(169.2), deg(189.6), NOW, J2000_epoch);
 //phobos.kepler(mars, 9376000, 0.0151, deg(1.093), 213.804/180*Math.PI, 128.694/180*Math.PI, 191.771/180*Math.PI, NOW, J2000_epoch);
@@ -568,6 +715,9 @@ let juno = new Body("Juno", "#aaf", earth.mass*4.722*10**-6, 130000, [0,0,0], [0
 juno.kepler(sun, 2.67073*au, 0.255305, deg(12.9794), deg(248.31), deg(169.883), deg(257.639), NOW, ceres_epoch);
 let vesta = new Body("Vesta", "#aa9", earth.mass*4.337*10**-5, 285000, [0,0,0], [0,0,0]);
 vesta.kepler(sun, 2.36179*au, 0.08874, deg(7.14043), deg(151.19853), deg(103.85136), deg(20.86384), NOW, JD_epoch(2014, 11, 9, 00).getTime()/1000);
+let hygiea = new Body("Hygiea", "#fff", earth.mass*1.45124e-5, 215500);
+hygiea.kepler(sun, 3.13703*au, 0.116109, deg(3.8419), deg(312.758), deg(283.418), deg(121.957), NOW, ceres_epoch);
+hygiea.desc = "'hygiea' is not spelled 'hygeia'. please keep this in mind if you ever feel like mispelling it.";
 
 //let aethra = new Body("132 Aethra", "#f77", 10**18, 40000, [0,0,0], [0,0,0]);
 //aethra.kepler(sun, 390050000000, 0.39036, deg(24.997), deg(255.216), deg(258.408), deg(38.271), NOW, JD_epoch(2016, 5, 31, 00).getTime()/1000);
@@ -577,74 +727,500 @@ jupiter.kepler(sun, 778.479*10**9, 0.0489, 1.303/180*Math.PI, 273.867/180*Math.P
 jupiter.desc = "how jovial! and excessively huge!";
 let io = new Body("Io", "#fa0", earth.mass*.01495, 1821600, [0,0,0], [0,0,0]);
 io.kepler(jupiter, 421800000, 0.004, deg(0.0), deg(49.1), deg(0.0), deg(330.9), NOW, J2000_epoch);
+io.desc = "absolutely full of lava";
 let europa = new Body("Europa", "#fff", earth.mass*.008035, 1560800, [0,0,0], [0,0,0]);
 europa.kepler(jupiter, 671100000, 0.0101, deg(0.47), deg(155.512-101.087), deg(101.087), deg(176.377-155.512), NOW, J2000_epoch);
+europa.desc = "absolutely full of water";
 let ganymede = new Body("Ganymede", "#c79", earth.mass*.0248, 2631200, [0,0,0], [0,0,0]);
 ganymede.kepler(jupiter, 1070400000, 0.0015, deg(0.195), deg(188.831-119.841), deg(119.841), deg(121.206-188.831+360), NOW, J2000_epoch);
+ganymede.desc = "absolutely full of rocks";
 let callisto = new Body("Callisto", "#779", earth.mass*.0248, 2631200, [0,0,0], [0,0,0]);
 callisto.kepler(jupiter, 1882700000, 0.007, deg(0.281), deg(335.933-323.265), deg(323.265), deg(85.091-335.933+360), NOW, J2000_epoch);
-let amalthea = new Body("Amalthea", "#a50", earth.mass*3.515*10**-7, 83500, [0,0,0], [0,0,0], true);
+callisto.desc = "plonk";
+let amalthea = new Body("Amalthea", "#a50", as_kg(0.16456), 83500, [0,0,0], [0,0,0], true);
 amalthea.kepler(jupiter, 181400000, 0.003, deg(0.384285), deg(301.622765), deg(220.288958), deg(315.352094), NOW, J2000_epoch);
 let thebe = new Body("Thebe", "#aaa", 4.3*10**17, 49300, [0,0,0], [0,0,0], true);
 thebe.kepler(jupiter, 221900000, 0.0175, deg(1.1), deg(26.6), deg(340.4), deg(182.1), NOW, J2000_epoch);
 
-let adrastea = new Body("Adrastea", "#999", 1, 1, [0,0,0], [0,0,0], true);
+let adrastea = new Body("Adrastea", "#999", as_kg(0.00014), 8200, [0,0,0], [0,0,0], true);
 adrastea.kepler(jupiter, 129000000, 0.000, deg(0.0), deg(0.0), deg(0.0), deg(214.5), NOW, J2000_epoch);
-let metis = new Body("Metis", "#666",1, 1, [0,0,0], [0,0,0], true);
+let metis = new Body("Metis", "#666", as_kg(0.00250), 21500, [0,0,0], [0,0,0], true);
 metis.kepler(jupiter, 128000000, 0.000, deg(0.0), deg(0.0), deg(0.0), deg(166.0), NOW, J2000_epoch);
-
-let himalia = new Body("Himalia", "#fff", 10**17, 12345);
-himalia.tiny = true;
+// G = 6.67430e-11 * m^3/s^2kg^2
+// M = 1.988435e+30 * kg
+// GM = 1.32712440041279419e+20 * m^3/s^2
+// ?????????????????????????
+let himalia = new Body("Himalia", "#f0f", as_kg(0.15155), 85000);
+himalia.is_tiny = true;
 himalia.kepler(jupiter, 11440600000, 0.160, deg(28.1), deg(328.4), deg(68.2), deg(66.5), NOW, J2000_epoch); // this is the first ecliptic moon listed in https://ssd.jpl.nasa.gov/sats/elem/sep.html !!!!!!! hooray, it's accurate!!!
+himalia.desc = "it should be noted that basically every single one of these moons is inaccurate in several respects. whether the mass hasn't been accurately measured, or the orbit is perturbed so often that the parameters in this simulation are dead wrong, the portrayal of the moons here is really only meant to give you an idea. if you want a *slightly* more accurate idea of where the moons of the solar system are at some given moment, then maybe you should major in astrodynamics or something i don't know";
 
-let elara = new Body("Elara", "#fff", 10**17, 12345);
-elara.tiny = true;
+let elara = new Body("Elara", "#fff", 10**17, 79900);
+elara.is_tiny = true;
 elara.kepler(jupiter, 11712300000, 0.211, deg(27.9), deg(140.1), deg(118.1), deg(330.7), NOW, J2000_epoch);
 
-let pasiphae = new Body("Pasiphae", "#fff", 10**17, 12345);
-pasiphae.tiny = true;
+let pasiphae = new Body("Pasiphae", "#fff", 10**17, 1000);
+pasiphae.is_tiny = true;
 pasiphae.kepler(jupiter, 23468200000, 0.412, deg(148.4), deg(264.8), deg(312.3), deg(277.8), NOW, J2000_epoch);
 
-let sinope = new Body("Sinope", "#fff", 10**17, 12345);
-sinope.tiny = true;
+let sinope = new Body("Sinope", "#fff", 10**17, 1000);
+sinope.is_tiny = true;
 sinope.kepler(jupiter, 23683900000, 0.264, deg(157.3), deg(96.6), deg(304.6), deg(167.5), NOW, J2000_epoch);
+
+let lysithea = new Body("Lysithea", "#fff", 1e17, 42200); lysithea.is_tiny = true;
+let carme = new Body("Carme", "#fff", 1e17, 46700); carme.is_tiny = true;
+let ananke = new Body("Ananke", "#fff", 1e17, 29100); ananke.is_tiny = true;
+let leda = new Body("Leda", "#fff", 1e17, 21500); leda.is_tiny = true;
+let callirrhoe = new Body("Callirrhoe", "#fff", 1e17, 9600); callirrhoe.is_tiny = true;
+let themisto = new Body("Themisto", "#fff", 1e17, 9000); themisto.is_tiny = true;
 
 //io.icrf_to_ecliptic(deg(268.1), deg(64.5));
 
 let saturn = new Body("Saturn", "#ffa", earth.mass*95.162, 60268000, [0,0,0], [0,0,0]);
 saturn.kepler(sun, 9.5371*au, 0.0542, 2.4845/180*Math.PI, (92.432-113.715+360)/180*Math.PI, 113.715/180*Math.PI, (49.944-92.432+360)/180*Math.PI, NOW, J2000_epoch);
 saturn.desc = "the only planet in the solar system with rings trivially visible from earth. big rings. big gorgeous amazing beautiful magnificent wonderful rings. rings that could slice your home planet in twain, thus reducing the calcium industry to shambles. rubble even.";
+/*
+for (let i = 0; i < 100; i++) {
+	let asteroid = new Body("Asteroid "+i, "#aaa", 10**10, 100);
+	asteroid.kepler(saturn, Math.random()*4e+7 + 136000000, 0, deg(0), deg(0), deg(0), Math.random()*Math.PI*2, NOW, J2000_epoch);
+}*/
 
-let mimas = new Body("Mimas", "#888", 1, 1);
+let mimas = new Body("Mimas", "#888", 3.7493*10**19, 198200);
 mimas.kepler(saturn, 186000000, 0.020, deg(1.6), deg(160.4), deg(66.2), deg(275.3), NOW, J2000_epoch);
-let enceladus = new Body("Enceladus", "#fff", 1, 1);
-enceladus.kepler(saturn, 238400000, 0.005, deg(0.0), deg(119.5), deg(0.0), deg(57.0), NOW, J2000_epoch);
-let titan = new Body("Titan", "#ff0", 1.3452e+23, 2574730);
+mimas.desc = "not shown is the very cool looking crater that makes mimas resemble the death star";
+let enceladus = new Body("Enceladus", "#fff", 1.08022*10**20, 252100);
+enceladus.kepler(saturn, 238400000, 0.005, deg(0.0047), deg(119.5), deg(0.0), deg(57.0), NOW, J2000_epoch);
+enceladus.desc = "ice! it's a ball of ice.";
+let tethys = new Body("Tethys", "#eec", 6.17449*10**20, 1062200);
+tethys.kepler(saturn, 295000000, 0.001, deg(1.1), deg(335.3), deg(273.0), deg(0.0), NOW, J2000_epoch);
+
+let dione = new Body("Dione", "#eee", 1.095452*10**21, 1122800);
+dione.kepler(saturn, 377700000, 0.0022, deg(0.019), deg(116.0), deg(0.0), deg(212.0), NOW, J2000_epoch);
+let rhea = new Body("Rhea", "#ddd", as_kg(153.94175), 763500);
+rhea.kepler(saturn, 527200000, 0.001, deg(0.3), deg(44.3), deg(133.7), deg(31.5), NOW, J2000_epoch);
+
+let titan = new Body("Titan", "#fc0", 1.3452e+23, 2574730);
 titan.kepler(saturn, 1221870000, 0.029, deg(0.3), deg(78.3), deg(78.6), deg(11.7), NOW, J2000_epoch);
+titan.desc = "the haze blocks the moon's surface from view...\nthis is the only object in the solar system, other than earth, which is known to have oceans. titan's oceans are made of liquid methane, however.";
+
+let hyperion = new Body("Hyperion", "#edc", 5.5510e18, 135000);
+let iapetus = new Body("Iapetus", "#dfe", 1.8056591e21, 734400);
+let phoebe = new Body("Phoebe", "#444", 8.3123e18, 106500);
+let helene = new Body("Helene", "#fff", 7.1e15, 36200); helene.is_tiny = true;
+let telesto = new Body("Telesto", "#fff", 4e15, 24600); telesto.is_tiny = true;
+let calypso = new Body("Calypso", "#fff", 2e15, 19000); calypso.is_tiny = true;
+let methone = new Body("Methone", "#fff", 3.92e12, 2900); methone.is_tiny = true; // todo: desc
+let polydeuces = new Body("Polydeuces", "#fff", 8e12, 3060); polydeuces.is_tiny = true;
+let janus = new Body("Janus", "#ddd", 1.89388e18, 178000);
+let epimetheus = new Body("Epimetheus", "#ddc", 5.25607e17, 117200);
+let atlas = new Body("Atlas", "#fff", 5.490e15, 29800); atlas.is_tiny = true;
+let prometheus = new Body("Prometheus", "#fff", 1.59720e17, 85600); prometheus.is_tiny = true;
+let pandora = new Body("Pandora", "#fff", 1.357e17, 80000); pandora.is_tiny = true;
 
 // the georgium sidus, or just 'sidis'
 let uranus = new Body("Uranus", "#0fa", earth.mass*14.536, 25362000);
 uranus.kepler(sun, 19.19126*au, 0.04717, deg(0.773), deg(96.998857), deg(74.006), deg(142.238600), NOW, J2000_epoch);
 uranus.desc = "uranus, also known as The Georgium Sidus and/or Urinus, is a big ball way out in space.";
+// tip: you can find ra and dec definitions at the bottom of SolarSys.sc, in the dysnomia/eris system
+let ariel = new Body("Ariel", "#635", 1.251e21, 578900);
+ariel.kepler(uranus, 190900000, 0.001, deg(0.0), deg(83.3), deg(0.0), deg(119.8), NOW, J2000_epoch);
+let umbriel = new Body("Umbriel", "#777", 1.275e21, 584700);
+umbriel.kepler(uranus, 266000000, 0.004, deg(0.1), deg(157.5), deg(195.5), deg(258.3), NOW, J2000_epoch);
+let titania = new Body("Titania", "#cbb", 3.4e21, 788400);
+titania.kepler(uranus, 436300000, 0.001, deg(0.1), deg(202.0), deg(26.4), deg(53.2), NOW, J2000_epoch);
+let oberon = new Body("Oberon", "#557", 3.076e21, 761400);
+oberon.kepler(uranus, 583400000, 0.001, deg(0.1), deg(182.4), deg(30.5), deg(139.7), NOW, J2000_epoch);
+let miranda = new Body("Miranda", "#ddd"/*"#855"*/, 6.4e19, 235800);
+miranda.kepler(uranus, 129900000, 0.001, deg(4.4), deg(155.6), deg(100.7), deg(72.4), NOW, J2000_epoch);
+let puck = new Body("Puck", "#999", 2.9e18, 81000);
+puck.kepler(uranus, 86000000, 0.000, deg(0.4), deg(0.0), deg(216.0), deg(50.1), NOW, J2000_epoch);
+
+let cordelia = new Body("Cordelia", "#fff", 4.4e16, 20100); cordelia.is_tiny = true;
+let ophelia = new Body("Ophelia", "#fff", 5.3e16, 21500); ophelia.is_tiny = true;
+let bianca = new Body("Bianca", "#fff", 9.2e16, 51000/2); bianca.is_tiny = true;
+let cressida = new Body("Cressida", "#fff", 3.4e17, 80000/2); cressida.is_tiny = true;
+let desdemona = new Body("Desdemona", "#fff", 1.8e17, 64000/2); desdemona.is_tiny = true;
+let juliet = new Body("Juliet", "#fff", 5.6e17, 94000/2); juliet.is_tiny = true;
+let portia = new Body("Portia", "#fff", 1.7e18, 135000/2); portia.is_tiny = true;
+let rosalind = new Body("Rosalind", "#fff", 2.5e17, 72000/2); rosalind.is_tiny = true;
+let belinda = new Body("Belinda", "#fff", 4.9e17, 90000/2); belinda.is_tiny = true;
+let perdita = new Body("Perdita", "#fff", 1.8e16, 30000/2); perdita.is_tiny = true;
+let mab = new Body("Mab", "#fff", 3.8e15, 18000/2); mab.is_tiny = true;
+let cupid = new Body("Cupid", "#fff", 3.8e15, 18000/2); cupid.is_tiny = true;
+let caliban = new Body("Caliban", "#fff", 2.5e17, 42000/2); caliban.is_tiny = true;
+let sycorax = new Body("Sycorax", "#fff", 2.3e18, 157000/2); sycorax.is_tiny = true;
+let prospero = new Body("Prospero", "#fff", 8.5e16, 50000/2); prospero.is_tiny = true;
+let setebos = new Body("Setebos", "#fff", 7.5e16, 48000/2); setebos.is_tiny = true;
+let stephano = new Body("Stephano", "#fff", 2.2e16, 32000/2); stephano.is_tiny = true;
+let trinculo = new Body("Trinculo", "#fff", 3.9e15, 18000/2); trinculo.is_tiny = true;
+let francisco = new Body("Francisco", "#fff", 7.2e15, 22000/2); francisco.is_tiny = true;
+let margaret = new Body("Margaret", "#fff", 5.4e15, 20000/2); margaret.is_tiny = true;
+let ferdinand = new Body("Ferdinand", "#fff", 5.4e15, 12000/2); ferdinand.is_tiny = true;
 
 let neptune = new Body("Neptune", "#0af", earth.mass*17.147, 24622000);
 neptune.kepler(sun, 30.07*au, 0.008678, deg(1.770), deg(273.187), deg(131.783), deg(259.883), NOW, J2000_epoch);
-neptune.desc = "the least moons of the giants, and the least-powerful winds.";
+neptune.desc = "the least moons of the giants, and the least-powerful winds.\nbut the prettiest moons!";
+let triton = new Body("Triton", "#dea", 2.1390e22, 1353400); // todo: desc
+triton.kepler(neptune, 354800000, 0.000, deg(157.3), deg(0.0), deg(178.1), deg(63.0), NOW, J2000_epoch);
+triton.desc = "triton orbits retrograde relative to the orbital motion of neptune! wow!";
+let naiad = new Body("Naiad", /*"#99a"*/"#fff", 1.3e17, 60400/2);
+naiad.kepler(neptune, 48200000, 0.000, deg(4.7), deg(0.0), deg(41.4), deg(89.7), NOW, J2000_epoch);
+let thalassa = new Body("Thalassa", "#fff", 3.5e17, 81400/2);
+thalassa.kepler(neptune, 50100000, 0.000, deg(0.2), deg(0.0), deg(130.6), deg(165.7), NOW, J2000_epoch);
+let despina = new Body("Despina", "#fff", 1.7e18, 156000/2);
+despina.kepler(neptune, 52500000, 0.000, deg(0.0), deg(0.0), deg(0.0), deg(125.1), NOW, J2000_epoch);
+let galatea = new Body("Galatea", "#fff", 2.8e18, 174800/2);
+galatea.kepler(neptune, 62000000, 0.000, deg(0.0), deg(0.0), deg(0.0), deg(86.7), NOW, J2000_epoch);
+let larissa = new Body("Larissa", "#fff", 3.8e18, 194000/2);
+larissa.kepler(neptune, 73500000, 0.001, deg(0.2), deg(247.3), deg(312.0), deg(165.5), NOW, J2000_epoch);
+let proteus = new Body("Proteus", "#fff", 4.4e19, 210000);
+proteus.kepler(neptune, 117600000, 0.000, deg(0.0), deg(0.0), deg(0.0), deg(276.8), NOW, J2000_epoch);
 
+let hippocamp = new Body("Hippocamp", "#888", 2.2e16, 34800/2); hippocamp.is_tiny = true;
+let nereid = new Body("Nereid", "#fff", 2.4e19/*THIS IS PROBABLY WRONG*/, 357000/2);
+let halimede = new Body("Halimede", "#fff", 1.2e17, 62000/2); halimede.is_tiny = true;
+let psamathe = new Body("Psamathe", "#fff", 2.9e16, 40000/2); psamathe.is_tiny = true;
+let sao = new Body("Sao", "#fff", 3.4e16, 44000/2); sao.is_tiny = true;
+let laomedeia = new Body("Laomedeia", "#fff", 3.4e16, 42000/2); laomedeia.is_tiny = true;
+let neso = new Body("Neso", "#fff", 1.1e17, 60000/2); neso.is_tiny = true;
+
+//let pluto_barycenter = new Body("Pluto Barycenter", "#fff", 1.303e+22+as_kg(105.88), 0);
+//pluto_barycenter.kepler(sun, 39.482*au, 0.2488, deg(17.16), deg(113.834), deg(110.299), deg(14.53), NOW, J2000_epoch);
+let charon_mean_anomaly = 192.4;//56.9861; -- TODO
 let pluto = new Body("Pluto", "#f7a", 1.303e+22, 1188300);
 pluto.kepler(sun, 39.482*au, 0.2488, deg(17.16), deg(113.834), deg(110.299), deg(14.53), NOW, J2000_epoch);
-pluto.desc = "even though it doesn't make categorical sense, the iau should've left pluto as an honorary/anachronistic planet\npluto is not an errant asteroid >:(";
+/*pluto.pos = [...pluto_barycenter.pos];*/
+/*pluto.vel = [...pluto_barycenter.vel];*///pluto.kepler(pluto_barycenter, 2269889, 0.000, deg(112.783/*pluto's plane, all other plane-angles for pluto's satellites are identical in-sim because the tilt is negligable irl and because i'm lazy*/), deg(337.92), deg(223.0539/*also pluto-charon's plane*/), deg(charon_mean_anomaly), NOW, JD_epoch(2020, 0, 01, 12).getTime()/1000, as_kg(105.88));
+pluto.desc = "even though it doesn't make categorical sense, the iau should've left pluto as an honorary/anachronistic planet\npluto is not an errant asteroid";
+let charon = new Body("Charon", "#987", as_kg(105.88), 606000);
+charon.desc = "charon's name being related to greek mythology was actually a complete coincidence!";
+//charon.kepler(pluto, 19600000, 0.000, deg(112.783), deg(157.92), deg(223.0539), deg(charon_mean_anomaly), NOW, JD_epoch(2020, 0, 01, 12).getTime()/1000);
+//charon.parent = pluto;
+let nix = new Body("Nix", "#888", as_kg(0.0030), 18000);
+//nix.kepler(pluto, 48700000, 0.000, deg(112.783), deg(157.92), deg(223.0539), deg(charon_mean_anomaly-107.6+360), NOW, JD_epoch(2020, 0, 01, 12).getTime()/1000); // M is off from charon by -107.6
+//nix.parent = pluto;
+let hydra = new Body("Hydra", "#fff", as_kg(0.0032), 18500);
+hydra.desc = "not to be confused with Bucholz's Hydra.";
+//hydra.kepler(pluto, 64700000, 0.006, deg(112.783), deg(157.92/*157.92+143.4/*this is surely very fine to do, Obliq+w*/), deg(223.0539), deg(charon_mean_anomaly+138.2), NOW, JD_epoch(2020, 0, 01, 12).getTime()/1000); // M is off from charon by +138.2 (this one had a lot of cursed angle additions and it does not work out alright)
+//hydra.parent = pluto;
+let kerberos = new Body("Kerberos", "#ccc", as_kg(0.0011), 6000);
+//kerberos.kepler(pluto, 57800000, 0.000, deg(112.783), deg(157.92), deg(223.0539), deg(charon_mean_anomaly+111.1), NOW, JD_epoch(2020, 0, 01, 12).getTime()/1000); // M is off from charon by +111.1
+//kerberos.parent = pluto;
+let styx = new Body("Styx", "#868", as_kg(0.0005), 5200);
+//styx.kepler(pluto, 42400000, 0.000, deg(112.783), deg(157.92), deg(223.0539), deg(charon_mean_anomaly-111.5), NOW, JD_epoch(2020, 0, 01, 12).getTime()/1000); // M is off from charon by -11.5
+//pluto_barycenter.mass = 1e-9;
+//pluto.satellites = [...pluto_barycenter.satellites];
+//pluto_barycenter.parent = neutral_reference;
+//pluto.parent = sun;
+//delete bodies[bodies.indexOf(pluto_barycenter)];
+//bodies.splice(bodies.indexOf(pluto_barycenter),1);
+//delete pluto_barycenter;
+let pluto_barycenter = new Barycenter("Pluto Barycenter", "#fff", [pluto, charon]);
+pluto_barycenter.desc = "from this point of view, the orbits of pluto's moon system should appear circular.";
 
-let eris = new Body("Eris", "#577", 1.6*10**22, 1163000);
+let eris = new Body("Eris", "#cee", 1.6*10**22, 1163000);
 eris.kepler(sun, 67.864*au, 0.43607, deg(44.040), deg(151.639), deg(35.951), deg(205.989), NOW, JD_epoch(2020, 4, 31, 00).getTime()/1000);
 eris.desc = "the discovery of eris, and the subsequent measurement of its radius, led to the declassification of pluto as a planet.\n\n\"betrayer of your own kind, eris\"";
+let dysnomia = new Body("Dysnomia", "#577", 4e+20, 600000);
+dysnomia.kepler(eris, 37273000, 0.0062, deg(45.49), deg(145), deg(35.6), deg(200), NOW, J2000_epoch); // obtained (with generous averaging and guesswork) from jpl horizons
+dysnomia.desc = "the color of this object in-simulation reflects its true color! dysnomia is significantly darker than its parent body eris. it is unknown why it is so dark.";
 
 let sedna = new Body("Sedna", "#f07", 10**22, 1000000);
 sedna.kepler(sun, 506*au, 0.8496, deg(11.9307), deg(311.352), deg(144.248), deg(358.117), NOW, JD_epoch(2020, 4, 31, 00).getTime()/1000);
 sedna.desc = "not much is known about sedna's physical characteristics!\nif new info comes out about its mass/radius, it will definitely be updated posthaste.";
 
+let haumea = new Body("Haumea", "#edd", 4.006e21, 780000);
+haumea.desc = "NOTE : not pictured is haumea's prominent ring, which orbits within its roche limit, closer than the orbits of its moons.\n\nNOTE2 : haumea is not circular in real life, but is (likely) to be in the shape of a jacobian ellipsoid! goodness(!)";
+let hi_iaka = new Body("Hi'iaka", "#fff", 1.79e19, 160000);
+let namaka = new Body("Namaka", "#bbb", 1.79e18, 85000);
+
+let makemake = new Body("Makemake", "#ba8", 3.1e21, 715000);
+makemake.desc = "makemake is extremely cold in real life, averaging temperatures of 40 kelvin, though this isn't modelled in this simulation (yet).\nalso not shown here is makemake's moon \"MK2\", which does not yet have a well-determined orbit.\n\nmakemake is not a perfect sphere, but it's not as lopsided as haumea.";
+// let MK2 = ...
+
+let gonggong = new Body("Gonggong", "#b87", 1.75e21, 615000);
+let xiangliu = new Body("Xiangliu", "#fff", 1e17, 35000);
+xiangliu.desc = "current mass/radius are not known\ncurrent orbital characteristics are ambiguous, xiangliu could be orbiting prograde or retrograde. prograde orbital elements are shown in this simulation. also of note: orbital parameters used here are not given by JPL horizons, but instead were obtained from wikipedia (specifically, \"The mass and density of the dwarf planet (225088) 2007 OR10\" arXiv:1903.05439). it is at your own risk, should you choose to, to claim certainty over certain properties and/or attributes of xiangliu, as depicted in this simulation. all warranties void if looked at directly or indirectly. do not feed after midnight. do not, under any circumstances,-- (the rest of the description is illegible, and looks like it was chewed on by a nine-headed dragon)";
+
+let quaoar = new Body("Quaoar", "#997", 1.20e21, 543000);
+let weywot = new Body("Weywot", "#555", 1e17, 170000/2);
+weywot.desc = "the mass/color of weywot is not known, due to measurement difficulties";
+
+let orcus = new Body("Orcus", "#aaa", 5.47e20, 910000/2);
+orcus.desc = "the anti-pluto; it reaches perihelion when pluto reaches aphelion, and vice-versa. Orcus (and vanth) also have extremely cool names.";
+let vanth = new Body("Vanth", "#777", 8.7e19, 442500/2);
+
+let salacia = new Body("Salacia", "#557", 4.922e20, 866000/2);
+let actaea = new Body("Actaea", "#77a", 2.0e19, 284000/2);
+
+// TODO !!!!!!!!! : VARDA & ILMARE
+
+/*let vulcan = new Body("Vulcan", "#715", 0.0553*earth.mass, 0.383*earth.radius);
+vulcan.kepler(sun, 0.14*au, 0.0, deg(12.0), deg(0.0/*undefined; doesn't matter what it is because there's no periapsis*\/), deg(0.0), deg(-147), NOW, JD_epoch(2017, 7-1, 22, /*9*\/13, 37).getTime()/1000);*/
+
+//let alt_sun = new Body("Alt Sun", "#f00", M*8, 695700000*2, [10**16,0,0], [0,0,0]);
+//let alternia = new Body("Alternia", "#777", earth.mass*1.314, earth.radius*1.04);
+//alternia.kepler(alt_sun, 2*au*(1.68), 0.000005, deg(0.1025), deg(118.291), deg(33.222), deg(86.988888888), NOW, J2000_epoch);
+
 //let comet = new Body("Comet", "#fff", 10**6, 1000, [1000000000000,0,0], [0,-2500,0]);
 //comet.parent = sun;
+
+sun.pos=[-1270694216.1428452,-296144415.5082968,32068896.54133531]
+sun.vel=[6.282455729908794,-13.969055870149349,-0.02801434794595572];
+mercury.pos=[46227842750.65255,-37673385032.81131,-7379197579.694101]
+mercury.vel=[20519.6259688504,40534.88194807636,1432.081256023586];
+venus.pos=[105512544848.9186,-20045663118.679348,-6400556558.515402]
+venus.vel=[6204.996483299718,34264.94773227335,113.0227727169935];
+earth.pos=[138735978909.7274,-56864787822.24681,34427013.860497616]
+earth.vel=[10677.91069171206,27479.9471611549,-2.551347082992095];
+moon.pos=[139090282065.3389,-56919225025.635124,16332932.33853206]
+moon.vel=[10877.24513209234,28555.4058973788,76.8629611197369];
+mars.pos=[-232985625445.28268,-73313798805.61345,4185658780.8603377]
+mars.vel=[8192.218932577369,-21054.858987581258,-641.795087757643];
+phobos.pos=[-232977414987.1947,-73315447913.79471,4181294114.066027]
+phobos.vel=[8612.833036134776,-18975.55226472759,-697.0888373921955];
+deimos.pos=[-233007008966.43512,-73313069980.55235,4195272024.4012847]
+deimos.vel=[8114.627400200499,-22402.16521166797,-711.3493892486016];
+ceres.pos=[-305547195722.5334,-252906110830.6351,48091364094.341835]
+ceres.vel=[10512.32628900877,-15162.46059519081,-2414.578009444364];
+pallas.pos=[-350039838745.055,-4221697553.8171873,32774667329.5086]
+pallas.vel=[-2305.1712328774433,-17005.21852872073,11973.16485146967];
+juno.pos=[-133830873278.1447,291792053906.7199,-60899432662.503746]
+juno.vel=[-21300.21250010236,-4790.893420978804,1951.81513234678];
+vesta.pos=[167157973598.1071,343606283622.677,-30684620809.28537]
+vesta.vel=[-15651.302743455799,8196.540622294982,1662.12375527962];
+hygiea.pos=[357092276448.725,-288151719922.8681,19008868293.09182]
+hygiea.vel=[12102.49018496207,12116.73128098884,973.9939487753481];
+jupiter.pos=[611315115755.3113,419558296292.4924,-15417468207.17147]
+jupiter.vel=[-7540.033388847468,11389.50827384333,121.3897784441809];
+io.pos=[611354227893.3402,419137258308.7326,-15431699944.42746]
+io.vel=[9670.833584250755,12932.23561083482,431.7600008098781];
+europa.pos=[610700848117.8292,419283251800.8921,-15440839658.130741]
+europa.vel=[-1824.464076126364,-1050.842406310825,-181.35042422582];
+ganymede.pos=[611131636087.7411,418504896107.2121,-15460205059.87167]
+ganymede.vel=[3184.769518938782,9531.385367101055,200.6859261485516];
+callisto.pos=[612535531181.3499,420976525266.6671,-15356684972.04718]
+callisto.vel=[-13768.18292305383,16797.516690137272,208.0543098961121];
+amalthea.pos=[611227838884.6401,419717443562.65344,-15414150162.257639]
+amalthea.vel=[-30686.81112201815,-1380.824627297174,-737.5949238381332];
+thebe.pos=[611093929155.1329,419544259432.96893,-15417072476.49619]
+thebe.vel=[-5608.437523573778,-12466.97667786203,-720.9815802573258];
+adrastea.pos=[611276438118.467,419681217742.82654,-15413615079.27406]
+adrastea.vel=[-37546.27907854864,1960.158416887666,-654.3661279433991];
+metis.pos=[611195637626.1964,419603844973.2964,-15417595305.75946]
+metis.vel=[-18785.285213817828,-18116.9943055033,-1098.4257586709841];
+himalia.pos=[611357373496.6024,407686225434.3692,-20783939604.343998]
+himalia.vel=[-4802.8569547511925,11937.55640149604,-619.3017635487363];
+elara.pos=[620070466266.8412,417557291786.82086,-20439135973.94088]
+elara.vel=[-6469.3609443009545,14923.501215141121,-292.0887696674273];
+pasiphae.pos=[640529477577.4622,406413461214.94354,-899351122.4407554]
+pasiphae.vel=[-7587.7289081538775,10077.4507645107,327.5344921461851];
+sinope.pos=[625126302508.69,435937880355.3034,-16559876632.202269]
+sinope.vel=[-6326.03332007779,9267.631378550865,944.8608048254807];
+saturn.pos=[1308183687607.6619,-648849491584.4644,-40803115104.79243]
+saturn.vel=[3752.5807498822533,8635.946031630207,-300.1163800659397];
+mimas.pos=[1308155514324.77,-648681671345.4955,-40885729215.64251]
+mimas.vel=[-10108.68631074747,7196.836891113518,1404.8377538020088];
+enceladus.pos=[1308419312184.701,-648871782207.2957,-40814316745.60043]
+enceladus.vel=[4540.834623711832,19823.92799384436,-6240.182609635557];
+tethys.pos=[1307890591463.766,-648829197331.3136,-40779950002.40225]
+tethys.vel=[3486.8049208895873,-1350.32962076553,5087.585337620817];
+dione.pos=[1308552916702.076,-648923167819.2291,-40800449063.08043]
+dione.vel=[5520.348030680747,17331.13035781234,-5023.852144242639];
+rhea.pos=[1308475722976.591,-649247676279.3848,-40620067120.485565]
+rhea.vel=[10783.00277611452,12555.40440860159,-3005.643499974466];
+titan.pos=[1306988595287.791,-648468044563.7418,-40880749899.4433]
+titan.vel=[2133.680242830241,4110.852695044392,2194.819443335671];
+uranus.pos=[1890515936560.964,2246238347865.787,-16149385148.22817]
+uranus.vel=[-5260.176511822336,4067.8230608060558,83.22482064288295];
+ariel.pos=[1890329257460.652,2246278268364.028,-16155690923.97499]
+ariel.vel=[-5282.271155126691,4827.153681161097,5537.4469436127465];
+umbriel.pos=[1890713305277.637,2246219886418.025,-15971990141.50834]
+umbriel.vel=[-2278.280016959636,2945.288791495769,-3326.49284532623];
+titania.pos=[1890846502921.8699,2246129324599.6953,-16410928049.969429]
+titania.vel=[-7511.325869426121,4159.9960215636365,-2790.610995484088];
+oberon.pos=[1889950429509.1292,2246347435536.5137,-16248298732.51891]
+oberon.vel=[-5693.236944377172,4598.809269894233,3154.174091316248];
+miranda.pos=[1890395225366.178,2246259664858.793,-16191783947.36052]
+miranda.vel=[-7108.224415796676,5859.109800768038,6256.233308529292];
+puck.pos=[1890582227544.717,2246231641759.955,-16094860843.367458];
+puck.vel=[-302.5781385354822,2150.250628155242,-6175.3461077108805];
+neptune.pos=[4459826567076.342,-325855061554.9774,-96070601179.85893]
+neptune.vel=[360.12044797921124,5453.189261616362,-120.4753293476104];
+triton.pos=[4459572125219.366,-326101954161.63403,-96086492985.14792]
+triton.vel=[-1680.380189888579,7343.086780884073,3274.6247793360303];
+naiad.pos=[4459862849098.54,-325874897011.2951,-96095941340.86108]
+naiad.vel=[6833.721660812099,15317.652136623281,1521.67770099375];
+thalassa.pos=[4459807530039.289,-325814774322.6964,-96048489299.4332]
+thalassa.vel=[-9581.318286233938,-354.54269814286437,1916.532612969494];
+despina.pos=[4459779980639.459,-325846145101.24,-96048509898.76418]
+despina.vel=[-2903.990017399888,-5205.699060970472,-2580.486588073277];
+galatea.pos=[4459799910719.462,-325807028924.4728,-96042685746.89365]
+galatea.vel=[-8332.23275605008,-252.74519203139562,1410.693479685238];
+larissa.pos=[4459794508574.138,-325920773966.1865,-96080770984.31613]
+larissa.vel=[8308.28508090947,2230.994443797054,-4515.810073022161];
+proteus.pos=[4459784310879.239,-325759103944.76227,-96017879466.68399]
+proteus.vel=[-6184.0910194598,1807.412705237331,1276.903055221026];
+pluto.pos=[2521928718418.644,-4554485398810.665,-242135763897.2182]
+pluto.vel=[4885.752366055233,1425.833447785134,-1584.247226259178];
+charon.pos=[2521915986895.487,-4554490530663.957,-242121777479.706]
+charon.vel=[4962.333770101274,1590.177600281832,-1454.242244494588];
+nix.pos=[2521891560504.779,-4554513977355.928,-242116719428.483]
+nix.vel=[4895.249612425514,1519.685812060023,-1450.190529279497];
+hydra.pos=[2521890600521.831,-4554536567863.59,-242152227976.4779]
+hydra.vel=[4836.019004632458,1447.781454319172,-1462.1418699403962];
+kerberos.pos=[2521965210453.646,-4554442274628.406,-242131327147.95758]
+kerberos.vel=[4935.754767690099,1414.809803897056,-1690.166752054206];
+styx.pos=[2521921473055.503,-4554468712537.021,-242095939263.3479]
+styx.vel=[5004.55180579644,1547.086967516203,-1595.856624701887];
+eris.pos=[12806013113502.74,5792700134223.386,-2737188159966.957]
+eris.vel=[-773.0543449417496,1504.534632801066,1613.937717364093];
+dysnomia.pos=[12806009897083.41,5792680505974.982,-2737156814445.9272]
+dysnomia.vel=[-632.8564652439248,1414.005258036258,1570.693543746313];
+sedna.pos=[6208760039289.671,10552328040052.67,-2576102334574.7754]
+sedna.vel=[-4263.518223244178,1094.586681391802,336.27128573207733];
+
+lysithea.pos=[600327003365.4358,422756179698.8009,-15899581726.86496];
+lysithea.vel=[-8682.826044961643,8609.450168748881,-1379.440566559423];
+carme.pos=[618839159852.9412,391576412036.0433,-22286504302.236797];
+carme.vel=[-9125.776585718406,10866.69270493777,297.9135243222339];
+ananke.pos=[597421910830.7047,439960392306.1279,-21813068946.296722];
+ananke.vel=[-6288.615816330464,12480.33519799764,1120.074017100201];
+leda.pos=[620911757002.9001,412573997954.15564,-10885893103.703169];
+leda.vel=[-5539.636831273337,13320.00152136064,-770.0209129340117];
+callirrhoe.pos=[624182872771.2068,440639542355.7032,-24304547264.27349];
+callirrhoe.vel=[-6461.316720962269,9831.872226471289,1112.922219412178];
+themisto.pos=[603599696160.5293,416566303361.8656,-13692454444.76181];
+themisto.vel=[-6914.318845567032,8933.797015457207,2663.848927171422];
+hyperion.pos=[1307057803395.973,-647749552268.6216,-41248210968.345215];
+hyperion.vel=[612.3899732548543,5813.885855422047,1412.834949398055];
+iapetus.pos=[1304848902598.1729,-650028150236.4612,-39858100018.93103];
+iapetus.vel=[4925.28458995115,5718.466772074294,138.007422849344];
+phoebe.pos=[1319123437264.991,-653932838900.4092,-42172431864.49939];
+phoebe.vel=[2735.581426426065,7126.505888061012,-173.9436483718997];
+helene.pos=[1308458277422.09,-648634100564.766,-40941116300.27416];
+helene.vel=[-3027.675855513449,15489.1006080768,-3252.714812791277];
+telesto.pos=[1308032470143.544,-649065651953.2104,-40671660489.07885];
+telesto.vel=[13420.10607913026,2972.43500237072,1503.420777542619];
+calypso.pos=[1308039689233.315,-648618977871.7789,-40917187152.799484];
+calypso.vel=[-6102.223944360917,4202.038604469799,3166.151458227424];
+methone.pos=[1308006428939.493,-648773111480.4958,-40825989437.50894];
+methone.vel=[-1851.260545206804,-2478.266322527395,6066.748916371187];
+polydeuces.pos=[1308130140669.17,-649177944329.1112,-40624627984.86686];
+polydeuces.vel=[13606.82364563428,6815.589560911798,-288.8644473785065];
+janus.pos=[1308248576867.527,-648731853839.1794,-40871006196.90299];
+janus.vel=[-10581.430815786349,15318.00044986743,-2464.854511147899];
+epimetheus.pos=[1308210152465.2878,-648983245839.3733,-40735616061.931404];
+epimetheus.vel=[19269.39183625483,10378.49387687029,-2606.02966764373];
+atlas.pos=[1308181571460.423,-648971131658.736,-40739153748.144];
+atlas.vel=[20348.40519300652,7736.752634820041,-1437.686052689437];
+prometheus.pos=[1308232332367.387,-648735506060.185,-40867547302.12672];
+prometheus.vel=[-11670.51880452528,14332.666143235461,-1789.1448769350711];
+pandora.pos=[1308215370651.243,-648973462452.2227,-40741087477.82132];
+pandora.vel=[19630.88477365377,11199.94401549489,-3172.624964043012];
+cordelia.pos=[1890504407287.551,2246247399254.488,-16101745388.65328];
+cordelia.vel=[4989.245715572759,2187.610935070889,2943.0245103033812];
+ophelia.pos=[1890481002506.69,2246251140571.729,-16111293970.76964];
+ophelia.vel=[2367.096622799078,3405.0462454796852,7289.226831833611];
+bianca.pos=[1890458306512.187,2246251270857.37,-16145996442.02721];
+bianca.vel=[-4420.19655346315,5256.131525610017,9874.38992143124];
+cressida.pos=[1890556652074.934,2246235859730.352,-16102844484.348179];
+cressida.vel=[1742.5917976550381,1667.236311275247,-6163.079638153768];
+desdemona.pos=[1890576733517.7131,2246226260920.421,-16139864172.94014];
+desdemona.vel=[-4102.10263161532,2493.026559003002,-9339.35061088175];
+juliet.pos=[1890530337619.136,2246243780810.7817,-16086840315.56344];
+juliet.vel=[3774.569609667346,1833.294118380225,-1798.625767155339];
+portia.pos=[1890571632615.021,2246230865837.254,-16114387013.74781];
+portia.vel=[-610.5998842172431,1959.1595551860921,-7766.34739732748];
+rosalind.pos=[1890584312172.928,2246223245103.251,-16149271057.42502];
+rosalind.vel=[-5514.973249043388,2866.767477282682,-8940.255318031725];
+belinda.pos=[1890573012666.637,2246232513583.138,-16100556044.16931];
+belinda.vel=[158.7172961857455,1967.167333344253,-6496.843790149843];
+perdita.pos=[1890468355182.131,2246256545472.4424,-16092630771.878];
+perdita.vel=[1305.606786372098,3418.334018860813,5803.128083502447];
+mab.pos=[1890557354463.732,2246217083900.753,-16235026204.980251];
+mab.vel=[-12049.05743923406,5060.455681991952,-3456.663264594627];
+cupid.pos=[1890506206209.689,2246250617795.0767,-16076544904.94263];
+cupid.vel=[3288.335547678571,2373.358062104216,1479.905283815905];
+caliban.pos=[1884553123698.8,2244255526684.956,-18226919839.20157];
+caliban.vel=[-5664.787666863588,4754.323246145693,638.0686882256337];
+sycorax.pos=[1896848958766.0452,2262723133769.7803,-17731041736.642242];
+sycorax.vel=[-4892.237022477963,3965.310299086628,-101.37616391952051];
+prospero.pos=[1886621605050.54,2255397485914.9062,-19774191760.497208];
+prospero.vel=[-4584.418988400165,4340.750296204236,-370.3487778485333];
+setebos.pos=[1893283123736.1838,2271306445967.582,-13730421117.823719];
+setebos.vel=[-4949.993488384446,4129.511010022126,-84.24798282546165];
+stephano.pos=[1899358243918.5159,2245136254541.624,-18210482289.042233];
+stephano.vel=[-5403.490346066717,3490.422919517123,-346.0031278380218];
+trinculo.pos=[1897051055940.0261,2248132368633.8857,-16250045225.87919];
+trinculo.vel=[-4938.9926189622765,3140.087915180144,-156.86120206691962];
+francisco.pos=[1886415464007.507,2246342197581.084,-18671800779.20663];
+francisco.vel=[-5363.489601120722,5083.836296779242,175.4922165556942];
+margaret.pos=[1882069346154.44,2234391100559.715,-25904646174.91627];
+margaret.vel=[-5236.4258841057635,3737.556634265094,-306.66477315247647];
+ferdinand.pos=[1905579467763.134,2236302427454.823,-19894752240.995293];
+ferdinand.vel=[-5409.989635829277,3505.615927907588,28.30787930380696];
+hippocamp.pos=[4459830671306.645,-325755756205.0996,-96036602781.48328];
+hippocamp.vel=[-7136.159633455161,4773.283727987706,2742.452991349054];
+nereid.pos=[4460711702534.311,-316585321774.9082,-95398179275.34761];
+nereid.vel=[-92.59028881983811,5317.611006449633,-155.68699871793228];
+halimede.pos=[4463319674332.02,-331703043594.5514,-112250585990.3911];
+halimede.vel=[-77.01775418003271,5049.8114741294285,-233.4561500194579];
+psamathe.pos=[4495705624154.997,-319100188210.303,-138523573511.68982];
+psamathe.vel=[552.8448341626748,5217.855089749839,-32.937464287492006];
+sao.pos=[4454529471468.829,-313808102528.96796,-82033035693.9599];
+sao.vel=[-65.11374596227687,5028.275059045825,83.71103390000556];
+laomedeia.pos=[4464178299908.939,-343471989747.9893,-107958003098.2866];
+laomedeia.vel=[863.202804909596,5484.9284870541605,-410.640951487613];
+neso.pos=[4402342435041.471,-288282706496.7187,-145350989685.5559];
+neso.vel=[415.7914889633427,5607.63824282989,-129.7925743446318];
+
+haumea.pos=[-5711360763954.885,-3305876781279.943,3537225333663.963];
+haumea.vel=[2272.4429627754794,-3114.470679343202,-150.0195081783622];
+hi_iaka.pos=[-5711316679853.829,-3305861966506.661,3537216587287.621];
+hi_iaka.vel=[2279.4737172458317,-3160.538396441555,-210.6935929919447];
+namaka.pos=[-5711357145543.987,-3305854430159.072,3537244213735.3613];
+namaka.vel=[2343.278182260869,-3096.2592116653973,-197.27557274225572];
+makemake.pos=[-6899528087217.196,-1080625548971.8411,3650268247219.677];
+makemake.vel=[199.61802423949328,-3731.7946067197927,-487.85552458287515];
+gonggong.pos=[12069406856249.451,-5683397437480.783,-285187687843.1561];
+gonggong.vel=[1829.791977677774,1383.6576851096281,1187.491183157255];
+quaoar.pos=[833867856927.9874,-6271770917427.957,887920119193.6831];
+quaoar.vel=[4530.234155176005,760.3387510719896,-6.919475137442566];
+weywot.pos=[833859901278.2329,-6271778007093.411,887924954975.0767];
+weywot.vel=[4450.038256828248,813.5054803609694,-10.580326242881581];
+orcus.pos=[-6506473712770.778,1811510998386.304,-2457475643759.822];
+orcus.vel=[-841.513502211039,-3684.707106394026,-281.4770298380285];
+vanth.pos=[-6506468623103.708,1811517315988.853,-2457471780134.71];
+vanth.vel=[-860.1366099555886,-3707.3665497633874,-219.7388503096545];
+salacia.pos=[6110961010283.721,900469049238.6718,2739975935170.381];
+salacia.vel=[-346.3107557220193,4247.711615601571,178.905541038505];
+actaea.pos=[6110958290291.976,900464168243.0991,2739977274784.7593];
+actaea.vel=[-283.5059935635271,4208.162621056543,164.81145341752048];
+
+xiangliu.kepler(gonggong, 24021000, 0.2908, deg(83.08), deg(109.05-31.99), deg(31.99), deg(205.57), NOW, JD_epoch(2014, 11, 8, 12).getTime()/1000); // i'm uncertain on the epoch because i'm extremely silly
+
+let orbiter_1 = new Body("Orbiter I", "#f0f", 12000, 20);
+orbiter_1.is_tiny = true;
+orbiter_1.kepler(earth, 7371000, 0.001, deg(0.3), deg(98.431), deg(233.485), deg(12.943), NOW, NOW);
+orbiter_1.desc = "don't mind this please. i eventually plan to turn this into a controllable spaceship, for the purpose of making the solar system explorable and giving a challenge to those who dare to venture to the most distant bodies.\n\n\ni have not implemented this yet!!!!!!!!:)!!!!!!!!!!";
+
+for (let i = 0; i < bodies.length; i++) {
+	let least_massive_candidate = sun;
+	bodies[i].satellites = [];
+	for (let j = 0; j < bodies.length; j++) {
+		bodies[i].parent = bodies[j];
+		let elements = bodies[i].get_osculating_elements();
+		if (elements[1] > 0 && elements[1] < 1 && elements[0] > 0 && bodies[j].mass < least_massive_candidate.mass) {
+			//console.log(bodies[i].name+": "+elements[1]+" | "+bodies[j].name);
+			least_massive_candidate = bodies[j];
+		}
+	}
+	bodies[i].parent = least_massive_candidate;
+	bodies[i].parent.satellites.push(bodies[i]);
+}
+sun.parent = neutral_reference;
+pluto_barycenter.parent = pluto;
 
 let zoom = 1e-9;
 function zoom_screen(event) {
@@ -668,9 +1244,10 @@ canvas.addEventListener('mousedown', function (e) {
 	//if (focused_body != hovered_body) 
 	if (hovered_body != neutral_reference) {
 		pan = [0,0]; // if we're not looking at nothing (i.e., looking at a planet) then focus the camera at the center of the object of interest
+		if (focused_body == hovered_body) zoom = 10/focused_body.radius;
 	} else {
 		let old_pan = [...pan];
-		pan = vec_mul(focused_body.pos, -zoom); // if we suddenly ARE looking at nothing, then rearrange the camera to at least be where we were when we were where we where. this will not change the effective panning, but the trails should still be cleared; the focused body (or reference frame, whatevevr) has changed.
+		pan = vec_mul([focused_body.pos[0], focused_body.pos[1]*Math.cos(yz_rot)+focused_body.pos[2]*Math.sin(yz_rot)], -zoom); // if we suddenly ARE looking at nothing, then rearrange the camera to at least be where we were when we were where we where. this will not change the effective panning, but the trails should still be cleared; the focused body (or reference frame, whatevevr) has changed.
 		pan = vec_add(old_pan, pan); // add the offset so that the camera is *never* jerked around without prior approval.
 	}
 	camera_clear_for_trails(); // if you're changing perspectives without changing the pan through the wasd or arrows, the camera needs to be cleared.
@@ -695,6 +1272,27 @@ document.getElementById("toggle-motion").addEventListener("click", (event)=>{
 		speed = 100;
 	}
 });
+document.getElementById("create-body-button").addEventListener("click", (event)=>{
+	let name = document.getElementById("create-body-name").value;
+	let colour = document.getElementById("create-body-color").value;
+	
+	let mass = document.getElementById("create-body-mass").value;
+	let radius = document.getElementById("create-body-radius").value;
+	
+	let epoch = document.getElementById("create-body-epoch").value;
+	
+	let sma = document.getElementById("create-body-sma").value;
+	let ecc = document.getElementById("create-body-ecc").value;
+	let inc = document.getElementById("create-body-inc").value;
+	
+	let omega_arg_per = document.getElementById("create-body-arg-per").value;
+	let omega_lon_asc = document.getElementById("create-body-lon-asc").value;
+	let mean_anomaly = document.getElementById("create-body-mean-anomaly").value;
+	
+	let body = new Body(name, colour, Number(mass), Number(radius));
+	body.kepler(focused_body, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, NOW, epoch*86400);
+	focused_body.satellites.push(body);
+});
 let pan = [0,0];
 let mouse_pos = [0,0];
 let yz_rot = 0;
@@ -705,8 +1303,8 @@ function update_mouse_pos(event) {
 	mouse_pos[0] = event.layerX - 1; // border of 1px
 	mouse_pos[1] = event.layerY - 1;
 }
-let step = 1/60/100;//1e-4;
-let speed = 100; // steps per loop
+let step = 1/60/20;//1e-4;
+let speed = 20;//100; // steps per loop
 let time = 0; // in-simulation
 let tick = 0; // no. of calls to loop
 let trails = false;
@@ -721,7 +1319,10 @@ let GUI_desc_focused = false;
 function draw_body(body, be_modular=false) {
 	let onscreen_x = pan[0] + canvas.width/2 + (body.pos[0]-focused_body.pos[0])*zoom;
 	let onscreen_y = pan[1] + canvas.height/2 + (body.pos[1]-focused_body.pos[1])*zoom*Math.cos(yz_rot) + (body.pos[2]-focused_body.pos[2])*zoom*Math.sin(yz_rot);
+	if (onscreen_x + zoom*body.radius < 0 || onscreen_x - zoom*body.radius > 800 ||
+		onscreen_y + zoom*body.radius < 0 || onscreen_y - zoom*body.radius > 600) return "STOP"; // if it's not gonna be there then don't bother
 	let distance_to_parent = ((body.pos[0]-body.parent.pos[0])**2 + (body.pos[1]-body.parent.pos[1])**2 + (body.pos[2]-body.parent.pos[2])**2);
+	if (distance_to_parent*zoom*zoom < 1 && body.parent != neutral_reference) return "STOP";
 	if (((mouse_pos[0]-onscreen_x)**2 + (mouse_pos[1]-onscreen_y)**2) < (zoom*body.radius + 7)**2 &&
 		(body.parent == neutral_reference || distance_to_parent*zoom*zoom > 256)) { // see the similar condition in draw_body_with_label
 		hovered_body = body;
@@ -743,10 +1344,11 @@ function draw_body(body, be_modular=false) {
 }
 function draw_body_with_label(body) {
 	let info = draw_body(body, be_modular=true); // >>:(
+	if (info == "STOP") return; // this is hackneyed i'm sorry
 	let onscreen_x = info[0];
 	let onscreen_y = info[1];
 	let scale = info[2];
-	let distance_to_parent = info[3]
+	let distance_to_parent = info[3];
 	if (labels) {
 		if (body.parent == neutral_reference || distance_to_parent*zoom*zoom > 256) { // if the distance times the zoom is greater than 16, then the square distance times the zoom squared must be greater than 16**2, which is 256. if the parent is neutral, then no distance can be ascribed, so the object must always be labelled.
 			if (trails) {
@@ -790,6 +1392,7 @@ function formatted_time(time) {
 	return time_string;
 }
 function formatted_dist(dist) {
+	if (dist < 1000) return dist + 'm'; // injection >:]
 	let distance = dist; // paranoia
 	if (distance > au*.1) {distance /= au; distance = (Math.round(distance*10**8)/10**8) + 'au';}
 	else {distance /= 1000; distance = Math.round(distance) + 'km';}
@@ -853,9 +1456,11 @@ function loop() {
 	labels = document.getElementById("labels-setting").checked;
 	
 	let yz_rot_setting_value = document.getElementById("yz-rot-setting").value/100*Math.PI*2;
-	if (yz_rot_setting_value != yz_rot) {
-		yz_rot = yz_rot_setting_value;
-		document.getElementById("yz-rot-indicator").innerHTML = "&emsp;"+(yz_rot+'').substr(0,4)+" rad";
+	let yz_fine_setting_value = (document.getElementById("yz-fine-setting").value-50)/10000*Math.PI*2;
+	if (yz_rot_setting_value + yz_fine_setting_value != yz_rot) {
+		yz_rot = yz_rot_setting_value + yz_fine_setting_value;
+		document.getElementById("yz-rot-indicator").innerHTML = "&emsp;"+(yz_rot_setting_value+'').substr(0,4)+" rad";
+		document.getElementById("yz-fine-indicator").innerHTML = "&emsp;"+(yz_fine_setting_value+'').substr(0,6)+" rad";
 		camera_clear_for_trails();
 	}
 	
@@ -882,39 +1487,51 @@ function loop() {
 	
 		for (let i = 0; i < bodies.length; i++) {
 			let body = bodies[i];
-			for (let j = 0; j < bodies.length; j++) {
-				if (bodies[j] == body) {/* do nothing for this loop please thank you */
-				} else {
-					let other = bodies[j];
-					let vec = vec_sub(other.pos, body.pos);
-					let r = (vec[0]**2 + vec[1]**2 + vec[2]**2)**.5;
-					vec = vec_div(vec, r); // normalize?
-					let F = G * (body.mass * other.mass) / r**2; // G*(m1m2/r^2)
-					vec = vec_mul(vec, F*step/body.mass);
-					body.vel = vec_add(body.vel, vec);
+			if (!body.is_barycenter) {
+				for (let j = 0; j < bodies.length; j++) {
+					if (bodies[j] == body) {/* do nothing for this loop please thank you */
+					} else {
+						let other = bodies[j];
+						let vec = vec_sub(other.pos, body.pos);
+						let r = (vec[0]**2 + vec[1]**2 + vec[2]**2)**.5;
+						vec = vec_div(vec, r); // normalize?
+						let F = G * (body.mass * other.mass) / r**2; // G*(m1m2/r^2)
+						vec = vec_mul(vec, F*step/body.mass);
+						body.vel = vec_add(body.vel, vec);
+					}
 				}
 			}
+		}
+		
+		for (let i = 0; i < barycenters.length; i++) {
+			barycenters[i].position_barycenter();
 		}
 		
 		for (let i = 0; i < bodies.length; i++) {
 			let body = bodies[i];
 			body.pos = vec_add(body.pos, vec_mul(body.vel, step));
-			if (trails && S % 15 == 0) draw_body(bodies[i]);
+			//if (trails && S % 20 == 0 && S != 40) draw_body(bodies[i]);
 		}
 		
-		/*for (let i = 0; i < bodies.length; i++) { // bluh (this is irreducible because if you merged it with the pos-updating loop, objects would be drawn where they technically never were in relation to each other. same goes for pos to vel-updating; essentially these all have to be buffers of each other, which is terrible.)
-			if (trails && S % 5 == 0) draw_body(bodies[i]);
+		/*for (let i = 0; i < barycenters.length; i++) {
+			draw_body(barycenters[i]);
 		}*/
 		
+		for (let i = 0; i < bodies.length; i++) { // bluh (this is irreducible because if you merged it with the pos-updating loop, objects would be drawn where they technically never were in relation to each other. same goes for pos to vel-updating; essentially these all have to be buffers of each other, which is terrible.)
+			if (trails && S % (speed/2/*please make sure speed is divisible by this!*/) == 0) draw_body(bodies[i]);
+		}
 	}
 	
+	/* * * Dwawing, et time * * */
 	time += step * speed; // keep in step!
 	tick++;
 	draw(); // listen i know this distinction is silly but i want the other stuff to work even if nothing is being drawn to the canvas xdd
 	let current_moment = new Date(Date.now());
 	let simulation_moment = new Date(1000*(NOW+time));
-	let current_epoch = 2451545 + (simulation_moment.getTime()/1000 - J2000_epoch)/86400;
+	let current_epoch = 2451545 + (NOW+time - J2000_epoch)/86400;
 	document.getElementById("simulation-time-indicator").innerHTML = simulation_moment;//.toUTCString();
+	document.getElementById("zoom-indicator").innerHTML = zoom;
+	document.getElementById("bodycount").innerHTML = bodies.length + " bodies.";
 	if (GUI_last_focused_body != focused_body) { // aka, on hovered_body change do:
 		GUI_last_focused_body = focused_body;
 		if (focused_body == neutral_reference) {
@@ -931,15 +1548,19 @@ function loop() {
 	if (focused_body != neutral_reference) {
 		let body_info = focused_body.get_osculating_elements();
 		for (let i = 0; i < body_info.length; i++) {body_info[i]*=10**8; body_info[i] = Math.round(body_info[i]); body_info[i]/=10**8;}
-		let sma = body_info[0];
+		/*let sma = body_info[0];
 		if (sma > au*.1) {sma /= au; sma = (Math.round(sma*10**8)/10**8) + 'au';}
-		else {sma /= 1000; sma = Math.round(sma) + 'km';}
+		else {sma /= 1000; sma = Math.round(sma) + 'km';}*/
 		let speed = Math.sqrt(focused_body.vel[0]**2 + focused_body.vel[1]**2 + focused_body.vel[2]**2);
 		let relative_speed = Math.sqrt((focused_body.vel[0]-focused_body.parent.vel[0])**2 + (focused_body.vel[1]-focused_body.parent.vel[1])**2 + (focused_body.vel[2]-focused_body.parent.vel[2])**2);
+		let dist_to_parent = ((focused_body.pos[0]-focused_body.parent.pos[0])**2 + (focused_body.pos[1]-focused_body.parent.pos[1])**2 + (focused_body.pos[2]-focused_body.parent.pos[2])**2)**.5;
+		let dist_to_parent_surface = dist_to_parent - focused_body.parent.radius;
 		
-		document.getElementById("info-body-radius").innerHTML = Math.floor(focused_body.radius/1000) + "km";
+		document.getElementById("info-body-radius").innerHTML = formatted_dist(focused_body.radius);
 		document.getElementById("info-body-mass").innerHTML = formatted_mass(focused_body.mass);
+		document.getElementById("info-body-surface-gravity").innerHTML = ((G*focused_body.mass)/(focused_body.radius**2))+'m/s<sup>2</sup>';
 		document.getElementById("info-body-color").innerHTML = focused_body.color;
+		document.getElementById("info-body-satellites").innerHTML = focused_body.satellites.length;
 		
 		document.getElementById("info-body-name").innerHTML = focused_body.name;
 		document.getElementById("info-body-parent").innerHTML = focused_body.parent.name;
@@ -950,11 +1571,17 @@ function loop() {
 		document.getElementById("info-body-arg-per").innerHTML = body_info[3] + "&deg;";
 		document.getElementById("info-body-lon-asc").innerHTML = body_info[4] + "&deg;";
 		document.getElementById("info-body-mean-anomaly").innerHTML = body_info[5] + "&deg;";
+		
 		document.getElementById("info-body-true-anomaly").innerHTML = body_info[6] + "&deg;";
 		document.getElementById("info-body-orbital-period").innerHTML = formatted_time(body_info[7]);
 		document.getElementById("info-body-speed").innerHTML = Math.round(speed*1000)/1000 + "m/s";
 		document.getElementById("info-body-relative-speed").innerHTML = Math.round(relative_speed*1000)/1000 + "m/s";
-		document.getElementById("info-body-distance-to-parent").innerHTML = formatted_dist(((focused_body.pos[0]-focused_body.parent.pos[0])**2 + (focused_body.pos[1]-focused_body.parent.pos[1])**2 + (focused_body.pos[2]-focused_body.parent.pos[2])**2)**.5);
+		document.getElementById("info-body-distance-to-parent").innerHTML = formatted_dist(dist_to_parent) + " | " + formatted_dist(dist_to_parent_surface);
+		
+		document.getElementById("info-body-pericenter").innerHTML = formatted_dist(body_info[8]);
+		document.getElementById("info-body-apocenter").innerHTML = formatted_dist(body_info[9]);
+		
+		document.getElementById("create-body-currently-focused-body").innerHTML = focused_body.name;
 	}
 	
 	/*if (!paused)*/ window.requestAnimationFrame(loop);
