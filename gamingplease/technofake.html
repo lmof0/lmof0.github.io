@@ -1,0 +1,286 @@
+<html>
+<head>
+<title>a website: tech-nofake</title>
+<!--
+some plans, not meant to be complete:
+cyborg parts let you see detailed, accurate, precise info
+ethanol makes the text hilarious (aluminum -> aluminium, pick up a rock -> rink plock, etc.)
+etc
+
+wawa
+
+- tabbed materials (primitive, ingots, etc.)
+- planet map in canvas
+- work out where machines will live
+-->
+<style>
+button {
+	display: inline;
+	margin-top: 4px;
+	border: outset;
+	cursor: pointer;
+}
+.progress {
+	height: 0.5em;
+	width: 0em;
+	background: #0a0;
+	display: inline-block;
+	margin-left: 0.5em;
+}
+.display {
+	margin-top: 2px;
+}
+.hidden {
+	display: none;
+}
+.machine {
+	width: 16em;
+	height: 12em;
+	border: #000 1px solid;
+	display: block;
+	margin: 1em;
+	padding: 0.25em;
+}
+</style>
+</head>
+<body>
+<div id="materials">
+<div class="display hidden" id="display_base">you have <span id="amount_base" style="display:inline;"></span> <span id="name_base">materials</span>.</div>
+<!--<div class="display">you have <span id="rocks_display" style="display:inline;"></span> rocks.</div>-->
+</div>
+
+<!--<div id="resources"> maybe make this the exploration/finding part? foraging? planets?-->
+<br>
+<div id="actions">
+	<div class="hidden" id="action_base"><button id="button_base" onclick="">do action</button><div id="progress_base" class="progress" style="width:0em;"></div></div>
+	<!--<button id="button_0" onclick="rock_action.start()">pick up a rock</button><div id="progress_0" class="progress" style="width:0em;"></div><br>
+	<button id="button_1" onclick="stick_action.start()">forage for sticks</button>-->
+</div>
+<div id="machines">
+	<div class="machine" id="machine_base">
+		<div id="machine_base_title" style="font-weight:bold;/*padding-top:0.25em;*/text-align:center;">Furnace</div>
+		<div id="machine_base_recipe">recipe: furnace-made cassiterite</div>
+		<div id="machine_base_inputs">inputs: 1 cassiterite</div>
+		<div id="machine_base_outputs">outputs: 1 tin chunk</div>
+		<div id="machine_base_progress_bg" style="width:10em;background-color:black;height:0.5em;margin-top:2px;">
+			<div id="machine_base_progress" class="progress" style="width:6em;margin-left:0em;"></div>
+		</div>
+		<div id="machine_base_fuel_type">fuel type: furnace coal</div>
+		<div id="machine_base_fuel">fuel: 1 coal / 60s</div>
+		<div id="machine_base_fuel_byproduct">byproduct: 1 ashes / 60s</div>
+		<div id="machine_base_fuel_progress_bg" style="width:10em;background-color:black;height:0.5em;margin-top:2px;">
+			<div id="machine_base_fuel_progress" class="progress" style="width:6em;margin-left:0em;background-color:#b00;"></div>
+		</div>
+		<div id="machine_base_temp" style="background-color:#000;color:#fff;width:fit-content;display:block;margin-top:2px;">Temp: Cool</div>
+	</div>
+</div>
+</body>
+<script>
+let materials = [];
+class Material {
+	constructor(name, plural) {
+		this.id = materials.length;
+		this.name = name;
+		this.plural = plural;
+		if (this.plural == '') this.plural = this.name;
+		this.amount = 0;
+		this.total_amount = 0;
+		
+		let display_element = document.getElementById("display_base").cloneNode(2);
+		display_element.setAttribute("id", "display_"+this.id);
+		display_element.children['amount_base'].setAttribute("id", "amount_"+this.id);
+		display_element.children['name_base'].innerHTML = this.plural.toLocaleLowerCase();
+		display_element.children['name_base'].setAttribute("id", "name_"+this.id);
+		document.getElementById("materials").appendChild(display_element);
+		this.hide();
+		
+		materials.push(this);
+	}
+	hide() {
+		document.getElementById("display_"+this.id).classList.add("hidden");
+	}
+	unhide() {
+		document.getElementById("display_"+this.id).classList.remove("hidden");
+	}
+	collect(qty) {
+		if (this.total_amount == 0 && qty > 0) this.unhide();
+		this.amount += qty;
+		this.total_amount += qty;
+	}
+}
+// class metal - dust, chunks, bars, plates, rods, gears, bolts, turbines, wires, springs, etc.
+class Metal extends Material {
+	constructor(name, plural) {
+		super(name, plural);
+	}
+}
+// class ore/raw - dust, ore, crushed ore, crystal, lens, etc.
+class Mineral extends Material {
+	constructor(name, plural) {
+		super(name, plural);
+	}
+}
+let actions = [];
+class Action {
+	constructor(name, epoch, func) {
+		this.id = actions.length;
+		this.name = name;
+		this.epoch = epoch;
+		this.func = func;
+		
+		this.progress = 0;
+		this.running = false;
+		
+		let action_element = document.getElementById("action_base").cloneNode(2);
+		action_element.setAttribute("id", "action_"+this.id);
+		action_element.classList.remove("hidden");
+		action_element.children['button_base'].addEventListener("click", ()=>{this.start()});
+		action_element.children['button_base'].innerHTML = this.name;
+		action_element.children['button_base'].setAttribute("id", "button_"+this.id);
+		action_element.children['progress_base'].setAttribute("id", "progress_"+this.id);
+		document.getElementById("actions").appendChild(action_element);
+		
+		actions.push(this);
+	}
+	start() {
+		if (!this.running) this.running = true;
+	}
+	tick(dt) {
+		if (this.running) {
+			this.progress += dt;
+			if (this.progress >= this.epoch) {
+				this.progress = 0; // intentionally not doing mod here but may change that
+				this.running = false;
+				this.func();
+			}
+			document.getElementById('progress_'+this.id).setAttribute("style", "width:"+(5*this.progress/this.epoch)+"em");
+		}
+	}
+}
+let machines = [];
+class Machine {
+	constructor(name, recipes, input_size, output_size) {
+		this.id = machines.length;
+		this.name = name;
+		this.recipes = recipes;
+		this.input_size = input_size;
+		this.output_size = output_size;
+		
+		machines.push(this);
+	}
+	make_graphic() {
+		
+	}
+}
+const furnace_recipes = [{
+	"name":"cassiterite &rarr; tin",
+	"inputs":[{"type":"cassiterite","count":1}],
+	"outputs":[{"type":"tin","count":1}],
+	"temperature":1200,
+}];
+const furnace_fuels = [{
+	"name": "coal",
+	"fuel": "coal",
+	"byproducts": ["ash"],
+	"heat": 100,
+	"efficiency": 60
+}];
+class Furnace extends Machine {
+	constructor() {
+		super("Furnace", furnace_recipes, 1, 1);
+		this.progress = 0; // out of 1
+		this.inputs = [];
+		this.outputs = [];
+		
+		this.fuels = [];
+		this.fuel_progress = 0;
+	}
+	
+}
+function collect(material,qty) {
+	material.collect(qty);
+}
+function choose(arr,weight=1) {
+	return arr[Math.floor((Math.random()**weight)*arr.length)];
+}
+
+let stick = new Material('Stick','Sticks');
+let flint = new Material('Flint','');
+let plant_fiber = new Material('Plant Fiber','');
+let wood = new Material('Wood','');
+let clay = new Material('Clay','');
+let sand = new Material('Sand','');
+let creosote_oil = new Material('Creosote Oil','');
+let diorite = new Material('Diorite','');
+let granite = new Material('Granite','');
+let andesite = new Material('Andesite','');
+let marble = new Material('Marble','');
+let basalt = new Material('Basalt','');
+let coal = new Material('Coal','');
+
+let tin = new Material('Tin','');
+let cassiterite = new Material('Cassiterite','');
+let stannite = new Material('Stannite','');
+
+let copper = new Material('Copper','');
+let cuprite = new Material('Cuprite','');
+let chalcopyrite = new Material('Chalcopyrite','');
+let azurite = new Material('Azurite','');
+let malachite = new Material('Malachite','');
+let tetrahedrite = new Material('Tetrahedrite','');
+let tennantite = new Material('Tennantite','');
+let bornite = new Material('Bornite','');
+let arsenic = new Material('Arsenic','');
+let realgar = new Material('Realgar','');
+let antimony = new Material('Antimony','');
+let stibnite = new Material('Stibnite','');
+
+let aluminum = new Material('Aluminum','');
+let bauxite = new Material('Bauxite','');
+let cryolite = new Material('Cryolite','');
+
+let zinc = new Material('Zinc','');
+let sphalerite = new Material('Sphalerite','');
+let cadmium = new Material('Cadmium','');
+let gallium = new Material('Gallium','');
+let germanium = new Material('Germanium','');
+let indium = new Material('Indium','');
+
+let iron = new Material('Iron','');
+let hematite = new Material('Hematite','');
+let pyrite = new Material('Pyrite','');
+
+let mercury = new Material('Mercury','');
+let cinnabar = new Material('Cinnabar','');
+
+let lead = new Material('Lead','');
+let galena = new Material('Galena','');
+let sulfur = new Material('Sulfur','');
+
+let proton = new Material('Proton','Protons');
+let neutron = new Material('Neutron','Neutrons');
+let electron = new Material('Electron','Electrons');
+
+let rock_action = new Action('pick up a rock',0.1,()=>{collect(choose([flint,granite]),1)});
+let stick_action = new Action('forage for sticks',1,()=>{collect(stick,1)});
+
+let t = 0;
+let tick_dt = 0;
+let frame_dt = 0;
+function draw() {
+	let loop_start_time = Date.now();
+	for (let i = 0; i < actions.length; i++) {
+		actions[i].tick(frame_dt);
+	}
+	for (let i = 0; i < materials.length; i++) {
+		document.getElementById("amount_"+i).innerHTML = materials[i].amount;
+	}
+	let loop_end_time = Date.now();
+	tick_dt = loop_end_time - loop_start_time;
+	frame_dt = Math.max(tick_dt,10)/1000;
+	setTimeout(draw, frame_dt*1000);
+	//window.requestAnimationFrame(draw);
+}
+draw();
+</script>
+</html>
