@@ -31,7 +31,7 @@ button {
 	margin-top: 2px;
 }
 .hidden {
-	display: none;
+	display: none !important;
 }
 .machine {
 	width: 16em;
@@ -57,7 +57,7 @@ button {
 	<button id="button_1" onclick="stick_action.start()">forage for sticks</button>-->
 </div>
 <div id="machines">
-	<div class="machine" id="machine_base">
+	<div class="hidden machine" id="machine_base">
 		<div id="machine_base_title" style="font-weight:bold;/*padding-top:0.25em;*/text-align:center;">Furnace</div>
 		<div id="machine_base_recipe">recipe: furnace-made cassiterite</div>
 		<div id="machine_base_inputs">inputs: 1 cassiterite</div>
@@ -165,6 +165,7 @@ class Machine {
 		this.recipes = recipes;
 		this.input_size = input_size;
 		this.output_size = output_size;
+		this.temp = 273.15;
 		
 		machines.push(this);
 	}
@@ -195,7 +196,17 @@ class Furnace extends Machine {
 		this.fuels = [];
 		this.fuel_progress = 0;
 	}
-	
+	make_graphic() {
+		let element = document.getElementById("machine_base").cloneNode(2);
+		element.setAttribute("id", "machine_"+this.id);
+		element.classList.remove("hidden");
+		element.children['machine_base_temp'].setAttribute("id", "machine_"+this.id+"_temp");
+		element.children['machine_base_title'].innerHTML = this.name;
+		document.getElementById("machines").appendChild(element);
+	}
+	tick() {
+		document.getElementById("machine_"+this.id+"_temp").innerHTML = "Temp: YEEEOW!";
+	}
 }
 function collect(material,qty) {
 	material.collect(qty);
@@ -217,6 +228,7 @@ let andesite = new Material('Andesite','');
 let marble = new Material('Marble','');
 let basalt = new Material('Basalt','');
 let coal = new Material('Coal','');
+let ashes = new Material('Ash','Ashes');
 
 let tin = new Material('Tin','');
 let cassiterite = new Material('Cassiterite','');
@@ -264,6 +276,10 @@ let electron = new Material('Electron','Electrons');
 let rock_action = new Action('pick up a rock',0.1,()=>{collect(choose([flint,granite]),1)});
 let stick_action = new Action('forage for sticks',1,()=>{collect(stick,1)});
 
+let f1 = new Furnace();
+f1.make_graphic();
+coal.collect(100);
+
 let t = 0;
 let tick_dt = 0;
 let frame_dt = 0;
@@ -271,6 +287,9 @@ function draw() {
 	let loop_start_time = Date.now();
 	for (let i = 0; i < actions.length; i++) {
 		actions[i].tick(frame_dt);
+	}
+	for (let i = 0; i < machines.length; i++) {
+		machines[i].tick();
 	}
 	for (let i = 0; i < materials.length; i++) {
 		document.getElementById("amount_"+i).innerHTML = materials[i].amount;
