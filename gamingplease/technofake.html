@@ -76,7 +76,28 @@ button {
 </div>
 </body>
 <script>
+let t = 0;
+let tick_dt = 0;
+let frame_dt = 0;
+
 let materials = [];
+let actions = [];
+let machines = [];
+
+const furnace_recipes = [{
+	"name":"cassiterite &rarr; tin",
+	"inputs":[{"type":"cassiterite","count":1}],
+	"outputs":[{"type":"tin","count":1}],
+	"temperature":1200,
+}];
+const furnace_fuels = [{
+	"name": "coal",
+	"fuel": "coal",
+	"byproducts": ["ash"],
+	"heat": 100,
+	"efficiency": 60
+}];
+
 class Material {
 	constructor(name, plural) {
 		this.id = materials.length;
@@ -86,22 +107,28 @@ class Material {
 		this.amount = 0;
 		this.total_amount = 0;
 		
+		this.create_element();
+		this.hide();
+		
+		materials.push(this);
+	}
+
+	create_element() {
 		let display_element = document.getElementById("display_base").cloneNode(2);
 		display_element.setAttribute("id", "display_"+this.id);
 		display_element.children['amount_base'].setAttribute("id", "amount_"+this.id);
 		display_element.children['name_base'].innerHTML = this.plural.toLocaleLowerCase();
 		display_element.children['name_base'].setAttribute("id", "name_"+this.id);
 		document.getElementById("materials").appendChild(display_element);
-		this.hide();
-		
-		materials.push(this);
 	}
+
 	hide() {
 		document.getElementById("display_"+this.id).classList.add("hidden");
 	}
 	unhide() {
 		document.getElementById("display_"+this.id).classList.remove("hidden");
 	}
+
 	collect(qty) {
 		if (this.total_amount == 0 && qty > 0) this.unhide();
 		this.amount += qty;
@@ -120,7 +147,6 @@ class Mineral extends Material {
 		super(name, plural);
 	}
 }
-let actions = [];
 class Action {
 	constructor(name, epoch, func) {
 		this.id = actions.length;
@@ -131,6 +157,12 @@ class Action {
 		this.progress = 0;
 		this.running = false;
 		
+		this.create_element();
+
+		actions.push(this);
+	}
+
+	create_element() {
 		let action_element = document.getElementById("action_base").cloneNode(2);
 		action_element.setAttribute("id", "action_"+this.id);
 		action_element.classList.remove("hidden");
@@ -139,25 +171,26 @@ class Action {
 		action_element.children['button_base'].setAttribute("id", "button_"+this.id);
 		action_element.children['progress_base'].setAttribute("id", "progress_"+this.id);
 		document.getElementById("actions").appendChild(action_element);
-		
-		actions.push(this);
 	}
+
 	start() {
 		if (!this.running) this.running = true;
 	}
-	tick(dt) {
-		if (this.running) {
-			this.progress += dt;
-			if (this.progress >= this.epoch) {
-				this.progress = 0; // intentionally not doing mod here but may change that
-				this.running = false;
-				this.func();
-			}
-			document.getElementById('progress_'+this.id).setAttribute("style", "width:"+(5*this.progress/this.epoch)+"em");
+
+	tick() {
+		if (!this.running) return;
+
+		this.progress += frame_dt;
+		if (this.progress >= this.epoch) {
+			this.progress = 0; // intentionally not doing mod here but may change that
+			this.running = false;
+			this.func();
 		}
+
+		document.getElementById('progress_'+this.id).setAttribute("style", "width:"+(5*this.progress/this.epoch)+"em");
 	}
 }
-let machines = [];
+
 class Machine {
 	constructor(name, recipes, input_size, output_size) {
 		this.id = machines.length;
@@ -169,23 +202,17 @@ class Machine {
 		
 		machines.push(this);
 	}
-	make_graphic() {
-		
+
+	create_element() {
+		let element = document.getElementById("machine_base").cloneNode(2);
+		element.setAttribute("id", "machine_"+this.id);
+		element.classList.remove("hidden");
+		element.children['machine_base_temp'].setAttribute("id", "machine_"+this.id+"_temp");
+		element.children['machine_base_title'].innerHTML = this.name;
+		document.getElementById("machines").appendChild(element);
 	}
 }
-const furnace_recipes = [{
-	"name":"cassiterite &rarr; tin",
-	"inputs":[{"type":"cassiterite","count":1}],
-	"outputs":[{"type":"tin","count":1}],
-	"temperature":1200,
-}];
-const furnace_fuels = [{
-	"name": "coal",
-	"fuel": "coal",
-	"byproducts": ["ash"],
-	"heat": 100,
-	"efficiency": 60
-}];
+
 class Furnace extends Machine {
 	constructor() {
 		super("Furnace", furnace_recipes, 1, 1);
@@ -196,21 +223,20 @@ class Furnace extends Machine {
 		this.fuels = [];
 		this.fuel_progress = 0;
 	}
-	make_graphic() {
-		let element = document.getElementById("machine_base").cloneNode(2);
-		element.setAttribute("id", "machine_"+this.id);
-		element.classList.remove("hidden");
-		element.children['machine_base_temp'].setAttribute("id", "machine_"+this.id+"_temp");
-		element.children['machine_base_title'].innerHTML = this.name;
-		document.getElementById("machines").appendChild(element);
+	
+	create_element() {
+		super.create_element();
 	}
+
 	tick() {
 		document.getElementById("machine_"+this.id+"_temp").innerHTML = "Temp: YEEEOW!";
 	}
 }
+
 function collect(material,qty) {
 	material.collect(qty);
 }
+
 function choose(arr,weight=1) {
 	return arr[Math.floor((Math.random()**weight)*arr.length)];
 }
@@ -277,29 +303,28 @@ let rock_action = new Action('pick up a rock',0.1,()=>{collect(choose([flint,gra
 let stick_action = new Action('forage for sticks',1,()=>{collect(stick,1)});
 
 let f1 = new Furnace();
-f1.make_graphic();
+let f2 = new Furnace();
+f1.create_element();
+f2.create_element();
 coal.collect(100);
+update();
 
-let t = 0;
-let tick_dt = 0;
-let frame_dt = 0;
-function draw() {
+function update() {
 	let loop_start_time = Date.now();
-	for (let i = 0; i < actions.length; i++) {
+
+	for (let i = 0; i < actions.length; i++)
 		actions[i].tick(frame_dt);
-	}
-	for (let i = 0; i < machines.length; i++) {
+
+	for (let i = 0; i < machines.length; i++)
 		machines[i].tick();
-	}
-	for (let i = 0; i < materials.length; i++) {
+
+	for (let i = 0; i < materials.length; i++) 
 		document.getElementById("amount_"+i).innerHTML = materials[i].amount;
-	}
+
 	let loop_end_time = Date.now();
 	tick_dt = loop_end_time - loop_start_time;
 	frame_dt = Math.max(tick_dt,10)/1000;
-	setTimeout(draw, frame_dt*1000);
-	//window.requestAnimationFrame(draw);
+	setTimeout(update, frame_dt*1000);
 }
-draw();
 </script>
 </html>
