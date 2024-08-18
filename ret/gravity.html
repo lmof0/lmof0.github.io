@@ -12,8 +12,8 @@ d done
 / in progress (i think)
 
 fixes:
-- fix trails acting odd with reference frames/high velocities/high timesteps
-- if the parent of a body is itself, it becomes unselectable due to distance criteria. pls fix
+d fix trails acting odd with reference frames/high velocities/high timesteps
+- if the parent of a body is itself, it becomes unselectable due to distance criteria. pls fix (<-- no? sounds like a bunch of your problem? lmao?????)
 -->
 <style>
 html {
@@ -121,7 +121,15 @@ button.toggle-motion:active {
 <body>
 <a href="../index.html" style="position:absolute;left:10px;bottom:10px;">back</a>
 	<!--<div style="position:absolute;left:10px;top:10px;font-size:2em;color:#f00;">ps this is like hugley wip please check back frequently for updates</div>-->
-	<div style="position:absolute;left:10px;top:10px;font-size:1em;color:#ddd;font-family:ms ui gothic, monospace;text-shadow:0px 0px 2px #fff;">all solar system position/velocity data obtained<br>using nasa's <a href="https://ssd.jpl.nasa.gov/horizons/" style="color:#aaa">jpl horizons service</a> :)<br>currently simulating <div id="bodycount" class="inline red">some number of bodies.</div></div>
+	<div style="position:absolute;left:10px;top:10px;font-size:1em;color:#ddd;font-family:ms ui gothic, monospace;text-shadow:0px 0px 2px #fff;">all solar system position/velocity data obtained<br>
+	using nasa's <a href="https://ssd.jpl.nasa.gov/horizons/" style="color:#aaa">jpl horizons service</a>. <div style="color:#777;text-shadow:none;" class="inline">(unless when otherwise stated)</div><br>
+	thank you nasa! :&gt;<br>
+	currently simulating <div id="bodycount" class="inline red" style="text-shadow:0px 0px 2px #f00;">some number of bodies.</div><br>
+	in-sim seconds per phys-step: <div id="step-size-indicator" class="inline yellow" style="text-shadow:0px 0px 2px #ff0;"></div><br>
+	phys-steps per frame: <div id="speed-indicator" class="inline yellow" style="text-shadow:0px 0px 2px #ff0;"></div><br>
+	frames per (real world) second: <div id="fps-indicator" class="inline yellow" style="text-shadow:0px 0px 2px #ff0;"></div><br>
+	phys-steps per (real world) second: <div id="steps-per-second-indicator" class="inline green" style="text-shadow:0px 0px 2px #0f0;"></div>
+	</div>
 
 <div id="wrap"><div id="wrapped-wrap">
 <canvas id="canvas" width="600" height="480" style="border:1px solid #fff;transform: scale(80%);" onwheel="zoom_screen(event)" onmousemove="update_mouse_pos(event)">
@@ -146,9 +154,21 @@ zoom: <div id="zoom-indicator" class="inline"></div>
 		<label for="labels-setting">labels enabled: </label>
 		<input type="checkbox" id="labels-setting" name="labels-setting" value="labels-setting"><br>
 		<label for="yz-rot-setting">y-z rotation: </label>
-		<input type="range" id="yz-rot-setting" name="yz-rot-setting" class="range-setting"><div id="yz-rot-indicator" style="display:inline;">&emsp;0 rad</div>
+		<input type="range" id="yz-rot-setting" name="yz-rot-setting" class="range-setting"><div id="yz-rot-indicator" style="display:inline;">&emsp;0 rad</div><br>
 		<label for="yz-fine-setting">fine-tune: </label>
-		<input type="range" id="yz-fine-setting" name="yz-fine-setting" class="range-setting"><div id="yz-fine-indicator" style="display:inline;">&emsp; .00 rad</div>
+		<input type="range" id="yz-fine-setting" name="yz-fine-setting" class="range-setting"><div id="yz-fine-indicator" style="display:inline;">&emsp; .00 rad</div><br>
+		<label for="steps-per-frame">steps/frame (speed): </label>
+		<input id="steps-per-frame" name="steps-per-frame" class="range-setting" style="height:12px;font-size:0.75em;" type="number" min="0" value="20" step="1"><br>
+		<label for="tiny-gravity-setting"><abbr title="If unchecked, objects marked 'tiny' will not generate any gravity. This may speed up the simulation, if there are many such objects.">tiny gravity?:</abbr> </label>
+		<input type="checkbox" id="tiny-gravity-setting" name="tiny-gravity-setting" value="tiny-gravity-setting"><br>
+		<label for="integrator-setting"><abbr title="The numerical integrator for calculating changes in position, velocity, and acceleration. Each have different trade-offs, refer to online resources for details.">integrator:</abbr> </label>
+		<select name="integrator-setting" id="integrator-setting">
+			<option value="euler">Euler</option>
+			<option value="verlet">Verlet</option>
+			<!--<option value="leapfrog">Leapfrog</option>-->
+			<!--<option value="RK4">Runge-Kutta 4th order</option>-->
+			<option value="gauss_jackson">Gauss-Jackson</option>
+		</select><br>
 		</details>
 	</div>
 	
@@ -177,13 +197,14 @@ zoom: <div id="zoom-indicator" class="inline"></div>
 				<abbr title="Eccentricity, the elongation or stretch of the orbit">ecc:</abbr> <div id="info-body-ecc" class="info-parameter"></div> <br>
 				<abbr title="Inclination">inc:</abbr> <div id="info-body-inc" class="info-parameter"></div> <br>
 				<abbr title="Argument of Pericenter"><m>&omega;</m>:</abbr> <div id="info-body-arg-per" class="info-parameter"></div> <br>
-				<abbr title="Longitude of the Ascending Node"><m>&Omega;</m>:</abbr> <div id="info-body-lon-asc" class="info-parameter"></div> <br>
+				<abbr title="Longitude of the Ascending Node"><m2>&Omega;</m2>:</abbr> <div id="info-body-lon-asc" class="info-parameter"></div> <br>
 				<abbr title="Mean Anomaly">M:</abbr> <div id="info-body-mean-anomaly" class="info-parameter"></div> <br>
 				<abbr title="True Anomaly"><m>&nu;</m>:</abbr> <div id="info-body-true-anomaly" class="info-parameter blue"></div> <br>
 				<abbr title="Orbital Period"><m>T</m>:</abbr> <div id="info-body-orbital-period" class="info-parameter yellow"></div> <br>
 				<abbr title="Speed"><m>v</m>:</abbr> <div id="info-body-speed" class="info-parameter blue"></div> <br>
 				<abbr title="Speed from the reference frame of the parent body"><m>v<sub>rel</sub></m>:</abbr> <div id="info-body-relative-speed" class="info-parameter blue"></div> <br>
 				dist. to parent:</abbr> <div id="info-body-distance-to-parent" class="info-parameter blue"></div> <br>
+				dist. to parent surface:</abbr> <div id="info-body-distance-to-parent-surf" class="info-parameter blue"></div> <br>
 				<abbr title="Pericenter / Periapsis, The closest this body will be from its parent"><m>r<sub>per</sub></m>:</abbr> <div id="info-body-pericenter" class="info-parameter red"></div> <br>
 				<abbr title="Apocenter / Apoapsis, The furthest this body will be from its parent"><m>r<sub>ap</sub></m>:</abbr> <div id="info-body-apocenter" class="info-parameter red"></div> <br>
 			</details>
@@ -193,8 +214,8 @@ zoom: <div id="zoom-indicator" class="inline"></div>
 	</div>
 	
 	<div id="create_body" class="info-box" style="border:4px solid #00f;color:#ccc;">
-		<details>
-		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;color:#fff;">create body</div></summary>
+		<details open>
+		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;color:#fff;">create/edit body</div></summary>
 		<br>
 		<table style="width:100%;padding:0;border-collapse:collapse;border-spacing:0">
 			<tbody>
@@ -245,23 +266,36 @@ zoom: <div id="zoom-indicator" class="inline"></div>
 					<td><input id="create-body-arg-per" class="input-parameter red" placeholder="angle of the periapsis w.r.t. the icrf plane"></td>
 				</tr>
 				<tr>
-					<td><abbr title="Longitude of the Ascending Node"><m>&Omega;</m>:</abbr></td>
+					<td><abbr title="Longitude of the Ascending Node"><m2>&Omega;</m2>:</abbr></td>
 					<td><input id="create-body-lon-asc" class="input-parameter red" placeholder="angle of tilt's orientation w.r.t. icrf"></td>
 				</tr>
 				<tr>
 					<td><abbr title="Mean Anomaly">M:</abbr></td>
 					<td><input id="create-body-mean-anomaly" class="input-parameter red" placeholder="angle along path of orbit @ epoch"></td>
 				</tr>
+				<tr>
+					<td>is tiny?:</td>
+					<td><input type="checkbox" id="create-body-is-tiny" name="create-body-is-tiny" value="create-body-is-tiny" class="input-parameter" style="width:1em;"></td>
+				</tr>
 			</tbody>
 		</table>
-		
-		body will be set in orbit around the currently focused celestial body, which is: <div id="create-body-currently-focused-body" class="inline"></div><br>
+		<div id="create-body-focused-indicator" hidden>
+		body will be set in orbit around the currently focused celestial body, which is: <div id="create-body-currently-focused-body" class="inline"></div><br><br>
 		
 		<button id="create-body-button" style="font-weight:bold;font-family:ms ui gothic;color:#0fa;background:#000;cursor:pointer;">create!</button>
 		
+		<button id="edit-body-button" style="font-weight:bold;font-family:ms ui gothic;color:#0af;background:#000;cursor:pointer;">edit!</button>
+		
+		<button id="get-params-body-button" style="font-weight:bold;font-family:ms ui gothic;color:#f0a;background:#000;cursor:pointer;">get params</button>
+		
+		</div>
+		<div id="create-body-not-focused-indicator">
+		click on the celestial body you wish to edit/use as a parent body!
+		</div>
+		
 		</details>
 	</div>
-	
+	<!--
 	<div id="edit_body" class="info-box" style="border:4px solid #0f0;">
 		<details>
 		<summary class="noselect settings-title" style="cursor:pointer;padding-left:3px;"><div style="text-align:center;position:absolute;display:inline;width:100%;left:0px;">edit body</div></summary>
@@ -278,6 +312,7 @@ zoom: <div id="zoom-indicator" class="inline"></div>
 		todo :^)
 		</details>
 	</div>
+	-->
 </div>
 
 <div style="bottom:10px;position:absolute;text-align:center;color:#aaa;text-shadow:0px 0px 2px #aaa;display:table;width:100%;">
@@ -286,7 +321,7 @@ use wasd or arrows to pan the camera. click on an object to follow it. [f] speed
 </div>
 </div>
 
-<button class="toggle-motion" id="toggle-motion">toggle motion</button>
+<!--<button class="toggle-motion" id="toggle-motion">toggle motion</button>-->
 
 <script>
 let canvas = document.getElementById("canvas");
@@ -307,6 +342,18 @@ function vec_lerp(V,U,f) { // VUF!!!! VUFFY!!!!
 function deg(angle) {return angle/180*Math.PI;} // turns degrees into radians, for ecliptic trig use/usage
 function as_kg(GM_km) {return (GM_km*1e9)/G;} // lmaoooo GM is just the gravitational constant times the mass of the object, not times the mass of the sun. incredible.
 
+let simulations = [];
+class Simulation {
+	constructor(name, bodies, desc, time) {
+		this.name = name;
+		this.bodies = bodies;
+		this.desc = desc;
+		this.time = time;
+		
+		simulations.push(this);
+	}
+}
+
 let bodies = [];
 class Body {
 	constructor(name, color, mass, radius, pos=[0,0,0], vel=[0,0,0], is_tiny=false) {
@@ -318,6 +365,7 @@ class Body {
 		this.radius = radius;
 		this.pos = pos; // [x,y,z] m
 		this.vel = vel; // [x,y,z] m/s
+		this.acc = [0,0,0]; // [x,y,z] m/s^2 - for certain integrators
 		this.is_tiny = is_tiny;
 		this.desc = "there's no description for this object!";
 		/*
@@ -333,14 +381,14 @@ class Body {
 		this.satellites = [];
 		this.is_barycenter = false;
 		
-		bodies.push(this);
+		//bodies.push(this);
 	}
 	/*kepler_te(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch) {
 		this.kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, Math.sqrt((G*parent.mass)/sma**3)*(time-epoch));
 	}*/
 	kepler(parent, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, time, epoch, mass=-1) {
-		this.parent = parent; // makeshift (oops it isn't makeshift haha)
-		this.parent.satellites.push(this); // just for the body info section
+		//this.parent = parent; // makeshift (oops it isn't makeshift haha)
+		//this.parent.satellites.push(this); // just for the body info section
 		this.parent = neutral_reference;
 		// all of this is makeshift i apologize
 		// mu = G * mass
@@ -357,7 +405,7 @@ class Body {
 		}
 		
 		// here we go again
-		// mostly using ComputeStateVectors() from http://orbitsimulator.com/gsim.html at line 9312
+		// mostly using ComputeStateVectors() from http://orbitsimulator.com/gsim.html at line 9312. i tried to figure this out by myself but it was too difficult to wrap my head around
 		let m = this.mass + (mass == -1 ? parent.mass : mass); // mass can be overridden if need be
 		let ecc_anomaly = mean_anomaly_at_t + ecc / 2;
 		let delta = 1;
@@ -468,6 +516,7 @@ class Body {
 	}
 	
 	get_osculating_elements() { // i'm just gonna assume that that's what the instantaneous keplerian elements are called
+	// this code is a slightly modified version of calcOrbitalElements() from https://github.com/ElaineCoe/orbital-mechanics-calculator/blob/master/scripts/calculator.js
 		let mu = this.parent.mass * G;
 		
 		let Ri = this.pos[0]-this.parent.pos[0];
@@ -543,6 +592,7 @@ class Body {
 	
 	// taken from stackoverflow: https://astronomy.stackexchange.com/questions/45456/how-to-translate-from-local-laplace-plane-to-ecliptic-j2000-or-icrf
 	// transform vectors from icrf to local body frame (all z-up)
+	// /!\ WARNING /!\ === i never got this method to work, and stackexchange is lacking in answers. using state vectors from nasa fixed my problems completely (should've done that from the beginning, but i didn't know what i was doing).
 	icrf_to_ecliptic(ra, dec) {
 		let x = this.pos[0]-this.parent.pos[0]; let y = this.pos[1]-this.parent.pos[1]; let z = this.pos[2]-this.parent.pos[2];
 		let vx = this.vel[0]-this.parent.vel[0]; let vy = this.vel[1]-this.parent.vel[1]; let vz = this.vel[2]-this.parent.vel[2];
@@ -621,6 +671,7 @@ class Barycenter extends Body {
 let neutral_reference = new Object; // is this a neutral reference ????????????????? <-- no this is jo
 neutral_reference.pos = [0,0,0];
 neutral_reference.vel = [0,0,0];
+neutral_reference.name = "N/A";
 let JD_epoch =(year, month, day, hour, minute=0, second=0, ms=0)=> {return new Date(year, month, day, hour, minute, second, ms);}
 let J2000 = JD_epoch(2000, 0, 01, 12); // 2000, 0th month (January), 01st day, 12th hour, 00th minute 00th second, 0th millisecond.
 // J2000.0 = 2451545 Julian Days
@@ -631,6 +682,62 @@ let NOW = /*JD_epoch(2020, 0, 01, 12).getTime()/1000;*/Date.now()/1000; // check
 NOW = JD_epoch(2023, 09-1, 01, 00).getTime()/1000;
 let au = 149597870691; // 149597870691 meters = 1 AU
 let GM = 1.32712440018e+20; // m^3 / s^2
+
+let fulldec2023data = '[{"name":"sun","pos":[-1214048065.5202181, -401379598.7957321, 31663697.72829919],"vel":[8.012077096627646, -12.71120897662364, -0.07076020950235948]},{"name":"mercury","pos":[50624426647.00754, -26455664244.023872, -6852359506.108861],"vel":[12355.96493823514, 45726.03282555176, 2605.140895838588]},{"name":"venus","pos":[-78164003666.46364, 74436982802.0922, 5499522774.738558],"vel":[-24534.876609105708, -25302.41055411627, 1068.761343807614]},{"name":"earth","pos":[53612459335.06583, 136563782139.9999, 23280468.44377369],"vel":[-28121.02736866474, 10949.08971337918, -0.5927513951968777]},{"name":"moon","pos":[53468491781.00805, 136930946337.74611, 58690448.19466025],"vel":[-29061.267250375622, 10629.08996759054, 6.872094816558594]},{"name":"mars","pos":[-108373261392.3766, -201103735135.7945, -1545970729.562879],"vel":[22293.40842795413, -9349.070226191618, -742.3774592132131]},{"name":"phobos","pos":[-108376229436.3009, -201094981281.1209, -1543751319.7474332],"vel":[20530.32490132289, -10167.49809735696, 73.72815903572727]},{"name":"deimos","pos":[-108392497394.07889, -201114698689.1435, -1538213659.051836],"vel":[22837.09939994857, -10540.009133645412, -1076.3848652629551]},{"name":"ceres","pos":[-205564212687.7124, -353853512234.6273, 26492598768.479572],"vel":[14601.714863935858, -10313.46653438777, -3014.411850349207]},{"name":"pallas","pos":[-337435139255.6486, -133863679502.6252, 121455066015.6976],"vel":[5148.455475111353, -15571.33484430052, 10338.210208792021]},{"name":"juno","pos":[-281765732090.0497, 224708626159.9988, -39668130650.024574],"vel":[-15968.78002263595, -11633.81420549918, 3288.913455111731]},{"name":"vesta","pos":[35059142303.52746, 382029495056.6978, -15740205274.77796],"vel":[-17545.74897264998, 1461.985134099764, 2093.357946159693]},{"name":"hygiea","pos":[436450548938.06836, -182478934444.68887, 25794736492.42797],"vel":[8013.214257135555, 14545.33522709955, 744.1880043134539]},{"name":"jupiter","pos":[546136255122.6889, 504624082375.2399, -14312126672.85466],"vel":[-9010.560244720806, 10215.6629932043, 159.2933436977013]},{"name":"io","pos":[546262254123.922, 505024456094.47095, -14296194281.17433],"vel":[-25613.56486711053, 15450.37958166237, 98.3471089512431]},{"name":"europa","pos":[546365758246.16064, 505260765432.1739, -14285146495.89595],"vel":[-21816.96988840786, 14835.62127275316, 30.525768011465]},{"name":"ganymede","pos":[545133491570.0936, 505004909348.28314, -14311695094.67885],"vel":[-12865.76703154136, 74.82910168465168, -281.5431081410512]},{"name":"callisto","pos":[544518815305.2653, 503637185089.88983, -14364659141.569231],"vel":[-4745.515840541242, 3274.210280213747, -1.412260202711124]},{"name":"amalthea","pos":[546317583259.8344, 504618348274.3092, -14309771604.338789],"vel":[-8276.148164513952, 36646.14089536967, 1290.371884695443]},{"name":"thebe","pos":[545934740132.24005, 504722795136.95844, -14311089294.445478],"vel":[-19689.76174302743, -10845.959171366942, -1189.402424567896]},{"name":"adrastea","pos":[546031477338.2606, 504699202402.0258, -14310962312.43593],"vel":[-27326.1510608475, -15335.88461736677, -1026.952842081388]},{"name":"metis","pos":[546212751383.46, 504726713035.417, -14307347122.6503],"vel":[-34308.99456291557, 29055.97941955445, 463.0294881745183]},{"name":"himalia","pos":[552954314114.0272, 511520964839.5209, -13667207580.32027],"vel":[-11642.25715162229, 12333.28488647993, 2062.984478028183]},{"name":"elara","pos":[543233600039.4032, 517844872597.3808, -11902102415.28305],"vel":[-11360.377711960251, 9605.622870881894, 1460.179271928271]},{"name":"pasiphae","pos":[572634575867.7687, 482885728465.594, 456542983.8014245],"vel":[-9638.507547824664, 9356.238527440159, 24.99459952227578]},{"name":"sinope","pos":[560791799877.2313, 499646138547.0984, -9742450636.472881],"vel":[-10423.6073818358, 7368.703942525973, 577.2853273043306]},{"name":"saturn","pos":[1335947096946.1821, -580132958140.2231, -43103280676.91885],"vel":[3309.207790367504, 8840.645162284547, -285.1999985959499]},{"name":"mimas","pos":[1336032348753.0042, -580279342767.5676, -43029124351.93393],"vel":[15887.41618682152, 14431.9109660574, -4391.946699203076]},{"name":"enceladus","pos":[1335751219547.7659, -580005148004.59, -43151220580.887344],"vel":[-3847.082344569658, -38.56109075488212, 5062.025621807577]},{"name":"tethys","pos":[1335857110266.062, -580376425805.9072, -42963777208.44251],"vel":[14054.148163877111, 5236.120488793252, 350.78389431373506]},{"name":"dione","pos":[1336013808198.178, -579806725992.604, -43280531447.05603],"vel":[-6524.423927557878, 10831.03350171889, -371.4633660453397]},{"name":"rhea","pos":[1336470541559.768, -580187616393.7101, -43122312415.28097],"vel":[3945.828871512497, 16307.75587567823, -4277.946387392178]},{"name":"titan","pos":[1336549260505.124, -579225134638.9755, -43631457627.360245],"vel":[-1466.33213358374, 11647.39273536466, -1256.892875288126]},{"name":"uranus","pos":[1848853093738.617, 2277854819907.957, -15492224184.46136],"vel":[-5337.553685933855, 3974.3461480595183, 83.76262899664889]},{"name":"ariel","pos":[1848705620838.573, 2277902484600.4346, -15380598825.51515],"vel":[-2037.7542924144811, 3863.137428663862, 4491.23783998062]},{"name":"umbriel","pos":[1848999839835.835, 2277853509181.4243, -15270729026.130909],"vel":[-1560.928113270305, 2805.853311307826, -2406.853464154747]},{"name":"titania","pos":[1848458659640.412, 2277962586323.931, -15339899674.72363],"vel":[-3989.3449163350742, 4150.955253842858, 3464.430582498276]},{"name":"oberon","pos":[1848897562817.376, 2277763501805.833, -16066316062.64162],"vel":[-8410.43679419003, 4594.616907475557, -260.4987027319752]},{"name":"miranda","pos":[1848916897105.396, 2277862231209.213, -15379336843.589901],"vel":[248.296081926795, 1891.805601751283, -2927.43457044172]},{"name":"puck","pos":[1848806737019.739, 2277854478836.961, -15564599909.72948],"vel":[-12038.09640846257, 6000.95253330677, 4371.639390724092]},{"name":"neptune","pos":[4462453155767.42, -282966957444.8065, -97014590126.19595],"vel":[308.31994081138293, 5457.285372566225, -119.09767130331721]},{"name":"triton","pos":[4462690281858.857, -282706422661.4791, -96972548573.0894],"vel":[2644.394302596806, 3872.9621124277724, -3480.5096089159997]},{"name":"naiad","pos":[4462498567236.028, -282956699863.7702, -97027350298.88116],"vel":[-1204.529208413633, 16694.45416394742, 3531.172198550268]},{"name":"thalassa","pos":[4462407456959.241, -282963110758.5607, -96994598643.576],"vel":[-1949.5618846485181, -5605.282809774545, -3159.984159748461]},{"name":"despina","pos":[4462419206599.829, -282935698482.9867, -96989527819.93051],"vel":[-7360.0068071043215, -2992.692231513153, 25.40062469922533]},{"name":"galatea","pos":[4462401588096.063, -282999885367.5586, -97005176626.21375],"vel":[4715.99848586554, -2813.003804719192, -4876.629624527701]},{"name":"larissa","pos":[4462448449682.903, -283036807557.9057, -97037332342.67522],"vel":[9264.421517162617, 5998.372091200507, -3626.212671813525]},{"name":"proteus","pos":[4462366412887.219, -282911220497.7229, -96957892553.79121],"vel":[-4024.196412251209, -793.201619229642, -601.5705375507359]},{"name":"pluto","pos":[2560332315668.835, -4543004988937.599, -254473416763.9821],"vel":[4859.483731143546, 1470.499265913969, -1551.275667977863]},{"name":"charon","pos":[2560338815685.535, -4542990647163.056, -254461752298.64188],"vel":[5005.763040774867, 1531.8157322378402, -1708.197089372638]},{"name":"nix","pos":[2560351999890.359, -4543010363927.17, -254516425365.1814],"vel":[4786.230093555804, 1367.525980104292, -1588.519164583712]},{"name":"hydra","pos":[2560338859752.233, -4542965313947.88, -254420443333.2021],"vel":[4965.594911149376, 1539.236900528572, -1625.2519343076071]},{"name":"kerberos","pos":[2560334934503.332, -4542971167244.232, -254424058111.31738],"vel":[4970.031920578102, 1549.063221951895, -1620.646368604117]},{"name":"styx","pos":[2560336500200.244, -4543022778682.039, -254509709216.6567],"vel":[4763.786933305607, 1381.012117700048, -1527.892665100184]},{"name":"eris","pos":[12799917134343.361, 5804521275816.455, -2724494911666.822],"vel":[-777.6120340598269, 1502.470344009776, 1614.9098994368248]},{"name":"dysnomia","pos":[12799886540338.61, 5804539112942.457, -2724482792410.2275],"vel":[-778.9257079782109, 1403.771684558221, 1754.525641479225]},{"name":"sedna","pos":[6175238167107.344, 10560932072103.451, -2573458479177.633],"vel":[-4266.811992453959, 1088.975172052847, 337.63890992902515]}]';
+
+let Full_Solar_System = new Simulation("Full Solar System", [new Body("Earth","#00f",5.972168*10**24,6371000,[53612459335.06583,136563782139.9999,23280468.44377369],[-28121.02736866474,10949.08971337918,-0.5927513951968777])]);
+Full_Solar_System.bodies[0].parent = neutral_reference;
+Full_Solar_System.time = JD_epoch();
+
+function convert_json_to_bodies(json) {
+	let bodies = [];
+	let info = JSON.parse(json);
+	for (let i = 0; i < info.length; i++) {
+		let new_body = new Body(info[i].name, info[i].color, info[i].mass, info[i].radius, info[i].pos, info[i].vel, info[i].is_tiny);
+		if (info[i].desc!="") new_body.desc = info[i].desc;
+		new_body.id = bodies.length;
+		bodies.push(new_body);
+	}
+	return bodies;
+}
+
+Full_Solar_System.bodies = convert_json_to_bodies(fulldec2023data);
+
+let test_system = new Simulation("test", [], 'sun, earth, and moon', JD_epoch(2023, 11, 01, 00));
+let test_data = '[{"name":"Sun","pos":[-1214048065.5202181, -401379598.7957321, 31663697.72829919],"vel":[8.012077096627646, -12.71120897662364, -0.07076020950235948],"color":"#ff0","mass":1.988435e+30,"radius":695700000,"is_tiny":false,"desc":"the sun is the gravitational center of the solar system. it is a common misconception that it is yellow in color. in reality, the sun is almost completely white. its classification as a \'yellow dwarf\' is infact a double-misnomer, it is neither yellow nor small. the reason it was thought to be small, is that only the largest and brightest stars are most visible to the naked eye. only when telescopes became more powerful was it clear that there are much smaller and much dimmer stars which far outnumber every other type of star in the milky way galaxy. the sun is larger than approximately 60% of the stars in the galaxy.\\n\\n\\nbelieve or not\\n\\nyou cannot land on the Sun"},{"name":"Earth","pos":[53612459335.06583, 136563782139.9999, 23280468.44377369],"vel":[-28121.02736866474, 10949.08971337918, -0.5927513951968777],"color":"#00f","mass":5.972168e+24,"radius":6371000,"is_tiny":false,"desc":"mostly harmless.\\n\\n\\n\\nplease see back for details"},{"name":"Moon","pos":[53468491781.00805, 136930946337.74611, 58690448.19466025],"vel":[-29061.267250375622, 10629.08996759054, 6.872094816558594],"color":"#aaa","mass":7.342e+22,"radius":1737400,"is_tiny":false,"desc":"the moon, also called selene, cynthia, e la lune, is made of cheese. it holds the record for being the biggest in comparison to its parent planet, at around 1/9th the radius of the earth.\\n\\nno es la locura,\\nen realidad es el amor..."}]';
+test_system.bodies = convert_json_to_bodies(test_data);
+
+let solar_system_planets = new Simulation("solar system planets", [], "", JD_epoch(2023, 11, 01, 00));
+let solar_system_planets_data = '[{"name":"Sun","pos":[-1214048065.5202181, -401379598.7957321, 31663697.72829919],"vel":[8.012077096627646, -12.71120897662364, -0.07076020950235948],"color":"#ff0","mass":1.988435e+30,"radius":695700000,"is_tiny":false,"desc":"the sun is the gravitational center of the solar system. it is a common misconception that it is yellow in color. in reality, the sun is almost completely white. its classification as a \'yellow dwarf\' is infact a double-misnomer, it is neither yellow nor small. the reason it was thought to be small, is that only the largest and brightest stars are most visible to the naked eye. only when telescopes became more powerful was it clear that there are much smaller and much dimmer stars which far outnumber every other type of star in the milky way galaxy. the sun is larger than approximately 60% of the stars in the galaxy.\\n\\n\\nbelieve or not\\n\\nyou cannot land on the Sun"},{"name":"Mercury","pos":[50624426647.00754, -26455664244.023872, -6852359506.108861],"vel":[12355.96493823514, 45726.03282555176, 2605.140895838588],"color":"#777","mass":3.3011e+23,"radius":2440000,"is_tiny":false,"desc":"this is the closest planet to the sun! it may also have the shortest orbital period around the sun of any object in the entire solar system. i\'m not going to confirm that claim though because i can\'t find any references for it"},{"name":"Venus","pos":[-78164003666.46364, 74436982802.0922, 5499522774.738558],"vel":[-24534.876609105708, -25302.41055411627, 1068.761343807614],"color":"#fa0","mass":4.8675e+24,"radius":6052000,"is_tiny":false,"desc":"don\'t go here, you\'d probably melt or evaporate or something"},{"name":"Earth","pos":[53612459335.06583, 136563782139.9999, 23280468.44377369],"vel":[-28121.02736866474, 10949.08971337918, -0.5927513951968777],"color":"#00f","mass":5.972168e+24,"radius":6371000,"is_tiny":false,"desc":"mostly harmless.\\n\\n\\n\\nplease see back for details"},{"name":"Moon","pos":[53468491781.00805, 136930946337.74611, 58690448.19466025],"vel":[-29061.267250375622, 10629.08996759054, 6.872094816558594],"color":"#aaa","mass":7.342e+22,"radius":1737400,"is_tiny":false,"desc":"the moon, also called selene, cynthia, e la lune, is made of cheese. it holds the record for being the biggest in comparison to its parent planet, at around 1/9th the radius of the earth.\\n\\nno es la locura,\\nen realidad es el amor..."},{"name":"Mars","pos":[-108373261392.3766, -201103735135.7945, -1545970729.562879],"vel":[22293.40842795413, -9349.070226191618, -742.3774592132131],"color":"#f00","mass":6.4171e+23,"radius":3389500,"is_tiny":false,"desc":"so-named for its bountiful mounds of cheap, easy-to-manufacture chocolate\\n\\nmountiful bounds"},{"name":"Jupiter","pos":[546136255122.6889, 504624082375.2399, -14312126672.85466],"vel":[-9010.560244720806, 10215.6629932043, 159.2933436977013],"color":"#faf","mass":1.8982e+27,"radius":69911000,"is_tiny":false,"desc":"how jovial! and excessively huge!"},{"name":"Saturn","pos":[1335947096946.1821, -580132958140.2231, -43103280676.91885],"vel":[3309.207790367504, 8840.645162284547, -285.1999985959499],"color":"#ffa","mass":5.6832e+26,"radius":60268000,"is_tiny":false,"desc":"the only planet in the solar system with rings trivially visible from earth. big rings. big gorgeous amazing beautiful magnificent wonderful rings. rings that could slice your home planet in twain, thus reducing the calcium industry to shambles. rubble even. rings not shown here."},{"name":"Uranus","pos":[1848853093738.617, 2277854819907.957, -15492224184.46136],"vel":[-5337.553685933855, 3974.3461480595183, 83.76262899664889],"color":"#0fa","mass":8.6811e+25,"radius":25362000,"is_tiny":false,"desc":"uranus, also known as The Georgium Sidus and/or Urinus, is a big ball way out in space."},{"name":"Neptune","pos":[4462453155767.42, -282966957444.8065, -97014590126.19595],"vel":[308.31994081138293, 5457.285372566225, -119.09767130331721],"color":"#0af","mass":1.0240e+26,"radius":24622000,"is_tiny":false,"desc":"the least moons of the giants, and the least-powerful winds.\\nbut the prettiest moons!\\n\\nalso, neptune is not this blue. actually, it\'s pretty much the same color as uranus!"},{"name":"Pluto","pos":[2560332418170.1533, -4543003996041.234, -254473207131.9091],"vel":[4859.4440273612845, 1470.496930949241, -1551.236535324611],"color":"#f7a","mass":1.303e+22,"radius":1188300,"is_tiny":false,"desc":"even though it doesn\'t make categorical sense, the iau should\'ve left pluto as an honorary/anachronistic planet\\npluto is not an errant asteroid"}]';
+solar_system_planets.bodies = convert_json_to_bodies(solar_system_planets_data);
+
+bodies = solar_system_planets.bodies;
+
+let full_solar_system_aug2024 = new Simulation("Full Solar System", [], "", JD_epoch(2024, 07, 14, 00));
+let client = new XMLHttpRequest();
+client.open('GET', 'fss_data_2.txt');
+client.onreadystatechange = function() {
+	//alert("ready!");
+	//console.log(client.responseText);
+	full_solar_system_aug2024.bodies = convert_json_to_bodies(client.responseText);
+	//bodies = full_solar_system_aug2024.bodies;
+	bodies.reduce((t, v, i)=>{find_orbital_parent(bodies[i])});
+	NOW = full_solar_system_aug2024.time.getTime()/1000;
+}
+client.send();
+
+function find_body(name, bodies) {
+	for (let i = 0; i < bodies.length; i++) {
+		if (bodies[i].name == name) return bodies[i];
+	}
+}
+
+let mam =(name, pos, vel, mass=1e15, radius=100)=> {
+	let new_moon = new Body(name, "#fff", mass, radius);
+	new_moon.is_tiny = true;
+	new_moon.pos = [...pos];
+	new_moon.vel = [...vel];
+}
 
 let sun = new Body("Sun", "#ff0", M, 695700000, vec_mul([-5.689*10**5,1.113*10**6,3.476*10**3],1000), vec_mul([-1.446*10**-2,-3.456*10**-3,3.988*10**-4],1000));
 sun.desc = "the sun is the gravitational center of the solar system. it is a common misconception that it is yellow in color. in reality, the sun is almost completely white. its classification as a 'yellow dwarf' is infact a double-misnomer, it is neither yellow nor small. the reason it was thought to be small, is that only the largest and brightest stars are most visible to the naked eye. only when telescopes became more powerful was it clear that there are much smaller and much dimmer stars which far outnumber every other type of star in the milky way galaxy. the sun is larger than approximately 60% of the stars in the galaxy.\n\n\nbelieve or not\n\nyou cannot land on the Sun";
@@ -673,7 +780,7 @@ venus.desc = "don't go here, you'd probably melt or evaporate or something";
 		MeanLongitude   181.979*/
 let mercury = new Body("Mercury", "#777", earth.mass*.05528, 2440000, [0,0,0], [0,0,0]);
 mercury.kepler(sun, 0.3871*149597870691, 0.2056, 7.0049/180*Math.PI, (77.456-48.33167)/180*Math.PI, 48.33167/180*Math.PI, (252.251-77.456)/180*Math.PI, NOW, J2000_epoch);
-mercury.desc = "this is the closest planet to the sun! it may also have the shortest orbital period around the sun of any object in the entire solar system.";
+mercury.desc = "this is the closest planet to the sun! it may also have the shortest orbital period around the sun of any object in the entire solar system. i'm not going to confirm that claim though because i can't find any references for it";
 /*		Period          0.2408
 		SemiMajorAxis   0.3871
 		Eccentricity    0.2056
@@ -704,7 +811,7 @@ deimos.desc = "wawawasdwasdAJwrna\nsfg gjeia jI Tjdwa\n\nd\na\ns";
 //deimos.kepler(mars, 23463200, 0.00033, deg(1.8), deg(0.0), deg(54.4), deg(205.0), NOW, J2000_epoch)
 //deimos.kepler(mars, 23463200, 0.00033, deg(1.793), 27.13/180*Math.PI, 271.725/180*Math.PI, 47.661/180*Math.PI, 21.087/180*Math.PI, NOW, JD_epoch(2023, 2, 3, 00));
 //deimos.icrf_to_ecliptic(deg(316.7), deg(53.5))
-
+//https://en.wikipedia.org/wiki/M%C3%A4mmi
 // w is first, then OMEGA
 let ceres = new Body("Ceres", "#aaa", earth.mass*.0001579, 470000, [0,0,0], [0,0,0]);
 ceres.kepler(sun, 2.76799*au, 0.0761669, 10.5942/180*Math.PI, 72.1671/180*Math.PI, 80.3301/180*Math.PI, 327.854/180*Math.PI, NOW, ceres_epoch);
@@ -752,7 +859,7 @@ metis.kepler(jupiter, 128000000, 0.000, deg(0.0), deg(0.0), deg(0.0), deg(166.0)
 // ?????????????????????????
 let himalia = new Body("Himalia", "#f0f", as_kg(0.15155), 85000);
 himalia.is_tiny = true;
-himalia.kepler(jupiter, 11440600000, 0.160, deg(28.1), deg(328.4), deg(68.2), deg(66.5), NOW, J2000_epoch); // this is the first ecliptic moon listed in https://ssd.jpl.nasa.gov/sats/elem/sep.html !!!!!!! hooray, it's accurate!!!
+himalia.kepler(jupiter, 11440600000, 0.160, deg(28.1), deg(328.4), deg(68.2), deg(66.5), NOW, J2000_epoch); // this is the first ecliptic moon listed in https://ssd.jpl.nasa.gov/sats/elem/sep.html !!!!!!! hooray, it's accurate!!! (<-- oh my god shut up. just you wait until you discover that the horizons swistem fixes all of your stupid issues.)
 himalia.desc = "it should be noted that basically every single one of these moons is inaccurate in several respects. whether the mass hasn't been accurately measured, or the orbit is perturbed so often that the parameters in this simulation are dead wrong, the portrayal of the moons here is really only meant to give you an idea. if you want a *slightly* more accurate idea of where the moons of the solar system are at some given moment, then maybe you should major in astrodynamics or something i don't know";
 
 let elara = new Body("Elara", "#fff", 10**17, 79900);
@@ -773,6 +880,22 @@ let ananke = new Body("Ananke", "#fff", 1e17, 29100); ananke.is_tiny = true;
 let leda = new Body("Leda", "#fff", 1e17, 21500); leda.is_tiny = true;
 let callirrhoe = new Body("Callirrhoe", "#fff", 1e17, 9600); callirrhoe.is_tiny = true;
 let themisto = new Body("Themisto", "#fff", 1e17, 9000); themisto.is_tiny = true;
+
+let magaclite = new Body("Magaclite", "#fff", 1e17, 1e4); magaclite.is_tiny = true;
+let taygete = new Body("Taygete", "#fff", 1e17, 1e4); taygete.is_tiny = true;
+let chaldene = new Body("Chaldene", "#fff", 1e17, 1e4); chaldene.is_tiny = true;
+let harpalyke = new Body("Harpalyke", "#fff", 1e17, 1e4); harpalyke.is_tiny = true;
+let kalyke = new Body("Kalyke", "#fff", 1e17, 1e4); kalyke.is_tiny = true;
+let iocaste = new Body("Iocaste", "#fff", 1e17, 1e4); iocaste.is_tiny = true;
+let erinome = new Body("Erinome", "#fff", 1e17, 1e4); erinome.is_tiny = true;
+let isonoe = new Body("Isonoe", "#fff", 1e17, 1e4); isonoe.is_tiny = true;
+let praxidike = new Body("Praxidike", "#fff", 1e17, 1e4); praxidike.is_tiny = true;
+let autonoe = new Body("Autonoe", "#fff", 1e17, 1e4); autonoe.is_tiny = true;
+let thyone = new Body("Thyone", "#fff", 1e17, 1e4); thyone.is_tiny = true;
+let hermippe = new Body("Hermippe", "#fff", 1e17, 1e4); hermippe.is_tiny = true;
+let aitne = new Body("Aitne", "#fff", 1e17, 1e4); aitne.is_tiny = true; // 531
+//let all_the_others = ["Eurydome","Euanthe","Euporie","Orthosie","Sponde","Kale","Pasithee","Hegemone","Mneme","Aoede","Thelxinoe","Arche","Kallichore","Helike","Carpo","Eukelade","Cyllene","Kore","Herse","S2010_j1","S2010_j2","Dia","S2016_j1","S2003_j18","S2011_j2","Eirene","Philophrosyne","S2017_j1","Eupheme","S2003_j19","Valetudo","S2017_j2","S2017_j3","Pandia","S2017_j5","S2017_j6","S2017_j7","S2017_j8","S2017_j9","Ersa","S2011_j1","S2003_j2","S2003_j4","S2003_j9","S2003_j10","S2003_j12","S2003_j16","S2003_j23","S2003_j24","S2011_j3","S2018_j2","S2018_j3","S2021_j1","S2021_j2","S2021_j3","S2021_j4","S2021_j5","S2021_j6","S2016_j3","S2016_j4","S2018_j4","S2022_j1","S2022_j2","S2022_j3"];
+//for (let i = 0; i < all_the_others.length; i++) {mam(all_the_others[i], [0,0,0], [0,0,0]/*dwbout it*/);}
 
 //io.icrf_to_ecliptic(deg(268.1), deg(64.5));
 
@@ -927,7 +1050,7 @@ dysnomia.desc = "the color of this object in-simulation reflects its true color!
 
 let sedna = new Body("Sedna", "#f07", 10**22, 1000000);
 sedna.kepler(sun, 506*au, 0.8496, deg(11.9307), deg(311.352), deg(144.248), deg(358.117), NOW, JD_epoch(2020, 4, 31, 00).getTime()/1000);
-sedna.desc = "not much is known about sedna's physical characteristics!\nif new info comes out about its mass/radius, it will definitely be updated posthaste.";
+sedna.desc = "not much is known about sedna's physical characteristics!\nif new info comes out about its mass/radius/natural satellites, it will definitely be updated posthaste.";
 
 let haumea = new Body("Haumea", "#edd", 4.006e21, 780000);
 haumea.desc = "NOTE : not pictured is haumea's prominent ring, which orbits within its roche limit, closer than the orbits of its moons.\n\nNOTE2 : haumea is not circular in real life, but is (likely) to be in the shape of a jacobian ellipsoid! goodness(!)";
@@ -1092,6 +1215,162 @@ callirrhoe.pos=[624182872771.2068,440639542355.7032,-24304547264.27349];
 callirrhoe.vel=[-6461.316720962269,9831.872226471289,1112.922219412178];
 themisto.pos=[603599696160.5293,416566303361.8656,-13692454444.76181];
 themisto.vel=[-6914.318845567032,8933.797015457207,2663.848927171422];
+magaclite.pos=[609172411156.5868,441849245805.5514,-28025909284.18174];
+magaclite.vel=[-5612.5784275898895,10769.93723076893,685.5348215442309];
+taygete.pos=[627203388848.8766,429863385765.8504,-14696953821.15093];
+taygete.vel=[-5752.915853949968,9300.169574188316,795.1716882862643];
+chaldene.pos=[634237174819.9606,430294153754.501,-19033807319.78938];
+chaldene.vel=[-7029.483502785378,9350.366045899675,-326.8067941972617];
+harpalyke.pos=[611284836895.0164,443256908690.91144,-11458178144.16036];
+harpalyke.vel=[-5771.849476807505,11109.22917013642,1248.884914420187];
+kalyke.pos=[632268857187.2281,433904900437.1156,-9174125922.650784];
+kalyke.vel=[-6017.540457352617,9915.317193379271,17.54670274908054];
+iocaste.pos=[609792562719.7126,441824846345.316,-27942909999.36792];
+iocaste.vel=[-5630.6763756740775,11517.1403084513,-221.3950905337727];
+erinome.pos=[603690333389.8439,448523397889.62726,-20776081592.39447];
+erinome.vel=[-5938.599687672619,11527.673772632801,424.71435013129087];
+isonoe.pos=[607804165457.898,397732787511.90045,-18555016591.55047];
+isonoe.vel=[-9899.060121766488,11295.662069047059,580.2178785802789];
+praxidike.pos=[631435840392.6409,418412731209.3119,-17513193550.36053];
+praxidike.vel=[-6631.222830714412,9270.081409135057,1234.276884664181];
+autonoe.pos=[631317599597.9535,411601637656.5467,-8392359101.142377];
+autonoe.vel=[-9029.950893776973,9649.07976345635,819.9979950964731];
+thyone.pos=[632857802772.612,409444714457.4447,-21499111551.898552];
+thyone.vel=[-7977.92101810658,9719.882095508903,1243.740647583308];
+hermippe.pos=[627754961157.1119,427517692627.2793,-11822567794.661339];
+hermippe.vel=[-6547.785569113003,9112.128137126118,1367.340994166399];
+aitne.pos=[592649858685.0098,414854790900.08966,-20770987244.43135];
+aitne.vel=[-8798.156787769009,13774.43451892194,-54.19632206738356];
+/*
+eurydome.pos=[597617276368.4248,424725472349.62555,-22116563540.368317];
+eurydome.vel=[-5699.913722965867,13962.774083819371,-237.1322384161063];
+euanthe.pos=[628477487394.5464,419141549898.88135,-22517562798.87976];
+euanthe.vel=[-7470.121008086826,8993.579484778003,1492.437998666724];
+euporie.pos=[626410740015.0371,419335945928.1127,-6504757464.429021];
+euporie.vel=[-6998.516436759596,8720.827025512985,-590.6055563098445];
+orthosie.pos=[589309331827.0243,410318993004.8327,-203971859.2115045];
+orthosie.vel=[-8320.788854236882,12946.0340556078,-59.13830909184181];
+sponde.pos=[629957243717.3052,425101273725.5597,-21066234594.48874];
+sponde.vel=[-6560.763900918724,9248.285515063202,-1180.648407203571];
+kale.pos=[587482148096.3506,407913923079.21893,-20471984606.99201];
+kale.vel=[-8694.60857738785,13042.71287523949,441.2642719266708];
+pasithee.pos=[602205831628.2664,393198885716.05774,-14957183547.87281];
+pasithee.vel=[-9118.19030111854,12370.82277438979,-360.5170267049163];
+hegemone.pos=[636045997518.5607,403891998545.5649,-2339620661.3434258];
+hegemone.vel=[-7819.008358176234,9879.150667423299,169.611820017753];
+mneme.pos=[597726082409.4736,439540957074.3498,-21719825604.79105];
+mneme.vel=[-5966.4764540271735,12096.816751537199,1076.552307735606];
+aoede.pos=[595634081273.9315,417803170116.4268,-6453816438.5309515];
+aoede.vel=[-7092.743025469044,14214.51416472216,-594.506251383656];
+thelxinoe.pos=[629400319740.2283,433542600864.85925,-21995492529.885983];
+thelxinoe.vel=[-6554.985364585975,9658.85949732232,-807.7051177705071];
+arche.pos=[598192985278.0968,405183381900.4847,-17909371670.90973];
+arche.vel=[-8926.88833739153,13730.81223611482,-292.4920669323381];
+kallichore.pos=[628205273022.0227,424563954664.922,-11201802919.625792];
+kallichore.vel=[-6719.680509414139,8598.475351448235,-190.640579992666];
+helike.pos=[592881056990.999,417810325229.93585,-18627660013.45044];
+helike.vel=[-7796.82953752806,13877.06171727296,1243.179583152001];
+carpo.pos=[595581627940.542,419502177645.282,-16986196845.40689];
+carpo.vel=[-9059.281691755554,9860.512917334701,-1874.863140996689];
+eukelade.pos=[613262813602.8732,447468535776.92505,-18248922034.152542];
+eukelade.vel=[-5750.697951178479,11330.10138110673,-410.7714866563148];
+cyllene.pos=[592974502247.056,422558758662.4507,-18730705077.330708];
+cyllene.vel=[-5941.0206639126245,13491.38606028685,-898.339804874091];
+kore.pos=[621456365750.4833,440210731184.9542,-22301314043.37361];
+kore.vel=[-5475.542958340508,11295.502366050221,1185.180632535587];
+herse.pos=[601557712283.1711,403234240811.9915,-12774539629.93276];
+herse.vel=[-10198.35170092016,12146.238813798149,-291.3454574309258];
+S2010_j1.pos=[634035461065.7351,417096031156.61017,-13303988603.62592];
+S2010_j1.vel=[-7086.011726480699,9125.909845437858,676.970454098742];
+S2010_j2.pos=[613862310025.3341,438370797780.065,-15567479231.311981];
+S2010_j2.vel=[-5431.322941586419,10261.085081079751,1366.963579364521];
+dia.pos=[617580778636.6898,429732729495.11646,-13362429352.608799];
+dia.vel=[-10248.28880466637,12464.026059613261,-1337.550824963593];
+S2016_j1.pos=[600509840761.3593,439737524906.5195,-19024752827.71268];
+S2016_j1.vel=[-5906.745370336089,11845.75363196627,-1240.356049039283];
+S2003_j18.pos=[629580782453.8748,425743903175.5496,-22548632443.647892];
+S2003_j18.vel=[-7017.033357562503,9245.36835297826,-1040.584498844322];
+S2011_j2.pos=[595886512708.3481,409825054765.9128,-26623475416.14088];
+S2011_j2.vel=[-8261.325645002466,13784.45052267271,562.8051666288272];
+eirene.pos=[589516830989.4019,412775550455.0874,-8479502419.950903];
+eirene.vel=[-7768.377619112945,13678.12123819091,102.9194648201175];
+philophrosyne.pos=[626379602270.8269,437202021709.8517,-30876862610.95788];
+philophrosyne.vel=[-6309.860257903443,9926.110155333376,92.48272185310569];
+S2017_j1.pos=[602977385290.2368,444840946828.6175,-30704804063.96195];
+S2017_j1.vel=[-6096.637905598039,12041.75570699723,-280.6004884847013];
+eupheme.pos=[596831747585.8978,425582583498.57,-10796984885.537891];
+eupheme.vel=[-7296.871147730653,14133.84225992059,-1208.6731030129508];
+S2003_j19.pos=[624600580018.6887,441997087831.802,-9586982932.081104];
+S2003_j19.vel=[-5702.356115661188,10531.80159838062,366.7866505114259];
+valetudo.pos=[598387179957.8429,429540912572.6504,-27151930420.08479];
+valetudo.vel=[-9368.797857773448,9903.470709338959,-75.81590955694529];
+S2017_j2.pos=[634303374605.3394,408154190512.1429,-10569125104.32595];
+S2017_j2.vel=[-8633.175474489404,9739.492414206346,-233.49031716739168];
+S2017_j3.pos=[605662705345.7506,442455229441.1674,-17236544711.798008];
+S2017_j3.vel=[-5873.193973401117,12034.31429073552,1292.326230554805];
+pandia.pos=[622103395448.7074,415208196921.6157,-9902201924.931408];
+pandia.vel=[-6568.323822309518,14056.91596108394,-623.361169468124];
+S2017_j5.pos=[593582749618.0454,426434772644.7341,-17253655875.67607];
+S2017_j5.vel=[-6193.391484428587,13711.749807945649,849.754547779356];
+S2017_j6.pos=[587558430555.2678,417768816565.48206,-25693597648.18543];
+S2017_j6.vel=[-8476.566100818749,13142.862955781951,-616.8693020380642];
+S2017_j7.pos=[614470157618.4213,435306850904.56213,-26555376248.17413];
+S2017_j7.vel=[-5124.100051677402,10351.26690883655,47.141162136302924];
+S2017_j8.pos=[598616074575.4225,429818377716.8404,-12650558010.05185];
+S2017_j8.vel=[-5335.991494163576,13520.60940775127,617.2797535166632];
+S2017_j9.pos=[600380566333.9069,439894602487.10223,-20296395389.32091];
+S2017_j9.vel=[-5574.347264023991,11841.52762459218,-707.2423894815421];
+ersa.pos=[603259613119.489,411943228935.25305,-10901587668.50498];
+ersa.vel=[-5988.51294609263,8791.287075546132,-863.2219447425955];
+S2011_j1.pos=[631139095261.7823,438185608282.0657,-21775545793.303608];
+S2011_j1.vel=[-6141.996061497476,10030.4616720244,369.39713250115693];
+S2003_j2.pos=[605504025067.5288,401301771861.5974,-14473171001.03909];
+S2003_j2.vel=[-9550.27701510325,12691.19024484313,-1097.562343032012];
+S2003_j4.pos=[594024405466.9355,440012298599.4964,-7943219763.771862];
+S2003_j4.vel=[-6105.162188369352,12062.77405435487,-802.6947459083384];
+S2003_j9.pos=[599631582464.3743,396722980841.4986,-22223263095.18699];
+S2003_j9.vel=[-9023.002062384467,12828.16251180349,155.6248186542168];
+S2003_j10.pos=[594204773934.3009,404762248934.3293,-11200541608.749811];
+S2003_j10.vel=[-9458.522196865953,12737.70109495505,720.1885428020445];
+S2003_j12.pos=[603587291763.8274,397825699599.19635,-26498017951.00945];
+S2003_j12.vel=[-9355.116335344592,12049.648603763311,-291.3327840775439];
+S2003_j16.pos=[610224899501.5227,440492930143.60175,-13114182560.40871];
+S2003_j16.vel=[-5512.5796162377455,10592.64797532674,1213.220016199887];
+S2003_j23.pos=[600195221031.8297,408660849576.57153,-27244818830.08657];
+S2003_j23.vel=[-9412.579950079336,13361.16384074206,689.3379741623909];
+S2003_j24.pos=[635880046774.2245,409545681995.3142,-20811754435.00108];
+S2003_j24.vel=[-7636.101447836926,9478.252100685591,496.70623130523063];
+S2011_j3.pos=[620237540782.5647,420258627918.96277,-20355562694.62925];
+S2011_j3.vel=[-7519.353953850576,15126.19416638342,-63.83980102834297];
+S2018_j2.pos=[619445554975.8252,414618727158.0635,-20951498281.24815];
+S2018_j2.vel=[-6203.600492689573,14566.04941580103,216.4035422725936];
+S2018_j3.pos=[584710482616.2688,425005823619.7845,-8702741896.13089];
+S2018_j3.vel=[-7750.0454610129755,13283.37072169147,399.1275981302627];
+S2021_j1.pos=[595356265621.5472,431343413670.3809,-13228064139.68357];
+S2021_j1.vel=[-6918.671701215043,13585.65642018556,-1037.075622438151];
+S2021_j2.pos=[591748205551.1727,426537372497.23663,-15738014439.84228];
+S2021_j2.vel=[-7693.255989101478,13554.05030678428,-1073.436565170767];
+S2021_j3.pos=[596361197011.2815,440214818106.68494,-1739687792.584419];
+S2021_j3.vel=[-6327.6160482480145,12351.33033231528,-102.6712936473864];
+S2021_j4.pos=[583357478838.4215,423589668899.58295,-9838695744.832485];
+S2021_j4.vel=[-7388.191616068878,13182.34944001507,470.70399733405213];
+S2021_j5.pos=[596320653009.2681,435839486183.0421,-9736037885.842264];
+S2021_j5.vel=[-6259.116788182898,13335.312538221411,-58.19537351664739];
+S2021_j6.pos=[603794016558.8989,448465738874.4155,-8600323486.867756];
+S2021_j6.vel=[-5962.712311149765,11641.91841525459,236.2999130560794];
+S2016_j3.pos=[586671020949.4446,423141296315.6321,-19772414444.47231];
+S2016_j3.vel=[-7942.478014345694,13450.0425146653,466.9054254803484];
+S2016_j4.pos=[586757517931.85,432714288157.9079,-9925025978.596003];
+S2016_j4.vel=[-6850.6730232833015,12701.671262804011,-953.4919712490364];
+S2018_j4.pos=[595834912509.7737,415190329487.47064,-13502737966.330471];
+S2018_j4.vel=[-7185.920215239799,9709.525666244208,-2126.4568795991668];
+S2022_j1.pos=[631280170334.2091,410718538122.9137,-10089445836.172699];
+S2022_j1.vel=[-7984.179680848853,9080.751228787383,397.99133129124044];
+S2022_j2.pos=[628634592702.3853,423994748438.6842,-12180467035.28801];
+S2022_j2.vel=[-6650.7137346552,8659.55090566379,-394.3476655630458];
+S2022_j3.pos=[619824519331.6895,440906055882.26715,-27054433312.30018];
+S2022_j3.vel=[-5994.019955759788,10321.67699026781,-506.0551336182635];
+*/
 hyperion.pos=[1307057803395.973,-647749552268.6216,-41248210968.345215];
 hyperion.vel=[612.3899732548543,5813.885855422047,1412.834949398055];
 iapetus.pos=[1304848902598.1729,-650028150236.4612,-39858100018.93103];
@@ -1118,6 +1397,288 @@ prometheus.pos=[1308232332367.387,-648735506060.185,-40867547302.12672];
 prometheus.vel=[-11670.51880452528,14332.666143235461,-1789.1448769350711];
 pandora.pos=[1308215370651.243,-648973462452.2227,-40741087477.82132];
 pandora.vel=[19630.88477365377,11199.94401549489,-3172.624964043012];
+/*
+pan_moon.pos=[1308085916416.229,-648925727753.4813,-40753672072.34091];
+pan_moon.vel=[15158.220799146618,-2822.3952551890206,4598.904311801173];
+ymir.pos=[1320071643786.625,-628887221342.6882,-40653391402.07377];
+ymir.vel=[4960.879318795017,8333.558476133032,-462.91289041051346];
+paaliaq.pos=[1324796914261.198,-641637625802.2053,-27263316760.79312];
+paaliaq.vel=[3266.070702907267,9304.609331246134,66.22282305712889];
+tarvos.pos=[1306844121881.853,-636461916226.0538,-35682030341.60224];
+tarvos.vel=[2299.771468429713,8981.553664943296,847.6939103369206];
+ijiraq.pos=[1319850162167.7092,-653887326926.6923,-44298328638.81007];
+ijiraq.vel=[4380.6833464828005,9423.310807222842,-1486.347551247012];
+suttungr.pos=[1323488810133.409,-634113247006.6283,-42290371052.83976];
+suttungr.vel=[4663.761613446739,7770.939702527111,-403.51595951825647];
+kiviuq.pos=[1318136102229.627,-653986340530.6404,-43663161681.19931];
+kiviuq.vel=[4366.51562891469,9657.650981309076,1039.889430162478];
+mundilfari.pos=[1328097451557.313,-651649801050.4973,-37155382005.907616];
+mundilfari.vel=[3777.793791985809,7335.6092601941655,-331.5172444974532];
+albiorix.pos=[1310308381219.648,-662153042181.2775,-43220059614.42804];
+albiorix.vel=[5084.292472374732,7893.708314209572,-1238.525829568675];
+skathi.pos=[1320206173896.918,-654079513656.3871,-46001759836.84942];
+skathi.vel=[3749.3613283110967,6966.449686197219,114.5747589406576];
+erriapus.pos=[1318316456134.9822,-667035448607.0254,-41576235224.901436];
+erriapus.vel=[4277.727044319249,9468.5552488077,-1024.585520016219];
+siarnaq.pos=[1299696772122.9219,-664059815888.9751,-48053057478.685555];
+siarnaq.vel=[4386.495405506498,7872.474889456211,-1246.096422596378];
+thrymr.pos=[1299471718077.07,-663376138657.4866,-39806828979.37191];
+thrymr.vel=[2796.940743350087,9920.624565650875,-202.8911893585552];
+narvi.pos=[1318858857806.204,-639652371868.4186,-35617241632.37503];
+narvi.vel=[4709.729429169355,7638.901529979701,-1378.89275384249];
+pallene.pos=[1307987487760.705,-648770855256.0698,-40824576318.389984];
+pallene.vel=[-1184.331806777378,-2153.428255820318,5849.9480858056695];
+
+//No ephemeris for target "Daphnis" after A.D. 2018-JAN-17 00:00:00.0000 TDB
+
+aegir.pos=[1324904537744.071,-634381721707.0125,-40365484808.80255];
+aegir.vel=[4266.796239237172,7523.648246932855,-581.3790895544608];
+bebhionn.pos=[1306870365464.27,-635485388644.5461,-52575416552.132866];
+bebhionn.vel=[2502.425285908771,8115.578034284828,120.4863185622282];
+bergelmir.pos=[1304584991134.047,-670126364422.4352,-45526122731.89738];
+bergelmir.vel=[2612.730873747079,8681.394584391832,85.71614827436403];
+bestla.pos=[1334536321076.498,-643445965794.8782,-53637886021.9878];
+bestla.vel=[3610.4224492552703,7955.508805593394,170.2918597702814];
+farbauti.pos=[1307695452004.7769,-669437360897.3748,-48689627983.29735];
+farbauti.vel=[2536.076008316537,8894.295108645185,-372.8895472517872];
+fenrir.pos=[1328858889131.619,-645259258374.1519,-46947411916.78238];
+fenrir.vel=[4076.6858996229826,7356.586100371895,-498.4886654047576];
+fornjot.pos=[1286768492567.208,-630880365414.6313,-37582742236.85199];
+fornjot.vel=[4278.735058174335,9588.098797201064,-478.4512668719807];
+hati.pos=[1320418014450.464,-631214633214.5968,-46604515767.80027];
+hati.vel=[4443.572316679498,7658.718402483651,-122.81788114361359];
+hyrrokkin.pos=[1312799482125.0178,-635684286000.5159,-41021433196.38574];
+hyrrokkin.vel=[5399.004089759643,8586.36735793236,501.7575349280072];
+kari.pos=[1295687649015.646,-667057483352.4844,-28208345032.39614];
+kari.vel=[3234.961759797879,9616.67735601222,-344.7486994139504];
+loge.pos=[1294896520499.352,-625754915680.722,-45942304704.2115];
+loge.vel=[4664.741826636051,9192.277669287056,-417.8988929897081];
+skoll.pos=[1296479045995.118,-646103277053.3876,-37516165375.01869];
+skoll.vel=[4767.828704589428,10172.26748395602,-1040.9338591279388];
+surtur.pos=[1303417797090.1611,-660947766549.5955,-39298600972.005516];
+surtur.vel=[1849.6187536853438,9120.519526496115,208.8330829797074];
+anthe.pos=[1308377696171.745,-648887388495.8376,-40802036169.950066];
+anthe.vel=[6165.493971787991,20641.38953131927,-6820.726102229106];
+jarnsaxa.pos=[1312400975937.799,-632917525679.7399,-43761668119.49539];
+jarnsaxa.vel=[5319.971332042711,8544.887592271796,-15.45036786953524];
+greip.pos=[1298235130404.2302,-638118027192.2911,-41926537022.853455];
+greip.vel=[4733.993072692993,10088.82587846436,-486.0309993243921];
+tarqeq.pos=[1299022055609.128,-658699122811.4296,-31666170272.41716];
+tarqeq.vel=[4183.359674962364,7266.250004378546,-979.1139548227729];
+aegaeon.pos=[1308046273994.838,-648928045213.4259,-40748620231.70149];
+aegaeon.vel=[12256.263331341452,-2705.029184820706,4818.527275576886];
+gridr.pos=[1312811183171.682,-634580230175.308,-45193216866.27445];
+gridr.vel=[5336.829148486489,8049.855787317776,-176.692074241553];
+angrboda.pos=[1293674164552.45,-639818111652.7625,-40200605778.95993];
+angrboda.vel=[4455.7258079724415,10087.89697581103,-345.6850502012188];
+skrymir.pos=[1314007918949.6802,-678909512007.4882,-42105753252.10163];
+skrymir.vel=[2994.236757362594,8267.760198731341,-278.78751838542956];
+gerd.pos=[1296495054494.229,-657487969812.9854,-39090992699.01159];
+gerd.vel=[2189.242806914368,9570.400065957903,-111.6835872926569];
+S2004_s26.pos=[1313359375611.957,-673118548463.1495,-37451769344.595406];
+S2004_s26.vel=[2508.198582016596,8502.970334580898,-279.9578922368919];
+eggther.pos=[1322300413519.9412,-658674495489.7687,-38245095056.75831];
+eggther.vel=[2810.746830197952,7408.503469967507,-575.5344747979842];
+S2004_s29.pos=[1323062190717.504,-648337166320.444,-51200288788.28922];
+S2004_s29.vel=[2861.705312701874,9684.405599303143,-535.7876106894315];
+beli.pos=[1298026747971.8462,-630273530070.3008,-37168258542.22664];
+beli.vel=[4817.503200050659,9215.76805061141,-788.3304549068182];
+gunnlod.pos=[1320393856202.559,-660826551816.4318,-40969454633.28287];
+gunnlod.vel=[2450.5219934627653,7833.808789761713,265.84389155870804];
+thiazzi.pos=[1311183830591.786,-682642568562.2888,-42309635410.51308];
+thiazzi.vel=[3031.998094637942,8716.197097039121,-588.8120543963007];
+S2004_s34.pos=[1293569771549.1309,-661118199187.4634,-36172197312.55114];
+S2004_s34.vel=[2586.7634847070563,9589.332956292,-245.39482364152622];
+alvaldi.pos=[1288589616765.414,-652318457651.0896,-40203797048.163376];
+alvaldi.vel=[3815.852094811727,10078.005672300611,-370.7936904248408];
+geirrod.pos=[1325972254580.445,-644445019035.2136,-34496412388.70877];
+geirrod.vel=[4768.7838372465085,7564.5146434098715,-435.3349031889842];
+S2004_s31.pos=[1294374433166.6301,-657223027864.0785,-30157440216.07894];
+S2004_s31.vel=[4173.749227119131,7661.332464094494,-1089.952401680183];
+//unrelated asteroid
+//65068.pos=[1313359375611.957,-673118548463.1495,-37451769344.595406];
+//65068.vel=[2508.198582016596,8502.970334580898,-279.9578922368919];
+
+//65069.pos=[1288589616765.414,-652318457651.0896,-40203797048.163376];
+//65069.vel=[3815.852094811727,10078.005672300611,-370.7936904248408];
+
+S2004_s24.pos=[1302340370190.723,-667798564473.9535,-55390870677.85192];
+S2004_s24.vel=[4877.611017798692,8278.617040896524,-143.0741279858636];*/
+/*65071.pos=[1314007918949.6802,-678909512007.4882,-42105753252.10163];
+65071.vel=[2994.236757362594,8267.760198731341,-278.78751838542956];
+65072.pos=[1296495054494.229,-657487969812.9854,-39090992699.01159];
+65072.vel=[2189.242806914368,9570.400065957903,-111.6835872926569];
+65073.pos=[1293674164552.45,-639818111652.7625,-40200605778.95993];
+65073.vel=[4455.7258079724415,10087.89697581103,-345.6850502012188];
+65074.pos=[1320393856202.559,-660826551816.4318,-40969454633.28287];
+65074.vel=[2450.5219934627653,7833.808789761713,265.84389155870804];  why
+65075.pos=[1311183830591.786,-682642568562.2888,-42309635410.51308];
+65075.vel=[3031.998094637942,8716.197097039121,-588.8120543963007];
+65076.pos=[1293569771549.1309,-661118199187.4634,-36172197312.55114];
+65076.vel=[2586.7634847070563,9589.332956292,-245.39482364152622];*//*
+S2004_s28.pos=[1287225697049.51,-638864151035.6273,-40626307843.862404];
+S2004_s28.vel=[4116.579351122525,9815.125064446896,-98.232131891272];
+//65078.pos=[1298026747971.8462,-630273530070.3008,-37168258542.22664];
+//65078.vel=[4817.503200050659,9215.76805061141,-788.3304549068182];
+S2004_s21.pos=[1313931237641.793,-661535798546.954,-42974172795.74555];
+S2004_s21.vel=[1997.284249076607,8193.616066648905,-982.4668091622093];
+//65080.pos=[1312811183171.682,-634580230175.308,-45193216866.27445];
+//65080.vel=[5336.829148486489,8049.855787317776,-176.692074241553];
+S2004_s36.pos=[1289246601793.856,-633909251903.8645,-31304651828.34846];
+S2004_s36.vel=[4785.679398265644,8988.455633558704,-657.5970267590461];
+S2004_s37.pos=[1305004422248.24,-640962629163.95,-38658256640.05962];
+S2004_s37.vel=[6248.3705508814855,8758.714824433155,-126.63986901194951];
+//65083.pos=[1325972254580.445,-644445019035.2136,-34496412388.70877];
+//65083.vel=[4768.7838372465085,7564.5146434098715,-435.3349031889842];
+S2004_s39.pos=[1320153517652.242,-628077014407.6189,-37429473489.035736];
+S2004_s39.vel=[4743.534931193041,7977.751815905986,-528.8398673904821];
+S2004_s07.pos=[1326022392955.6711,-622286388131.8396,-46262597330.933304];
+S2004_s07.vel=[4197.137458230493,8084.244360542538,-121.2773915010117];
+S2004_s12.pos=[1310605753476.5042,-626240115159.3525,-46841601549.91826];
+S2004_s12.vel=[4846.043165271792,8860.740310265288,-510.4170994070687];
+S2004_s13.pos=[1311040902875.928,-628014165997.1147,-38652662039.93061];
+S2004_s13.vel=[4955.326519155799,8795.505633483717,-511.0586884900545];
+S2004_s17.pos=[1293912742842.896,-657639543155.4346,-41099465715.053055];
+S2004_s17.vel=[2968.139456024677,10002.54136677938,-625.9185936770804];
+S2006_s01.pos=[1307687119549.0552,-631821054127.6104,-48421808230.567375];
+S2006_s01.vel=[5165.688055562102,8752.70196030521,-431.2132059766518];
+S2006_s03.pos=[1285483960062.5442,-643232669908.0002,-30122672784.274582];
+S2006_s03.vel=[4414.265898048336,9510.212174402806,-311.7135866417109];
+S2007_s02.pos=[1299081479961.2,-666610707549.31,-41913053493.738625];
+S2007_s02.vel=[2672.475243475918,9115.620865417797,-327.51311127678787];
+S2007_s03.pos=[1320104720257.53,-634976753935.149,-39732122789.20543];
+S2007_s03.vel=[4974.936230167934,7802.6826397184295,-272.1413922236322];
+S2019_s01.pos=[1307721087467.157,-635521539184.6271,-52906098525.67115];
+S2019_s01.vel=[2871.090024258655,8750.268924947602,-96.74203327626162];
+S2019_s02.pos=[1291797260180.913,-659617765830.5253,-42145310809.30793];
+S2019_s02.vel=[2895.9710818628,9543.262497356021,-318.6630969618727];
+S2019_s03.pos=[1296830482808.821,-664958898714.2106,-38559940678.68528];
+S2019_s03.vel=[2944.50298279562,9559.75925176196,-19.40136568660655];
+S2020_s01.pos=[1319205612039.855,-652473806641.1443,-43655938994.65659];
+S2020_s01.vel=[4577.394664495933,9503.943377946423,-1556.46160776887];
+S2020_s02.pos=[1307629732361.362,-629394603044.018,-39819766508.66637];
+S2020_s02.vel=[5067.843203340669,8541.980464108656,-161.4242893580515];
+S2004_s40.pos=[1297556465323.3071,-654280628043.2948,-41831080513.70477];
+S2004_s40.vel=[2568.435172174236,10203.09735121984,-633.5230206633788];
+//65099.pos=[-322707146158.5133,57319231607.01476,27337138057.575783];
+//65099.vel=[-339.4952422262817,-20711.826763102308,1134.113219444863];
+S2006_s09.pos=[1295536105199.2532,-661990630409.094,-40941358450.46848];
+S2006_s09.vel=[2876.818954511652,9490.786618444316,-426.2059388659267];
+S2007_s05.pos=[1296149755236.6409,-659982161167.1296,-46570333097.58559];
+S2007_s05.vel=[2858.047992333713,9704.580134467491,-179.9688662803764];
+S2020_s03.pos=[1297426470116.693,-641134549932.0348,-53016360017.83255];
+S2020_s03.vel=[2695.22509143864,7735.23936939838,139.51575830503498];
+S2019_s04.pos=[1316467397628.754,-663556607228.8813,-39511491742.358795];
+S2019_s04.vel=[2904.023717514192,7377.135610903119,-17.7849458950905];
+S2004_s41.pos=[1330246406359.335,-643946122688.6152,-37023398625.61914];
+S2004_s41.vel=[4068.78660204383,7585.378311824748,-159.1755322999311];
+S2020_s04.pos=[1299778676129.602,-635178672676.9031,-27112436810.18174];
+S2020_s04.vel=[3078.237348980757,7598.356162084347,-341.8974675677648];
+S2020_s05.pos=[1307991843107.097,-638063907827.8925,-52816860728.83475];
+S2020_s05.vel=[2192.684426682723,8228.513007970796,-471.6614708539559];
+S2007_s06.pos=[1309666337289.378,-663976044350.9935,-37273202902.22421];
+S2007_s06.vel=[2096.627016250642,8442.387276436684,-127.07064669165871];
+S2004_s42.pos=[1292535580218.8972,-640553721894.4034,-44396970300.63018];
+S2004_s42.vel=[4241.319053320721,9990.188024403711,-549.1586108778379];
+S2006_s10.pos=[1291237342409.852,-641500908934.5576,-44569495125.7216];
+S2006_s10.vel=[4144.466775091538,9954.560641690314,-689.4162192134683];
+S2019_s05.pos=[1323881075256.685,-645926773019.5924,-48028752614.36406];
+S2019_s05.vel=[3814.938189744435,7112.957734029497,-149.4568008272346];
+S2004_s43.pos=[1318269054581.553,-632996758723.1166,-40403133000.71073];
+S2004_s43.vel=[4526.055040854554,7463.278070727522,-492.1641092555689];
+S2004_s44.pos=[1297863621533.1409,-632145688357.286,-44101393956.88343];
+S2004_s44.vel=[4785.271451974211,9530.518226236445,-203.8912004333624];
+S2004_s45.pos=[1292859373151.885,-624023887042.2633,-45558602598.90902];
+S2004_s45.vel=[4355.326116968882,9010.087293480161,-696.6954488820622];
+S2006_s11.pos=[1326448892441.709,-655951546385.7689,-43390913637.96329];
+S2006_s11.vel=[3455.808370516183,7275.78945525495,-265.9417693422736];
+S2006_s12.pos=[1310958424643.1128,-660195077804.5068,-40773251460.33886];
+S2006_s12.vel=[5446.8579344593245,8433.10269685102,-1586.591430568585];
+S2019_s06.pos=[1327270935941.125,-663351491059.4519,-41155501550.475624];
+S2019_s06.vel=[4215.53787474541,9279.926331157345,-1124.4457514104952];
+S2006_s13.pos=[1299745774167.201,-665352161832.2285,-41920502883.329895];
+S2006_s13.vel=[2736.149630038991,9641.288031504158,-640.2129469510354];
+S2019_s07.pos=[1305365217659.8179,-664714848357.5299,-41324603837.7957];
+S2019_s07.vel=[2160.738822053117,9121.191185907512,-94.11004225286757];
+S2019_s08.pos=[1322540096551.179,-648172375592.5004,-41249530983.50111];
+S2019_s08.vel=[3999.0908810659953,6815.0680621930105,-490.02962741472675];
+S2019_s09.pos=[1329352448791.6611,-665799513375.8938,-40068777926.63458];
+S2019_s09.vel=[3076.263886758746,7992.4743335920175,-613.2287748844134];
+S2004_s46.pos=[1284139658589.822,-653838667930.8756,-39093407827.39067];
+S2004_s46.vel=[3449.412232560388,9707.591699951625,-303.644611992774];
+S2019_s10.pos=[1299428558886.538,-661037430270.7482,-36581933082.639275];
+S2019_s10.vel=[2342.256130378656,9590.556149479675,46.23445250879321];
+S2004_s47.pos=[1290315516720.515,-655538499215.6022,-34082970712.91724];
+S2004_s47.vel=[3209.657541913722,9676.102383789153,-383.4442701648539];
+S2019_s11.pos=[1286079130941.229,-636464149102.9003,-48991994912.7883];
+S2019_s11.vel=[3768.18777316513,9533.538823425562,-788.5175948520682];
+S2006_s14.pos=[1320377055676.463,-633160680090.0422,-45524904187.520775];
+S2006_s14.vel=[4824.187642156074,7797.336984396796,-503.07703594064446];
+S2019_s12.pos=[1320911796472.1538,-663055638183.8815,-37144772891.09179];
+S2019_s12.vel=[3339.198147591228,7271.689994645264,-2.025432437944286];
+S2020_s06.pos=[1295343658633.785,-664817289816.0273,-40252660732.02625];
+S2020_s06.vel=[2432.915260105811,8947.188768553118,-513.7455113308924];
+S2019_s13.pos=[1292660233233.723,-639702242040.6409,-40460750696.32351];
+S2019_s13.vel=[4936.660511054341,9644.291518821206,-332.989507069021];
+S2005_s04.pos=[1302135664771.42,-652433812624.531,-33914184941.930286];
+S2005_s04.vel=[5444.919959374914,7584.799016651045,322.3276892197076];
+S2007_s07.pos=[1326769076957.385,-648758410043.4951,-39591015344.239624];
+S2007_s07.vel=[3558.868009082532,7359.751680714472,-90.30329342347531];
+S2007_s08.pos=[1306261556374.5872,-666481553797.1537,-27530407072.96959];
+S2007_s08.vel=[4648.065957563219,8050.730855374861,-137.3035805961416];
+S2020_s07.pos=[1329184490423.08,-634455639327.5181,-39367032562.237114];
+S2020_s07.vel=[3981.123371844893,7824.10730628558,-586.6851515134916];
+S2019_s14.pos=[1299682544980.176,-656969019808.1848,-26843887084.81312];
+S2019_s14.vel=[4729.88385574409,7613.351336013935,-180.0583656650083];
+S2019_s15.pos=[1295595807775.042,-669467196599.8431,-38707496285.1992];
+S2019_s15.vel=[2728.454903899889,8954.210589314256,-703.1410474259858];
+S2005_s05.pos=[1338906029628.1272,-651476278792.0884,-38029554973.7938];
+S2005_s05.vel=[3908.657515634459,7813.745284639738,-358.2825409097765];
+S2006_s15.pos=[1291638605799.502,-640538046635.8512,-46489906392.17031];
+S2006_s15.vel=[4492.423761770299,9908.167476125538,-462.20789577482117];
+S2006_s16.pos=[1304055751956.358,-625655449339.4724,-34668030111.07439];
+S2006_s16.vel=[4830.599114670663,9084.097078735067,-276.96142766187745];
+S2006_s17.pos=[1327301568253.386,-669885260821.3325,-43727071970.82701];
+S2006_s17.vel=[3308.186688071756,7759.422574897545,-111.8446457593989];
+S2004_s48.pos=[1313981962113.2551,-618987669482.221,-35211949705.103745];
+S2004_s48.vel=[4566.274342357059,8655.178352437482,-525.4137615382249];
+S2020_s49.pos=[1282912621786.4631,-645213680545.1248,-48083876504.84723];
+S2020_s49.vel=[4074.659133782034,9663.603563161227,-320.6242436230777];
+S2004_s49.pos=[1304080729506.653,-633035398767.5151,-36708050882.462135];
+S2004_s49.vel=[5315.9514080549625,8521.111675355538,-888.4886308113718];
+S2004_s50.pos=[1310142153956.2212,-664488161691.6967,-44835309712.778595];
+S2004_s50.vel=[2189.2571923527607,7926.391541067163,-281.75111448466123];
+S2006_s18.pos=[1302393951763.438,-625597329261.6646,-42397085171.32917];
+S2006_s18.vel=[4941.3889994919455,8844.693278572282,-128.67933517075468];
+S2019_s16.pos=[1296213416843.822,-624533658851.239,-32810007100.76678];
+S2019_s16.vel=[4545.624929589139,9288.183590215995,-426.0602399198343];
+S2019_s17.pos=[1314448010777.513,-668926207579.003,-47655674898.48894];
+S2019_s17.vel=[2467.1927324550584,8900.963811546157,-429.3840720086513];
+S2019_s18.pos=[1304113992099.659,-616572874875.3755,-33895669417.18763];
+S2019_s18.vel=[4364.596666981179,9030.080557278143,-632.6938139194236];
+S2019_s19.pos=[1296589754397.5679,-620206345391.3263,-33628752793.816887];
+S2019_s19.vel=[4332.566752433957,9143.837176705161,-709.6348563966437];
+S2019_s20.pos=[1314063364720.96,-664437432392.8413,-47999059328.80378];
+S2019_s20.vel=[2398.134555993938,7776.866611201809,-335.9223877717334];
+S2006_s19.pos=[1334721421326.125,-630582350545.7551,-44152320324.03061];
+S2006_s19.vel=[3868.555310251243,7779.8034723684505,-263.4154286060082];
+S2004_s51.pos=[1306820527100.71,-670329966671.8538,-37700596681.94327];
+S2004_s51.vel=[2386.971078613161,8918.786020960713,-171.37872892571428];
+S2020_s09.pos=[1335328693077.086,-658091470665.0654,-32409283202.5995];
+S2020_s09.vel=[2977.877342525162,7937.0198551926715,-315.80988165355];
+S2004_s52.pos=[1286126221196.816,-640543305170.8086,-33713848951.40615];
+S2004_s52.vel=[3851.0286188326872,9918.162914173256,-139.7817236144481];
+S2007_s09.pos=[1314697195472.128,-672765921985.5138,-40269088926.73315];
+S2007_s09.vel=[2755.423316002393,8595.933068239106,126.21611543579058];
+S2004_s53.pos=[1305494424549.536,-620208431095.9753,-35930719517.398636];
+S2004_s53.vel=[4676.597908974672,8799.03875717571,-578.0398229149059];
+S2020_s10.pos=[1323415236607.827,-663483260201.299,-45384222788.723145];
+S2020_s10.vel=[3160.270817656051,7347.721046148083,-137.02490606363148];
+S2019_s21.pos=[1288421160818.584,-666578943988.754,-39245995699.25883];
+S2019_s21.vel=[2877.624651929539,9409.963753944181,-450.8184383191871];
+S2006_s20.pos=[1300681430679.5881,-636169783429.0549,-41727862410.21356];
+S2006_s20.vel=[5140.9639968554075,9208.308977086112,-189.36415757313748];*/
+
 cordelia.pos=[1890504407287.551,2246247399254.488,-16101745388.65328];
 cordelia.vel=[4989.245715572759,2187.610935070889,2943.0245103033812];
 ophelia.pos=[1890481002506.69,2246251140571.729,-16111293970.76964];
@@ -1205,7 +1766,7 @@ orbiter_1.is_tiny = true;
 orbiter_1.kepler(earth, 7371000, 0.001, deg(0.3), deg(98.431), deg(233.485), deg(12.943), NOW, NOW);
 orbiter_1.desc = "don't mind this please. i eventually plan to turn this into a controllable spaceship, for the purpose of making the solar system explorable and giving a challenge to those who dare to venture to the most distant bodies.\n\n\ni have not implemented this yet!!!!!!!!:)!!!!!!!!!!";
 
-for (let i = 0; i < bodies.length; i++) {
+/*for (let i = 0; i < bodies.length; i++) {
 	let least_massive_candidate = sun;
 	bodies[i].satellites = [];
 	for (let j = 0; j < bodies.length; j++) {
@@ -1218,10 +1779,45 @@ for (let i = 0; i < bodies.length; i++) {
 	}
 	bodies[i].parent = least_massive_candidate;
 	bodies[i].parent.satellites.push(bodies[i]);
+}*/
+let highest_mass_body = {mass:-1e308};
+for (let i = 0; i < bodies.length; i++) {
+	if (bodies[i].mass > highest_mass_body.mass) {
+		highest_mass_body = bodies[i];
+	}
 }
+function find_orbital_parent(body) {
+	let least_massive_candidate = {mass:1e308};
+	if (body.parent != neutral_reference) {
+		let body_index = body.parent.satellites.indexOf(body);
+		body.parent.satellites.splice(body_index, 1);
+	}
+	if (body == highest_mass_body) return;
+	let found_valid_candidate = false;
+	for (let j = 0; j < bodies.length; j++) {
+		body.parent = bodies[j];
+		let elements = body.get_osculating_elements();
+		if (elements[1] > 0 && elements[1] < 1 && elements[0] > 0 && bodies[j].mass < least_massive_candidate.mass) {
+			least_massive_candidate = bodies[j];
+			found_valid_candidate = true;
+		}
+	}
+	if (found_valid_candidate) {
+		body.parent = least_massive_candidate;
+		body.parent.satellites.push(body);
+	}
+	else {
+		body.parent = neutral_reference;
+	}
+}
+//bodies.reduce((t, v, i)=>{find_orbital_parent(bodies[i])}); // just to set everybody up before anything happens; good if the sim starts with a speed of 0.
 sun.parent = neutral_reference;
 pluto_barycenter.parent = pluto;
-
+//bodies = [...Full_Solar_System.bodies];
+/*bodies = [];
+let erin = new Body("Erin", "#77a", 2.94e22, 500000, [0,0,0], [0,0,0]);
+let pock = new Body("Pock", "#fff", 2.646e19, 60000, [1997558+500000,0,0], [0,1009.9,0]);
+pock.parent = erin;*/
 let zoom = 1e-9;
 function zoom_screen(event) {
 	let change = 1 - (event.deltaY/1000);
@@ -1240,7 +1836,7 @@ window.addEventListener('keyup', function (e) {
 	active_keys[e.keyCode] = (e.type == "keydown");            
 });
 canvas.addEventListener('mousedown', function (e) {
-	if (focused_body == neutral_reference && hovered_body == neutral_reference) return; // prevents going from unfocused to unfocused, which is rather disorienting
+	if (focused_body == neutral_reference && hovered_body == neutral_reference) return; // prevents going from unfocused to unfocused, which is rather disorienting     (lol)
 	//if (focused_body != hovered_body) 
 	if (hovered_body != neutral_reference) {
 		pan = [0,0]; // if we're not looking at nothing (i.e., looking at a planet) then focus the camera at the center of the object of interest
@@ -1253,6 +1849,12 @@ canvas.addEventListener('mousedown', function (e) {
 	camera_clear_for_trails(); // if you're changing perspectives without changing the pan through the wasd or arrows, the camera needs to be cleared.
 	focused_body = hovered_body; // focus on the darn thing you're hovering over
 	hovered_body = neutral_reference; // forget i asked!
+	
+	
+	document.getElementById("create-body-currently-focused-body").innerHTML = focused_body.name;
+	
+	document.getElementById("create-body-focused-indicator").hidden = focused_body == neutral_reference;
+	document.getElementById("create-body-not-focused-indicator").hidden = focused_body != neutral_reference;
 });
 document.getElementById("info-body-desc").addEventListener('input', function (event) {
 	focused_body.desc = document.getElementById("info-body-desc").value; // save and apply
@@ -1263,7 +1865,7 @@ document.getElementById("info-body-desc").addEventListener('focus', function (ev
 document.getElementById("info-body-desc").addEventListener('blur', function (event) {
 	GUI_desc_focused = false; // waow
 });
-let paused = false;
+/*let paused = false;
 document.getElementById("toggle-motion").addEventListener("click", (event)=>{
 	paused = !paused;
 	if (paused) {
@@ -1271,7 +1873,7 @@ document.getElementById("toggle-motion").addEventListener("click", (event)=>{
 	} else {
 		speed = 100;
 	}
-});
+});*/
 document.getElementById("create-body-button").addEventListener("click", (event)=>{
 	let name = document.getElementById("create-body-name").value;
 	let colour = document.getElementById("create-body-color").value;
@@ -1289,9 +1891,12 @@ document.getElementById("create-body-button").addEventListener("click", (event)=
 	let omega_lon_asc = document.getElementById("create-body-lon-asc").value;
 	let mean_anomaly = document.getElementById("create-body-mean-anomaly").value;
 	
-	let body = new Body(name, colour, Number(mass), Number(radius));
-	body.kepler(focused_body, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, NOW, epoch*86400);
-	focused_body.satellites.push(body);
+	if (focused_body != neutral_reference) {
+		let body = new Body(name, colour, Number(mass), Number(radius));
+		body.kepler(focused_body, sma, ecc, inc, omega_arg_per, omega_lon_asc, mean_anomaly, NOW, epoch*86400);
+		bodies.push(body);
+		//focused_body.satellites.push(body);
+	}
 });
 let pan = [0,0];
 let mouse_pos = [0,0];
@@ -1439,7 +2044,13 @@ function camera_clear_for_trails() { // if the view/panning/zoom of the scene is
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 	}
 }
+let t1 = Date.now();
+let t2 = Date.now();
+let get_dt =()=> {return t2-t1;}
+let dts = [];
+let fps = 0;
 function loop() {
+	t1 = Date.now();
 	/* * * not display (camera panning) * * */
 	if (!GUI_desc_focused/*not focusing textarea*/) {
 		if (active_keys && (active_keys[37] || active_keys[65])) {pan[0] += 10; camera_clear_for_trails()}
@@ -1463,6 +2074,12 @@ function loop() {
 		document.getElementById("yz-fine-indicator").innerHTML = "&emsp;"+(yz_fine_setting_value+'').substr(0,6)+" rad";
 		camera_clear_for_trails();
 	}
+	let steps_per_frame_setting_value = Math.floor(Number(document.getElementById("steps-per-frame").value));
+	if (!isNaN(steps_per_frame_setting_value) && speed != steps_per_frame_setting_value) {
+		speed = steps_per_frame_setting_value;
+	}
+	let tiny_gravity = document.getElementById("tiny-gravity-setting").checked;
+	let integrator = document.getElementById("integrator-setting").value;
 	
 	/* * * extra thing for trails+labels * * */
 	if (labels && trails || labels_setting_changed) {
@@ -1484,22 +2101,63 @@ function loop() {
 	
 	/* * * STEP * * */
 	for (let S = 0; S < speed; S++) {
-	
+		for (let i = 0; i < bodies.length; i++) {
+			if (integrator == "verlet") {
+				bodies[i].new_pos = vec_add(bodies[i].pos, vec_add(vec_mul(bodies[i].vel,step), vec_mul(bodies[i].acc,step*step*0.5)));
+				bodies[i].new_acc = [0,0,0];
+			} else if (integrator == "euler") {
+				bodies[i].acc=[0,0,0];
+			}
+		} //yeey
+		/* compute acceleration */
 		for (let i = 0; i < bodies.length; i++) {
 			let body = bodies[i];
 			if (!body.is_barycenter) {
 				for (let j = 0; j < bodies.length; j++) {
-					if (bodies[j] == body) {/* do nothing for this loop please thank you */
+					if (bodies[j] == body || ((!tiny_gravity) && bodies[j].is_tiny)) {/* do nothing for this loop please thank you */
 					} else {
 						let other = bodies[j];
 						let vec = vec_sub(other.pos, body.pos);
 						let r = (vec[0]**2 + vec[1]**2 + vec[2]**2)**.5;
-						vec = vec_div(vec, r); // normalize?
+						vec = vec_div(vec, r); // normalize and invert
 						let F = G * (body.mass * other.mass) / r**2; // G*(m1m2/r^2)
-						vec = vec_mul(vec, F*step/body.mass);
-						body.vel = vec_add(body.vel, vec);
+						vec = vec_mul(vec, F/body.mass);
+						if (integrator == "euler") {body.acc = vec_add(body.acc, vec);}
+						else if (integrator == "verlet") {body.new_acc = vec_add(body.new_acc, vec);}
+						
+						if (integrator == "poo hgjfhdjkghdkhgjkdfhg shdjfshdskfh,, GHFKJHKFNJDSJKCJ") {
+							/*let other = bodies[j];
+							let new_pos = vec_add(other.pos, vec_add(vec_mul(other.vel,step), vec_mul(other.acc,step*step*0.5)));
+							
+							let vec = vec_sub(other.pos, body.pos);
+							let r = (vec[0]**2 + vec[1]**2 + vec[2]**2)**.5;
+							vec = vec_div(vec, -r); // normalize and invert
+							let F = G * (body.mass * other.mass) / r**2; // G*(m1m2/r^2)
+							vec = vec_mul(vec, F/other.mass);
+							
+							let new_acc = vec;
+							let new_vel = vec_add(other.vel, vec_mul(vec_add(other.acc,new_acc),step*0.5));
+							other.pos = new_pos;
+							other.vel = new_vel;
+							other.acc = new_acc;*/
+							/*let other = bodies[j];
+							let vec = vec_sub(other.pos, body.pos);
+							let r = (vec[0]**2 + vec[1]**2 + vec[2]**2)**.5;
+							vec = vec_div(vec, -r);
+							let F = G * (body.mass * other.mass) / r**2;
+							vec = vec_mul(vec, F/other.mass);
+							other.acc = vec_add(other.acc, vec);
+							//other.pos = vec_add(vec_add(other.pos, vec_mul(other.vel, step)), vec_mul(other.acc, step*step*0.5));
+							if (other.prev_pos == undefined) other.prev_pos = other.pos;
+							other.pos = vec_add(vec_sub(vec_mul(other.pos, 2), other.prev_pos), vec_mul(other.acc, step*step));
+							other.prev_pos = other.pos;*/
+						}
 					}
 				}
+			}
+			let elements = body.get_osculating_elements();
+			if (elements[1] > 1 || elements[1] < 0 || isNaN(elements[1])) {
+				find_orbital_parent(body);
 			}
 		}
 		
@@ -1507,9 +2165,20 @@ function loop() {
 			barycenters[i].position_barycenter();
 		}
 		
+		/* after we have acceleration information, we can integrate */
 		for (let i = 0; i < bodies.length; i++) {
 			let body = bodies[i];
-			body.pos = vec_add(body.pos, vec_mul(body.vel, step));
+			if (integrator == "euler") {
+				body.vel = vec_add(body.vel, vec_mul(body.acc, step));
+				body.pos = vec_add(body.pos, vec_mul(body.vel, step));
+			}
+			else if (integrator == "verlet") {
+				let new_vel = vec_add(body.vel, vec_mul(vec_add(body.acc,body.new_acc),step*0.5));
+				body.pos = body.new_pos;
+				body.vel = new_vel;
+				body.acc = body.new_acc;
+			}
+			
 			//if (trails && S % 20 == 0 && S != 40) draw_body(bodies[i]);
 		}
 		
@@ -1518,7 +2187,7 @@ function loop() {
 		}*/
 		
 		for (let i = 0; i < bodies.length; i++) { // bluh (this is irreducible because if you merged it with the pos-updating loop, objects would be drawn where they technically never were in relation to each other. same goes for pos to vel-updating; essentially these all have to be buffers of each other, which is terrible.)
-			if (trails && S % (speed/2/*please make sure speed is divisible by this!*/) == 0) draw_body(bodies[i]);
+			if (trails && S % (speed/2/*please make sure speed is divisible by this!*/) == 0 && S != speed) draw_body(bodies[i]);
 		}
 	}
 	
@@ -1531,6 +2200,10 @@ function loop() {
 	let current_epoch = 2451545 + (NOW+time - J2000_epoch)/86400;
 	document.getElementById("simulation-time-indicator").innerHTML = simulation_moment;//.toUTCString();
 	document.getElementById("zoom-indicator").innerHTML = zoom;
+	document.getElementById("step-size-indicator").innerHTML = step;
+	document.getElementById("speed-indicator").innerHTML = speed;
+	document.getElementById("fps-indicator").innerHTML = Math.floor(fps);
+	document.getElementById("steps-per-second-indicator").innerHTML = Math.floor(speed*fps);
 	document.getElementById("bodycount").innerHTML = bodies.length + " bodies.";
 	if (GUI_last_focused_body != focused_body) { // aka, on hovered_body change do:
 		GUI_last_focused_body = focused_body;
@@ -1576,14 +2249,20 @@ function loop() {
 		document.getElementById("info-body-orbital-period").innerHTML = formatted_time(body_info[7]);
 		document.getElementById("info-body-speed").innerHTML = Math.round(speed*1000)/1000 + "m/s";
 		document.getElementById("info-body-relative-speed").innerHTML = Math.round(relative_speed*1000)/1000 + "m/s";
-		document.getElementById("info-body-distance-to-parent").innerHTML = formatted_dist(dist_to_parent) + " | " + formatted_dist(dist_to_parent_surface);
+		document.getElementById("info-body-distance-to-parent").innerHTML = formatted_dist(dist_to_parent)
+		document.getElementById("info-body-distance-to-parent-surf").innerHTML = formatted_dist(dist_to_parent_surface);
 		
 		document.getElementById("info-body-pericenter").innerHTML = formatted_dist(body_info[8]);
 		document.getElementById("info-body-apocenter").innerHTML = formatted_dist(body_info[9]);
-		
-		document.getElementById("create-body-currently-focused-body").innerHTML = focused_body.name;
 	}
-	
+	t2 = Date.now();
+	dts.push(get_dt());
+	if (dts.length > 100) {
+		dts.reverse();
+		dts.pop();
+		dts.reverse();
+	}
+	fps = 1000/(dts.reduce((total, v)=>{return total + v;})/dts.length);
 	/*if (!paused)*/ window.requestAnimationFrame(loop);
 }
 document.getElementById("labels-setting").checked = true;
